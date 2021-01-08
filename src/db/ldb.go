@@ -431,10 +431,9 @@ func (ldb *LevelDb) getHistoricalDataWithMinLength(itemNames []string, startTime
 
 // check if all itemNames given exist
 func (ldb *LevelDb) checkItems(itemNames ...string) (int, bool) {
-	ldb.FilterMutex.RLock()         // acquire lock
-	defer ldb.FilterMutex.RUnlock() // release lock
 	for index, itemName := range itemNames {
-		if !ldb.RtDbFilter.Test([]byte(itemName)) {
+		_, ok := ldb.RtDbFilter.Get(itemName)
+		if !ok {
 			return index, false
 		}
 	}
