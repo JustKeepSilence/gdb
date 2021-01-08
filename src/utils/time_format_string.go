@@ -7,5 +7,5 @@ github: https://github.com/JustKeepSilence
 package utils
 
 const (
-	TimeFormatString = "2006-01-02 15:04:05"  // 格式化时间的字符串
+	TimeFormatString = "2006-01-02 15:04:05"
 )
