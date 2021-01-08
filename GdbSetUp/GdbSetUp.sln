@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29201.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "GdbSetUp", "GdbSetUp\GdbSetUp.vdproj", "{5DCD1883-216C-4E28-85FA-4A58C3DA1D19}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Default = Debug|Default
+		Release|Default = Release|Default
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5DCD1883-216C-4E28-85FA-4A58C3DA1D19}.Debug|Default.ActiveCfg = Debug
+		{5DCD1883-216C-4E28-85FA-4A58C3DA1D19}.Debug|Default.Build.0 = Debug
+		{5DCD1883-216C-4E28-85FA-4A58C3DA1D19}.Release|Default.ActiveCfg = Release
+		{5DCD1883-216C-4E28-85FA-4A58C3DA1D19}.Release|Default.Build.0 = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6858598D-1500-41EB-8E8D-19E8077FC16D}
+	EndGlobalSection
+EndGlobal
