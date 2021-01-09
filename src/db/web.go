@@ -314,11 +314,11 @@ func (ldb *LevelDb) GetHistoricalDataHandler(c *gin.Context) {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
 		itemNames := historicalDataString.ItemNames
-		startTime := historicalDataString.StartTime
-		endTime := historicalDataString.EndTime
-		interval := historicalDataString.Interval
+		startTimes := historicalDataString.StartTimes
+		endTimes := historicalDataString.EndTimes
+		intervals := historicalDataString.Intervals
 		endTime1 := time.Now()
-		responseData, err := ldb.GetHistoricalData(itemNames, startTime, endTime, interval)
+		responseData, err := ldb.GetHistoricalData(itemNames, startTimes, endTimes, intervals)
 		endTime2 := time.Now()
 		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(utils.TimeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
 		if err != nil {
@@ -340,13 +340,13 @@ func (ldb *LevelDb) GetHistoricalDataWithConditionHandler(c *gin.Context) {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
 		itemNames := g.ItemNames
-		startTime := g.StartTime
-		endTime := g.EndTime
-		interval := g.Interval
+		startTimes := g.StartTimes
+		endTimes := g.EndTimes
+		intervals := g.Intervals
 		filterCondition := g.FilterCondition
 		deadZones := g.DeadZones
 		endTime1 := time.Now()
-		responseData, err := ldb.GetHistoricalDataWithCondition(itemNames, startTime, endTime, interval, filterCondition, deadZones...) // 根据SQL进行相应的操作并返回数据
+		responseData, err := ldb.GetHistoricalDataWithCondition(itemNames, startTimes, endTimes, intervals, filterCondition, deadZones...)
 		endTime2 := time.Now()
 		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(utils.TimeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
 		if err != nil {
@@ -401,7 +401,7 @@ func (ldb *LevelDb) GetDbSpeedHistoryHandler(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := ldb.getDbSpeedHistory(Speed, g.StartTime, g.EndTime, g.Interval[0])
+		responseData, err := ldb.getDbSpeedHistory(Speed, g.StartTimes, g.EndTimes, g.Intervals[0])
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -508,7 +508,7 @@ func (ldb *LevelDb) GetJsCodeHandler(c *gin.Context) {
 	}
 }
 
-func (ldb *LevelDb)GetLogsHandler(c *gin.Context)  {
+func (ldb *LevelDb) GetLogsHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
 	responseData, err := getLogs() // add groups
@@ -540,8 +540,8 @@ func (ldb *LevelDb) AddCalcItemHandler(c *gin.Context) {
 	}
 }
 
-func (ldb *LevelDb)GetCalcItemHandler(c *gin.Context)  {
-	g := map[string]string{}  // condition
+func (ldb *LevelDb) GetCalcItemHandler(c *gin.Context) {
+	g := map[string]string{} // condition
 	request := c.Request
 	defer request.Body.Close()
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
@@ -557,7 +557,7 @@ func (ldb *LevelDb)GetCalcItemHandler(c *gin.Context)  {
 	}
 }
 
-func (ldb *LevelDb)UpdateCalcItemHandler(c *gin.Context)  {
+func (ldb *LevelDb) UpdateCalcItemHandler(c *gin.Context) {
 	g := updatedCalculationInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -575,35 +575,35 @@ func (ldb *LevelDb)UpdateCalcItemHandler(c *gin.Context)  {
 	}
 }
 
-func (ldb *LevelDb)StartCalculationItemHandler(c *gin.Context)  {
-	id := c.Param("id")  // get id
+func (ldb *LevelDb) StartCalculationItemHandler(c *gin.Context) {
+	id := c.Param("id") // get id
 	_, err := sqlite.UpdateItem("update calc_cfg set status='true' where id=" + id)
 	if err != nil {
 		handleError(c, err.Error())
-	}else{
-		r , _ := Json.Marshal(ResponseData{200, "", Rows{1}})
+	} else {
+		r, _ := Json.Marshal(ResponseData{200, "", Rows{1}})
 		c.String(200, "%s", r)
 	}
 }
 
-func (ldb *LevelDb)StopCalculationItemHandler(c *gin.Context)  {
-	id := c.Param("id")  // get id
+func (ldb *LevelDb) StopCalculationItemHandler(c *gin.Context) {
+	id := c.Param("id") // get id
 	_, err := sqlite.UpdateItem("update calc_cfg set status='false' where id=" + id)
 	if err != nil {
 		handleError(c, err.Error())
-	}else{
-		r , _ := Json.Marshal(ResponseData{200, "", Rows{1}})
+	} else {
+		r, _ := Json.Marshal(ResponseData{200, "", Rows{1}})
 		c.String(200, "%s", r)
 	}
 }
 
-func (ldb *LevelDb)DeleteCalculationItemHandler(c *gin.Context)  {
+func (ldb *LevelDb) DeleteCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id")
 	_, err := sqlite.UpdateItem("delete from calc_cfg where id=" + id)
 	if err != nil {
 		handleError(c, err.Error())
-	}else{
-		r , _ := Json.Marshal(ResponseData{200, "", Rows{1}})
+	} else {
+		r, _ := Json.Marshal(ResponseData{200, "", Rows{1}})
 		c.String(200, "%s", r)
 	}
 }
@@ -643,7 +643,7 @@ func (ldb *LevelDb) Calc() error {
 			rows, _ := sqlite.Query("select id, expression, status, duration from calc_cfg where 1=1")
 			for _, row := range rows {
 				go func(r map[string]string) {
-					status, _ := strconv.ParseBool(r["status"])  // if calc
+					status, _ := strconv.ParseBool(r["status"]) // if calc
 					if status {
 						// calc
 						d, _ := strconv.ParseInt(r["duration"], 10, 64)
@@ -658,16 +658,16 @@ func (ldb *LevelDb) Calc() error {
 								}
 								// run script
 								loop.Run(func(vm *goja.Runtime) {
-									vm.Set("getRtData", ldb.getRtData)  // get realTime data
-									vm.Set("getHData", ldb.getHData)  // get history
-									vm.Set("writeRtData", ldb.BatchWrite)  // write data
-									vm.Set("getTimeStamp", ldb.getUnixTimeStamp)  // get timeStamp of given time string
-									vm.Set("getNowTime", ldb.getNowTime)  // get current Time
-									vm.Set("getTime", ldb.getTime)  // get time
+									vm.Set("getRtData", ldb.getRtData)           // get realTime data
+									vm.Set("getHData", ldb.getHData)             // get history
+									vm.Set("writeRtData", ldb.BatchWrite)        // write data
+									vm.Set("getTimeStamp", ldb.getUnixTimeStamp) // get timeStamp of given time string
+									vm.Set("getNowTime", ldb.getNowTime)         // get current Time
+									vm.Set("getTime", ldb.getTime)               // get time
 									program, _ := goja.Compile("main.js", expression, false)
 									_, err := vm.RunProgram(program)
 									if err != nil {
-										_, _ = sqlite.UpdateItem("update calc_cfg set errorMessage='" +err.Error() + "' where id=" + r["id"])
+										_, _ = sqlite.UpdateItem("update calc_cfg set errorMessage='" + err.Error() + "' where id=" + r["id"])
 									}
 								})
 							}

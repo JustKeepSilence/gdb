@@ -9,7 +9,7 @@ package db
 
 /*
 The data structure and errors returned by GDB
- */
+*/
 // structure
 
 type ResponseData struct {
@@ -31,7 +31,7 @@ type Cols struct {
 }
 
 type Items struct {
-	ItemCount int64 `json:"itemCount"`
+	ItemCount  int64               `json:"itemCount"`
 	ItemValues []map[string]string `json:"itemValues"`
 }
 
@@ -43,12 +43,12 @@ type GroupInfo struct {
 
 // function return GroupProperty {"itemCount": 10, "itemColumnNames": ["units", "type"]}
 type GroupProperty struct {
-	ItemCount string `json:"itemCount"`
+	ItemCount       string   `json:"itemCount"`
 	ItemColumnNames []string `json:"itemColumnNames"`
 }
 
 type AddGroupInfo struct {
-	GroupName   string   `json:"groupNames"`
+	GroupName   string   `json:"groupName"`
 	ColumnNames []string `json:"columnNames"`
 }
 
@@ -62,41 +62,41 @@ type UpdatedGroupInfo struct {
 }
 
 type UpdatedGroupColumnInfo struct {
-	GroupName string `json:"groupName"`
+	GroupName      string   `json:"groupName"`
 	OldColumnNames []string `json:"oldColumnNames"`
 	NewColumnNames []string `json:"newColumnNames"`
 }
 
 type DeletedGroupColumnInfo struct {
-	GroupName string `json:"groupName"`
+	GroupName   string   `json:"groupName"`
 	ColumnNames []string `json:"columnNames"`
 }
 
 type AddGroupColumnInfo struct {
-	GroupName string `json:"groupName"`
+	GroupName   string   `json:"groupName"`
 	ColumnNames []string `json:"columnNames"`
 }
 
 type HistoricalDataInfo struct {
-	ItemNames       []string `json:"itemNames"`       // ItemNames
-	TimeStamps      []string `json:"timeStamps"`      // time stamp
-	StartTime       []int    `json:"startTime"`       // startTime Unix TimeStamp
-	EndTime         []int    `json:"endTime"`         // endTime Unix TimeStamp
-	Interval        []int      `json:"interval"`        // interval
-	FilterCondition string   `json:"filterCondition"` // filter condition: item["itemNames1"] > 100
-	DeadZones	    []DeadZone `json:"deadZones"`  // deadZone filter condition
+	ItemNames       []string   `json:"itemNames"`       // ItemNames
+	TimeStamps      []string   `json:"timeStamps"`      // time stamp
+	StartTimes      []int      `json:"startTimes"`      // startTime Unix TimeStamp
+	EndTimes        []int      `json:"endTimes"`        // endTime Unix TimeStamp
+	Intervals       []int      `json:"intervals"`       // interval
+	FilterCondition string     `json:"filterCondition"` // filter condition: item["itemNames1"] > 100
+	DeadZones       []DeadZone `json:"deadZones"`       // deadZone filter condition
 }
 
 type DeadZone struct {
-	ItemName string `json:"itemName"`
-	DeadZoneCount int `json:"deadZoneCount"`
+	ItemName      string `json:"itemName"`
+	DeadZoneCount int    `json:"deadZoneCount"`
 }
 
 type calcInfo struct {
-	Expression string `json:"expression"`
-	Flag string `json:"flag"`
-	Duration string `json:"duration"`
-	CreateTime string `json:"createTime"`
+	Expression  string `json:"expression"`
+	Flag        string `json:"flag"`
+	Duration    string `json:"duration"`
+	CreateTime  string `json:"createTime"`
 	UpdatedTime string `json:"updatedTime"`
 	Description string `json:"description"`
 }
@@ -108,9 +108,9 @@ type AddItemInfo struct {
 
 type ItemInfo struct {
 	GroupName string `json:"groupName"`
-	Column string `json:"column"`
-	StartRow int `json:"startRow"`
-	RowCount int `json:"rowCount"`
+	Column    string `json:"column"`
+	StartRow  int    `json:"startRow"`
+	RowCount  int    `json:"rowCount"`
 	Condition string `json:"condition"`
 	Clause    string `json:"clause"`
 }
@@ -140,19 +140,19 @@ type userInfo struct {
 }
 
 type updatedCalculationInfo struct {
-	Id string `json:"id"`
+	Id          string `json:"id"`
 	Description string `json:"description"`
-	Expression string `json:"expression"`
-	Duration string `json:"duration"`
+	Expression  string `json:"expression"`
+	Duration    string `json:"duration"`
 }
 
 type logsInfo struct {
-	Level string `json:"level"`
-	Method string `json:"method"`
-	Message string `json:"msg"`
+	Level         string `json:"level"`
+	Method        string `json:"method"`
+	Message       string `json:"msg"`
 	RequestString string `json:"requestString"`
-	Url string `json:"url"`
-	Time string `json:"time"`
+	Url           string `json:"url"`
+	Time          string `json:"time"`
 }
 
 // errors, some errors imported , some not
@@ -161,7 +161,7 @@ type conditionError struct {
 	ErrorInfo string
 }
 
-func (ce conditionError)Error() string {
+func (ce conditionError) Error() string {
 	return ce.ErrorInfo
 }
 
@@ -185,15 +185,15 @@ type snError struct {
 	ErrorInfo string
 }
 
-func (se snError)Error() string {
+func (se snError) Error() string {
 	return se.ErrorInfo
 }
 
-type itemError struct{
+type itemError struct {
 	ErrorInfo string
 }
 
-func (ie itemError)Error() string {
+func (ie itemError) Error() string {
 	return ie.ErrorInfo
 }
 
@@ -201,14 +201,15 @@ type runTimeError struct {
 	ErrorInfo string
 }
 
-func (rt runTimeError)Error() string {
+func (rt runTimeError) Error() string {
 	return rt.ErrorInfo
 }
+
 type ExcelError struct {
 	ErrorInfo string
 }
 
-func (oe ExcelError)Error() string {
+func (oe ExcelError) Error() string {
 	return oe.ErrorInfo
 }
 
@@ -224,7 +225,7 @@ type connectionDBError struct {
 	ErrorInfo string
 }
 
-func (cd connectionDBError)Error() string {
+func (cd connectionDBError) Error() string {
 	return cd.ErrorInfo
 }
 
@@ -232,6 +233,6 @@ type updateItemError struct {
 	ErrorInfo string
 }
 
-func (ui updateItemError)Error() string {
+func (ui updateItemError) Error() string {
 	return ui.ErrorInfo
 }

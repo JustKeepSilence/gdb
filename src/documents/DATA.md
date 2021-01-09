@@ -38,7 +38,7 @@
     des: 在getHistoricalData的基础之上可以获取指定筛选条件的历史数据,filterCondition为筛选条件,可以是任何符合语法的js语句,需要注意的是如果和item相关
          则形式应该为item["item1"]>10之类,deadZones为item对应的死区个数,即当有多少个值是相同的时候,则认为这段数据是无效的.如果不提供filterCondition
          或者filterCondition为空字符串则认为该项为true,如果不提供deadZones或者deadZones为[],则认为该项为true,即不进行死区筛选
-    par: {"filterCondition": string, deadZones: int[]}
+    par: {"filterCondition": string, deadZones: []int}
     egs: print(requests.post("http://192.168.0.199:8082/data/getHistoricalDataWithCondition", data=json.dumps({"itemNames":["item1"],"startTime":[1609761600],"endTime":[1609763580],"interval":[360], "filterCondition": 'item["item2"]<800 && item["item1"] > 100', deadZones: [5]})).text)  
          # 获取item1>100并且item2<800时item1的数据,并且item1中连续的数据段不能超过5个(超过5个认为item1不刷新,数据无效)
          >>> {"item1":[["1609761600", "1609762369","1609762758","1609763146","1609763535"],["778","278","746","865","876"]]}

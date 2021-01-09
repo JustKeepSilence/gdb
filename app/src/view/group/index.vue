@@ -575,9 +575,9 @@ export default {
           const d = [];
           for (let i = 0; i < g.length; i++) {
             if (c[i].length == 0) {
-              d.push({ groupNames: g[i] });
+              d.push({ groupName: g[i] });
             } else {
-              d.push({ groupNames: g[i], columnNames: c[i].split(",") });
+              d.push({ groupName: g[i], columnNames: c[i].split(",") });
             }
           }
           addGroups(JSON.stringify(d))
@@ -914,9 +914,9 @@ export default {
         JSON.stringify({
           groupName: this.selectedGroups,
           itemNames: [this.selectedItem],
-          startTime: [s],
-          endTime: [e],
-          interval: [parseInt(this.interval)],
+          startTimes: [s],
+          endTimes: [e],
+          intervals: [parseInt(this.interval)],
         })
       )
         .catch(({ response: { data: {message: message}} }) => {

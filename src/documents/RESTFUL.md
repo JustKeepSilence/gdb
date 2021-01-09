@@ -5,7 +5,7 @@
 1.请求的方式:POST
 2.返回的数据格式
 {"Code": , "Message": , "data": },分别代表返回的状态码,返回的信息,返回的数据。请求成功Code为200,Message
-为空,data为对应的数据。请求失败Code为500，Message为错误信息,data为nul
+为空,data为对应的数据。请求失败Code为500，Message为错误信息,data为null
 ```
 <h2>1.Config</h2>
 ```

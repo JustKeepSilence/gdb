@@ -89,9 +89,9 @@ export default {
     this.render()
     this.myChart = this.$echarts.init(document.getElementById("main"));
     getSpeedHistory(JSON.stringify({
-        startTime: [this.currentTime - 10 * 60 * 1000],
-        endTime: [this.currentTime],
-        interval: [5]
+        startTimes: [this.currentTime - 10 * 60 * 1000],
+        endTimes: [this.currentTime],
+        intervals: [5]
     })).then(({data})=>{
         for(let i =0 ; i < data.speed[0].length;i++){
            this.xData.push(this.parseTime(new Date(parseInt(data.speed[0][i])* 1000)))
