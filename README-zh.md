@@ -10,4 +10,9 @@ Go语言使用者,还可以直接下载src中的源代码进行二次开发工�
 ![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/launch.png)
 
 # Web Application Serve
-在支持es6的浏览器上输入对应的url: http:// + ip + port + "/index",初次运行没有cookie信息,会跳转到如下的登陆界面
+1.login
+
+```在支持es6的浏览器上输入对应的url: http:// + ip + port + "/index",初次运行没有cookie信息,会跳转到如下的登陆界面```
+![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/login.png)
+其中远端服务器的地址即为整个服务运行的ip+port,这里就是192.168.0.114:8082,用户名为admin,密码为admin@123
+登陆成功之后会跳转到首页index
