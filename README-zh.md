@@ -25,6 +25,7 @@ Go语言使用者,还可以直接下载src中的源代码进行二次开发工�
 ```其中远端服务器的地址即为整个服务运行的ip+port,这里就是192.168.0.114:8082,用户名为admin,密码为admin@123```
 
 2.index
+
 ```首页的界面如下```
 ![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/index.png)
 
@@ -32,17 +33,20 @@ Go语言使用者,还可以直接下载src中的源代码进行二次开发工�
 
 
 3.group
+
 ```group的界面如下```
 ![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/group.png)
 
 ```通过这个界面可以加组,加点,下载点表,查看点的实时值和历史值，下载指定时间的历史数据,编辑item的属性等一系列操作```
 
 4.calc
+
 ```calc是和二次计算操作有关的界面```
-![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/group.png)
+![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/calc.png)
 
 ```通过这个界面可以添加基于二次js的二次计算项,也可以实时修改，监测计算项的运行情况.```
 
 # Restful Api
-1.group
+[接口文档](https://justkeepsilence.gitbook.io/gdb/)
+
 
