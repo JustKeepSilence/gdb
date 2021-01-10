@@ -26,8 +26,17 @@ const updateCalculationItems = (data)=>{
     })
 }
 
+const getReCalc = (data)=>{
+    return request({
+        url: "http://" + getCookie('ip') +'/calculation/getReCalc',
+        method: "post",
+        data
+    })
+}
+
 export{
     addCalulationItems,
     getCalculationItems,
-    updateCalculationItems
+    updateCalculationItems,
+    getReCalc
 }

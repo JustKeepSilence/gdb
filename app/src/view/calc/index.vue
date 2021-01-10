@@ -53,6 +53,7 @@
         <el-table-column
           prop="updatedTime"
           label="updatedTime"
+          align="center"
           sortable
           width="180"
         >
@@ -293,7 +294,6 @@ export default {
       editItems: [],
       size: 'medium',
       owdith:'300',
-
     };
   },
   created() {

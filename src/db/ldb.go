@@ -182,15 +182,23 @@ func (ldb *LevelDb) GetHistoricalData(itemNames []string, startTimeStamps []int,
 				it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 				values := []string{}
 				count := 0
-				timeStamps := []string{}
+				var st int64 // start time stamp of data
+				timeStamps := []int64{}
 				for it.Next() {
-					if count%interval == 0 {
+					tt, _ := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), name, "", -1), 10, 64) // get time stamp
+					if count == 0 {
+						st = tt // get start time stamp of data
 						values = append(values, fmt.Sprintf("%s", it.Value()))
-						timeStamps = append(timeStamps, strings.Replace(fmt.Sprintf("%s", it.Key()), name, "", -1))
+						timeStamps = append(timeStamps, tt)
+					} else {
+						if (tt-st)%int64(interval) == 0 {
+							values = append(values, fmt.Sprintf("%s", it.Value()))
+							timeStamps = append(timeStamps, tt)
+						}
 					}
 					count++
 				}
-				rawData.Set(name, [][]string{timeStamps, values})
+				rawData.Set(name, []interface{}{timeStamps, values})
 			}
 		}(itemName)
 	}
@@ -388,15 +396,23 @@ func (ldb *LevelDb) getHistoricalDataWithMinLength(itemNames []string, startTime
 				it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 				values := []string{}
 				count := 0
-				timeStamps := []string{}
+				var st int64 // start time stamp of data
+				timeStamps := []int64{}
 				for it.Next() {
-					if count%interval == 0 {
+					tt, _ := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), name, "", -1), 10, 64) // get time stamp
+					if count == 0 {
+						st = tt // get start time stamp of data
 						values = append(values, fmt.Sprintf("%s", it.Value()))
-						timeStamps = append(timeStamps, strings.Replace(fmt.Sprintf("%s", it.Key()), name, "", -1))
+						timeStamps = append(timeStamps, tt)
+					} else {
+						if (tt-st)%int64(interval) == 0 {
+							values = append(values, fmt.Sprintf("%s", it.Value()))
+							timeStamps = append(timeStamps, tt)
+						}
 					}
 					count++
 				}
-				rawData.Set(name, [][]string{timeStamps, values})
+				rawData.Set(name, []interface{}{timeStamps, values})
 				lengthMap[j] = len(values)
 			}
 		}(itemName, index)
