@@ -10,9 +10,10 @@ package db
 import (
 	"errors"
 	"fmt"
-	. "github.com/ahmetb/go-linq"
+	"gdb/cmap"
+	"gdb/utils"
+	. "github.com/ahmetb/go-linq/v3"
 	"github.com/dop251/goja"
-	cmap "github.com/orcaman"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"regexp"
@@ -20,7 +21,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"utils"
 )
 
 /* Batch write real-time data

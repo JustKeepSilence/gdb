@@ -7,11 +7,11 @@ github: https://github.com/JustKeepSilence
 package db
 
 import (
-	cmap "github.com/orcaman"
+	"gdb/cmap"
+	"gdb/sqlite"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
-	"sqlite"
 )
 
 type LevelDb struct {
@@ -26,8 +26,8 @@ const (
 	Ram             = "ram"
 	WrittenItems    = "writtenItems"
 	Speed           = "speed"
-	initialUserName = "admin"
-	initialUserInfo = `{"passWord": "admin@123", "roles": ["super_user"]}`
+	initialUserName = "seu"
+	initialUserInfo = `{"passWord": "seu@123", "roles": ["super_user"]}`
 )
 
 func (ldb *LevelDb) InitialDb(dbPath string, flag int) error {

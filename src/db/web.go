@@ -8,6 +8,8 @@ package db
 
 import (
 	"fmt"
+	"gdb/sqlite"
+	"gdb/utils"
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/eventloop"
 	"github.com/gin-gonic/gin"
@@ -15,10 +17,8 @@ import (
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/process"
 	"io/ioutil"
-	"sqlite"
 	"strconv"
 	"time"
-	"utils"
 )
 
 var Json = jsonIter.ConfigCompatibleWithStandardLibrary // see: https://github.com/json-iterator/go
@@ -65,7 +65,6 @@ func (ldb *LevelDb) DeleteGroupsHandler(c *gin.Context) {
 			c.String(200, "%s", r)
 		}
 	}
-
 }
 
 func (ldb *LevelDb) GetGroupsHandler(c *gin.Context) {

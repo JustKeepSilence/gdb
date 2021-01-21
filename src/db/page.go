@@ -9,7 +9,7 @@ package db
 
 import (
 	"fmt"
-	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"os"
 	"regexp"
 	"strings"
@@ -51,44 +51,44 @@ func (ldb *LevelDb) getUserInfo(userName string) (map[string]interface{}, error)
 }
 
 // add items by excel ,web app
-func (ldb *LevelDb)addItemsByExcel(info fileInfo) (Rows, error)  {
+func (ldb *LevelDb) addItemsByExcel(info fileInfo) (Rows, error) {
 	fileName, groupName := info.FileName, info.GroupName
-	f, err := excelize.OpenFile("./uploadFiles/" + fileName)  // open excel
+	f, err := excelize.OpenFile("./uploadFiles/" + fileName) // open excel
 	if err != nil {
 		return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
-	}else{
+	} else {
 		// open excel successfully
-		sheetName := f.GetSheetList()[0]   // use first worksheet
+		sheetName := f.GetSheetList()[0] // use first worksheet
 		rows, err := f.Rows(sheetName)   // get all rows
-		var headers []string  // headers
+		var headers []string             // headers
 		var items AddItemInfo
 		values := []map[string]string{}
 		if err != nil {
 			return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
-		}else{
+		} else {
 			// get rows successfully
 			count := 0
 			for rows.Next() {
-				if count == 0{
+				if count == 0 {
 					// check headers
 					headers, err = rows.Columns()
 					if err != nil {
 						return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
-					}else{
+					} else {
 						// get headers successfully
 						cols, err := GetGroupProperty([]string{groupName}...)
 						if err != nil {
 							return Rows{-1}, err
 						}
 						tableHeaders := cols[groupName].ItemColumnNames
-						if !equal(headers, tableHeaders){
+						if !equal(headers, tableHeaders) {
 							return Rows{-1}, ExcelError{"ExcelError: Inconsistent header"}
 						}
 					}
-				}else{
+				} else {
 					c, _ := rows.Columns()
 					value := map[string]string{}
-					if len(c) < len(headers){
+					if len(c) < len(headers) {
 						// see: https://github.com/360EntSecGroup-Skylar/excelize/issues/721
 						e := len(headers) - len(c)
 						for i := 0; i < e; i++ {
@@ -100,14 +100,14 @@ func (ldb *LevelDb)addItemsByExcel(info fileInfo) (Rows, error)  {
 					}
 					values = append(values, value)
 				}
-				count ++
+				count++
 			}
 		}
 		items.GroupName = groupName
 		items.Values = values
-		if r, err := ldb.AddItems(items);err!=nil{
+		if r, err := ldb.AddItems(items); err != nil {
 			return Rows{-1}, err
-		}else{
+		} else {
 			return r, nil
 		}
 	}
@@ -134,17 +134,17 @@ func getLogs() ([]logsInfo, error) {
 		return nil, err
 	}
 	defer f.Close()
-	info , _ := f.Stat()
+	info, _ := f.Stat()
 	content := make([]byte, info.Size())
 	n, err := f.Read(content)
 	if err != nil {
 		return nil, err
 	}
-	if n != int(info.Size()){
+	if n != int(info.Size()) {
 		return nil, fmt.Errorf("read Error")
 	}
 	reg := regexp.MustCompile("(?is){(.*?)}")
-	if !reg.Match(content){
+	if !reg.Match(content) {
 		return nil, nil
 	}
 	matchedResults := reg.FindAllString(fmt.Sprintf("%s", content), -1)
@@ -158,11 +158,11 @@ func getLogs() ([]logsInfo, error) {
 }
 
 func equal(a []string, b []string) bool {
-	if len(a) != len(b){
+	if len(a) != len(b) {
 		return false
 	}
 	for i := 0; i < len(a); i++ {
-		if strings.Trim(a[i], " ") != b[i]{
+		if strings.Trim(a[i], " ") != b[i] {
 			return false
 		}
 	}

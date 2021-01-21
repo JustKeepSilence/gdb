@@ -7,18 +7,18 @@ github: https://github.com/JustKeepSilence
 package config
 
 import (
-	"db"
+	"gdb/db"
 	"os"
 )
 
 type Config struct {
-	Port int64 `json:"port"`
+	Port int64  `json:"port"`
 	Path string `json:"path"`
-	IP string `json:"ip"`
+	IP   string `json:"ip"`
 }
 
-func ReadDbConfig(path string) (Config, error)  {
-	file , err := os.Open(path)
+func ReadDbConfig(path string) (Config, error) {
+	file, err := os.Open(path)
 	if err != nil {
 		return Config{}, err
 	}
@@ -30,4 +30,3 @@ func ReadDbConfig(path string) (Config, error)  {
 	_ = db.Json.Unmarshal(b, &c)
 	return c, nil
 }
-

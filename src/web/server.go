@@ -7,8 +7,9 @@ github: https://github.com/JustKeepSilence
 package web
 
 import (
-	"db"
 	"fmt"
+	"gdb/db"
+	"gdb/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"utils"
 )
 
 // Check whether a port is occupied, the returned value is -1, which means it was not found
@@ -49,12 +49,12 @@ var (
 // web app router
 func appRouter(dbPath string, ldb *db.LevelDb) http.Handler {
 	defer func() {
-		if err := recover();err!=nil{
+		if err := recover(); err != nil {
 			fmt.Println(err)
 			time.Sleep(60 * time.Second)
 		}
 	}()
-	if err := ldb.InitialDb(dbPath, -1);err!=nil{
+	if err := ldb.InitialDb(dbPath, -1); err != nil {
 		utils.WriteError("", "", "", err.Error())
 		return nil
 	}
@@ -64,10 +64,10 @@ func appRouter(dbPath string, ldb *db.LevelDb) http.Handler {
 		return ""
 	})) // customer console writing
 	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		if err, ok := recovered.(string);ok{
-			if c.Request.Method == "GET"{
+		if err, ok := recovered.(string); ok {
+			if c.Request.Method == "GET" {
 				utils.WriteError(c.Request.URL.String(), "GET", c.Request.URL.String(), err)
-			}else if c.Request.Method == "POST"{
+			} else if c.Request.Method == "POST" {
 				b, _ := ioutil.ReadAll(c.Request.Body)
 				utils.WriteError(c.Request.URL.String(), "POST", fmt.Sprintf("%s", b), err)
 			}
@@ -76,28 +76,28 @@ func appRouter(dbPath string, ldb *db.LevelDb) http.Handler {
 	}))
 	router.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
-		AllowHeaders: []string{"Authorization", ""},
+		AllowHeaders:    []string{"Authorization", ""},
 	}))
-	router.Use(cors.Default())  // allow all cors
-	group := router.Group("/group")  // group handler
+	router.Use(cors.Default())      // allow all cors
+	group := router.Group("/group") // group handler
 	{
-		group.POST("/addGroups", ldb.AddGroupsHandler)  // add
-		group.POST("/deleteGroups", ldb.DeleteGroupsHandler)  // delete
-		group.POST("/getGroups", ldb.GetGroupsHandler)  // get
+		group.POST("/addGroups", ldb.AddGroupsHandler)               // add
+		group.POST("/deleteGroups", ldb.DeleteGroupsHandler)         // delete
+		group.POST("/getGroups", ldb.GetGroupsHandler)               // get
 		group.POST("/getGroupProperty", ldb.GetGroupPropertyHandler) // update
-		group.POST("/updateGroupNames", ldb.UpdateGroupNamesHandler)  // update
+		group.POST("/updateGroupNames", ldb.UpdateGroupNamesHandler) // update
 		group.POST("/updateGroupColumnNames", ldb.UpdateGroupColumnNamesHandler)
 		group.POST("/deleteGroupColumns", ldb.DeleteGroupColumnsHandler)
 		group.POST("/addGroupColumns", ldb.AddGroupColumnsHandler)
 	}
-	item := router.Group("/item")  // item handler
+	item := router.Group("/item") // item handler
 	{
 		item.POST("/addItems", ldb.AddItemsHandler)
 		item.POST("/deleteItems", ldb.DeleteItemsHandler)
 		item.POST("/getItems", ldb.GetItemsHandler)
 		item.POST("/updateItems", ldb.UpdateItemsHandler)
 	}
-	data := router.Group("/data")  // data handler
+	data := router.Group("/data") // data handler
 	{
 		data.POST("/batchWrite", ldb.BatchWriteHandler)
 		data.POST("/getRealTimeData", ldb.GetRealTimeDataHandler)
@@ -107,19 +107,19 @@ func appRouter(dbPath string, ldb *db.LevelDb) http.Handler {
 		data.POST("/getDbInfo", ldb.GetDbInfoHandler)
 		data.POST("/getDbSpeedHistory", ldb.GetDbSpeedHistoryHandler)
 	}
-	pageRequest := router.Group("/page")  // page request handler
+	pageRequest := router.Group("/page") // page request handler
 	{
-		pageRequest.POST("/userLogin", ldb.HandleUserLogin)  // user login
-		pageRequest.POST("/getUserInfo", ldb.HandleGetUerInfo)  // get user info
-		pageRequest.POST("/uploadFile", ldb.HandleUploadFile)  // upload file
-		pageRequest.POST("/addItemsByExcel", ldb.HandleAddItemsByExcel) // add item by excel
-		pageRequest.POST("/getItemsWithCount", ldb.HandleGetItemsWithCount)  // get item with  count
-		pageRequest.GET("/getJsCode/:fileName", ldb.GetJsCodeHandler)  // get js code
-		pageRequest.GET("/getLogs", ldb.GetLogsHandler)  // get logs
+		pageRequest.POST("/userLogin", ldb.HandleUserLogin)                 // user login
+		pageRequest.POST("/getUserInfo", ldb.HandleGetUerInfo)              // get user info
+		pageRequest.POST("/uploadFile", ldb.HandleUploadFile)               // upload file
+		pageRequest.POST("/addItemsByExcel", ldb.HandleAddItemsByExcel)     // add item by excel
+		pageRequest.POST("/getItemsWithCount", ldb.HandleGetItemsWithCount) // get item with  count
+		pageRequest.GET("/getJsCode/:fileName", ldb.GetJsCodeHandler)       // get js code
+		pageRequest.GET("/getLogs", ldb.GetLogsHandler)                     // get logs
 	}
 	calcRequest := router.Group("/calculation")
 	{
-		calcRequest.POST("/addCalcItem", ldb.AddCalcItemHandler)  // add calc item
+		calcRequest.POST("/addCalcItem", ldb.AddCalcItemHandler) // add calc item
 		calcRequest.POST("/getCalcItem", ldb.GetCalcItemHandler)
 		calcRequest.POST("/updateCalcItem", ldb.UpdateCalcItemHandler)
 		calcRequest.GET("/startCalcItem/:id", ldb.StartCalculationItemHandler)
@@ -153,8 +153,8 @@ func appRouter(dbPath string, ldb *db.LevelDb) http.Handler {
 		c.Request.URL.Path = "/index"
 		router.HandleContext(c)
 	})
-	router.Static("/static", "./dist/static")  // load static files
-	router.LoadHTMLGlob("./dist/*.html")  // render html template
+	router.Static("/static", "./dist/static") // load static files
+	router.LoadHTMLGlob("./dist/*.html")      // render html template
 	return router
 }
 
@@ -164,16 +164,16 @@ func documentRouter() http.Handler {
 		return ""
 	})) // customer console writing
 	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		if err, ok := recovered.(string);ok{
+		if err, ok := recovered.(string); ok {
 			utils.WriteError("", "", "", err)
 		}
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}))
 	router.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
-		AllowHeaders: []string{"Authorization", ""},
+		AllowHeaders:    []string{"Authorization", ""},
 	}))
-	router.Use(cors.Default())  // allow all cors
+	router.Use(cors.Default()) // allow all cors
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
@@ -195,31 +195,31 @@ func documentRouter() http.Handler {
 	router.GET("/DATA.html", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "DATA.html", nil)
 	})
-	router.Static("/gitbook", "./documents/_book/gitbook")  // load static files
-	router.LoadHTMLGlob("./documents/_book/*.html")  // render html template
+	router.Static("/gitbook", "./documents/_book/gitbook") // load static files
+	router.LoadHTMLGlob("./documents/_book/*.html")        // render html template
 	return router
 }
 
-func InitialDbServer(ip string, port int64, dbPath string, startReadConfigTime time.Time) error{
+func InitialDbServer(ip string, port int64, dbPath string, startReadConfigTime time.Time) error {
 	checkResult, err := portInUse(port)
-	if err != nil{
+	if err != nil {
 		return fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(utils.TimeFormatString), port, err)
 	}
-	if checkResult != -1{
+	if checkResult != -1 {
 		// used
 		return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult)
 	}
 	checkResult1, err := portInUse(8087)
-	if err != nil{
+	if err != nil {
 		return fmt.Errorf("%s: fail in checking port %d : %s", time.Now().Format(utils.TimeFormatString), port, err)
 	}
-	if checkResult1 != -1{
+	if checkResult1 != -1 {
 		// used
 		return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), 8087, checkResult1, checkResult1)
 	}
-	gin.SetMode(gin.ReleaseMode)  // production
-	address := ip + ":" + fmt.Sprintf("%d", port)  // base url of web server
-	ldb := &db.LevelDb{}  // ldb pointer
+	gin.SetMode(gin.ReleaseMode)                  // production
+	address := ip + ":" + fmt.Sprintf("%d", port) // base url of web server
+	ldb := &db.LevelDb{}                          // ldb pointer
 	appServer := &http.Server{
 		Addr:         address,
 		Handler:      appRouter(dbPath, ldb),
@@ -238,21 +238,21 @@ func InitialDbServer(ip string, port int64, dbPath string, startReadConfigTime t
 	g.Go(func() error {
 		err := appServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			utils.WriteError("", "", "", err.Error())  // write logs
+			utils.WriteError("", "", "", err.Error()) // write logs
 		}
 		return err
 	})
 	g.Go(func() error {
 		err := documentServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			utils.WriteError("", "", "", err.Error())  // write logs
+			utils.WriteError("", "", "", err.Error()) // write logs
 		}
 		return err
 	})
-	g.Go(ldb.GetProcessInfo)  // monitor
-	g.Go(ldb.Calc)  // calc goroutine
+	g.Go(ldb.GetProcessInfo) // monitor
+	g.Go(ldb.Calc)           // calc goroutine
 	if err := g.Wait(); err != nil {
-		utils.WriteError("", "", "", err.Error())  // write logs
+		utils.WriteError("", "", "", err.Error()) // write logs
 	}
 	return nil
 }
