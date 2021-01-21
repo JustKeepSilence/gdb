@@ -1,8 +1,0 @@
-/*
-改变exe图标的方式
-1.安装gcc
-2.在main函数同级目录下创建main.exe.mainfest
-3.创建main.rc
-4.执行命令：windres -o main-res.syso main.rc,此时在同级目录生成main-res.syso文件,其中包含了icon的信息,go在编译的时候会将icon
-的信息嵌入
- */
