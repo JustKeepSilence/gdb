@@ -1,7 +1,13 @@
 <template>
-  <div style="backgound-color:#909399;width:100%;height:100%">
-  <div class="container" v-if="!small">
-    <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px" id="loginForm">
+<div>
+  <div class="background"> <img :src="imgSrc" width="100%" height="100%" alt="" /></div>
+  <div>
+    <el-card class="container" shadow="never">
+      <div slot="header" class="title">
+        <span>GDB实时数据库</span>
+      </div>
+    <div>
+    <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" id="loginForm">
       <el-form-item prop="ip">
          <el-input
           v-model="ruleForm.ip"
@@ -28,41 +34,11 @@
         ></el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="submitForm" style="width: 100%">登录</el-button>
+        <el-button type="primary" @click="submitForm" style="width:100%">登录</el-button>
       </el-form-item>
     </el-form>
-  </div>
-  <div class="mobile_container" v-else>
-    <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px" id="loginForm">
-      <el-form-item prop="ip">
-         <el-input
-          v-model="ruleForm.ip"
-          autocomplete="off"
-          prefix-icon="el-icon-position"
-          placeholder="请输入远端服务器地址"
-        ></el-input>
-      </el-form-item>
-      <el-form-item prop="userName">
-        <el-input
-          v-model="ruleForm.userName"
-          autocomplete="off"
-          prefix-icon="el-icon-user-solid"
-          placeholder="请输入用户名"
-        ></el-input>
-      </el-form-item>
-      <el-form-item prop="passWord">
-        <el-input
-          type="password"
-          v-model="ruleForm.passWord"
-          autocomplete="off"
-          prefix-icon="el-icon-key"
-          placeholder="请输入密码"
-        ></el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="submitForm" style="width: 100%">登录</el-button>
-      </el-form-item>
-    </el-form>
+    </div>
+    </el-card>
   </div>
   </div>
 </template>
@@ -93,7 +69,7 @@ export default {
         ],
       },
       userName : '',
-      small: false
+      imgSrc:require('@/images/bg-1.jpg')
     }
   },
   mounted(){
@@ -126,23 +102,27 @@ export default {
 };
 </script>
 <style scoped>
-.container {
-  width: 400px;
-  margin-left: 600px;
-  margin-top: 370px;
-}
-.mobile_container{
-  width: 300px;
-  margin-top: 200px;
-}
 .background{
-    width:100%;  
+    margin-left: -1%;
     height:100%;  /**宽高100%是为了图片铺满屏幕 */
     z-index:-1;
     position: absolute;
+    margin-top: -60px;
+    overflow: hidden;
 }
-.front{
-    z-index:1;
+.container {
+z-index:1;
     position: absolute;
+    margin-top: 12%;
+    margin-left: 35%;
+    background-color: rgba(200, 200, 200, 0);
+    border: none;
 }
+.title{
+  text-align: center;
+  font-size: 24px;
+  color: rgba(50, 50, 50, 0.8);
+}
+
+
 </style>
