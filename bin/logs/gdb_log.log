@@ -1,4 +1,0 @@
-﻿{"level":"error","method":"","msg":"sqliteTransactionError: file is not a database","requestString":"","time":"2021-01-11T22:00:48+08:00","url":""}
-{"level":"error","method":"","msg":"sqliteTransactionError: file is not a database","requestString":"","time":"2021-01-11T22:02:10+08:00","url":""}
-{"level":"error","method":"","msg":"sqliteConnectionError: near \"@123\": syntax error","requestString":"","time":"2021-01-11T22:08:53+08:00","url":""}
-{"level":"error","method":"","msg":"2021-01-11 22:10:55: Failed to start web service: Port number 8082 is already occupied, process PID is 1124, please consider using taskkill /f /pid 1124 to terminate the process","requestString":"","time":"2021-01-11T22:10:55+08:00","url":""}
