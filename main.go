@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"gdb/config"
-	"gdb/sqlite"
-	"gdb/utils"
-	"gdb/web"
+	"github.com/JustKeepSilence/gdb/config"
+	"github.com/JustKeepSilence/gdb/sqlite"
+	"github.com/JustKeepSilence/gdb/utils"
+	"github.com/JustKeepSilence/gdb/web"
 	"time"
 )
 

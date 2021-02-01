@@ -7,7 +7,7 @@ github: https://github.com/JustKeepSilence
 package config
 
 import (
-	"gdb/db"
+	"github.com/JustKeepSilence/gdb/db"
 	"os"
 )
 
