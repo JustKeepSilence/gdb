@@ -7,7 +7,7 @@ github: https://github.com/JustKeepSilence
 package db
 
 import (
-	"gdb/sqlite"
+	"github.com/JustKeepSilence/gdb/sqlite"
 	"github.com/deckarep/golang-set"
 	"strings"
 )

@@ -8,8 +8,8 @@ package web
 
 import (
 	"fmt"
-	"gdb/db"
-	"gdb/utils"
+	"github.com/JustKeepSilence/gdb/db"
+	"github.com/JustKeepSilence/gdb/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"

@@ -7,9 +7,9 @@ github: https://github.com/JustKeepSilence
 package db
 
 import (
-	"gdb/cmap"
-	"gdb/compare"
-	"gdb/sqlite"
+	"github.com/JustKeepSilence/gdb/cmap"
+	"github.com/JustKeepSilence/gdb/compare"
+	"github.com/JustKeepSilence/gdb/sqlite"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"

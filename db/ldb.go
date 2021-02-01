@@ -10,8 +10,8 @@ package db
 import (
 	"errors"
 	"fmt"
-	"gdb/cmap"
-	"gdb/utils"
+	"github.com/JustKeepSilence/gdb/cmap"
+	"github.com/JustKeepSilence/gdb/utils"
 	. "github.com/ahmetb/go-linq/v3"
 	"github.com/dop251/goja"
 	"github.com/syndtr/goleveldb/leveldb"

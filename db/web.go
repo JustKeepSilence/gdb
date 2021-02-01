@@ -8,8 +8,8 @@ package db
 
 import (
 	"fmt"
-	"gdb/sqlite"
-	"gdb/utils"
+	"github.com/JustKeepSilence/gdb/sqlite"
+	"github.com/JustKeepSilence/gdb/utils"
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/eventloop"
 	"github.com/gin-gonic/gin"

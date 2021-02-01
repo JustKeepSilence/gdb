@@ -8,7 +8,7 @@ goVersion: 1.15.3
 package db
 
 import (
-	"gdb/sqlite"
+	"github.com/JustKeepSilence/gdb/sqlite"
 	"github.com/syndtr/goleveldb/leveldb"
 	"regexp"
 	"strconv"
