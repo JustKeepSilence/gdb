@@ -1,4 +1,4 @@
-module gdb
+module module github.com/JustKeepSilence/gdb
 
 go 1.15
 
