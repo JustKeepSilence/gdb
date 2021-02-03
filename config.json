@@ -1,6 +1,6 @@
 {
   "ip": "",
   "port": 8084,
-  "dbPath": "../leveldb",
-  "itemDbPath": "../itemDb"
+  "dbPath": "./leveldb",
+  "itemDbPath": "./itemDb"
 }
