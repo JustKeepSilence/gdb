@@ -33,13 +33,13 @@ func handleError(c *gin.Context, message string) {
 
 // group handler
 func (gdb *Gdb) AddGroupsHandler(c *gin.Context) {
-	g := []AddGroupInfo{}
+	var g []AddGroupInfo
 	request := c.Request
 	defer request.Body.Close()
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := AddGroups(g...) // add groups
+		responseData, err := gdb.AddGroups(g...) // add groups
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -57,7 +57,7 @@ func (gdb *Gdb) DeleteGroupsHandler(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := DeleteGroups(g)
+		responseData, err := gdb.DeleteGroups(g)
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -69,7 +69,7 @@ func (gdb *Gdb) DeleteGroupsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) GetGroupsHandler(c *gin.Context) {
-	responseData, err := GetGroups()
+	responseData, err := gdb.GetGroups()
 	if err != nil {
 		handleError(c, err.Error())
 	} else {
@@ -86,7 +86,7 @@ func (gdb *Gdb) GetGroupPropertyHandler(c *gin.Context) {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
 		groupNames := g["groupNames"]
-		responseData, err := GetGroupProperty(groupNames...)
+		responseData, err := gdb.GetGroupProperty(groupNames...)
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -98,13 +98,13 @@ func (gdb *Gdb) GetGroupPropertyHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) UpdateGroupNamesHandler(c *gin.Context) {
-	g := []UpdatedGroupInfo{}
+	var g []UpdatedGroupInfo
 	request := c.Request
 	defer request.Body.Close()
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := UpdateGroupNames(g...)
+		responseData, err := gdb.UpdateGroupNames(g...)
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -121,7 +121,7 @@ func (gdb *Gdb) UpdateGroupColumnNamesHandler(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := UpdateGroupColumnNames(g)
+		responseData, err := gdb.UpdateGroupColumnNames(g)
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -138,7 +138,7 @@ func (gdb *Gdb) DeleteGroupColumnsHandler(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := DeleteGroupColumns(g)
+		responseData, err := gdb.DeleteGroupColumns(g)
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -155,7 +155,7 @@ func (gdb *Gdb) AddGroupColumnsHandler(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := AddGroupColumns(g)
+		responseData, err := gdb.AddGroupColumns(g)
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -210,7 +210,7 @@ func (gdb *Gdb) GetItemsHandler(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := GetItems(g) // add groups
+		responseData, err := gdb.GetItems(g) // add groups
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -273,10 +273,10 @@ func (gdb *Gdb) BatchWriteHandler(c *gin.Context) {
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
-			_ = gdb.InfoDb.Put([]byte(WrittenItems), []byte(fmt.Sprintf("%d", len(kv[0]))), nil)
-			_ = gdb.InfoDb.Put([]byte(Speed), []byte(fmt.Sprintf("%dms/%d", endTime1.Sub(endTime).Milliseconds(), len(kv[0]))), nil)
-			ts, _ := gdb.InfoDb.Get([]byte(TimeKey), nil)
-			_ = gdb.InfoDb.Put([]byte(Speed+fmt.Sprintf("%s", ts)), []byte(fmt.Sprintf("%s", endTime1.Sub(endTime))), nil) // write history
+			_ = gdb.infoDb.Put([]byte(WrittenItems), []byte(fmt.Sprintf("%d", len(kv[0]))), nil)
+			_ = gdb.infoDb.Put([]byte(Speed), []byte(fmt.Sprintf("%dms/%d", endTime1.Sub(endTime).Milliseconds(), len(kv[0]))), nil)
+			ts, _ := gdb.infoDb.Get([]byte(TimeKey), nil)
+			_ = gdb.infoDb.Put([]byte(Speed+fmt.Sprintf("%s", ts)), []byte(fmt.Sprintf("%s", endTime1.Sub(endTime))), nil) // write history
 			r, _ := Json.Marshal(ResponseData{200, "", responseData})
 			c.String(200, "%s", r)
 		}
@@ -508,7 +508,7 @@ func (gdb *Gdb) HandleGetItemsWithCount(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := GetItemsWithCount(g) // add groups
+		responseData, err := gdb.GetItemsWithCount(g) // add groups
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -556,7 +556,7 @@ func (gdb *Gdb) AddCalcItemHandler(c *gin.Context) {
 		} else {
 			// add item to calc_cfg
 			createTime := time.Now().Format(utils.TimeFormatString)
-			_, _ = sqlite.UpdateItem("insert into calc_cfg (description, expression, createTime) values ('" + g.Description + "', '" + g.Expression + "' , '" + createTime + "')")
+			_, _ = sqlite.UpdateItem(gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime) values ('"+g.Description+"', '"+g.Expression+"' , '"+createTime+"')")
 			r, _ := Json.Marshal(ResponseData{200, "", responseData})
 			c.String(200, "%s", r)
 		}
@@ -600,7 +600,7 @@ func (gdb *Gdb) UpdateCalcItemHandler(c *gin.Context) {
 
 func (gdb *Gdb) StartCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id") // get id
-	_, err := sqlite.UpdateItem("update calc_cfg set status='true' where id=" + id)
+	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set status='true' where id="+id)
 	if err != nil {
 		handleError(c, err.Error())
 	} else {
@@ -611,7 +611,7 @@ func (gdb *Gdb) StartCalculationItemHandler(c *gin.Context) {
 
 func (gdb *Gdb) StopCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id") // get id
-	_, err := sqlite.UpdateItem("update calc_cfg set status='false' where id=" + id)
+	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set status='false' where id="+id)
 	if err != nil {
 		handleError(c, err.Error())
 	} else {
@@ -622,7 +622,7 @@ func (gdb *Gdb) StopCalculationItemHandler(c *gin.Context) {
 
 func (gdb *Gdb) DeleteCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id")
-	_, err := sqlite.UpdateItem("delete from calc_cfg where id=" + id)
+	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "delete from calc_cfg where id="+id)
 	if err != nil {
 		handleError(c, err.Error())
 	} else {
@@ -643,15 +643,15 @@ func (gdb *Gdb) GetProcessInfo() error {
 				name, _ := p.Name()
 				if name == "db.exe" {
 					m, _ := p.MemoryPercent()
-					_ = gdb.InfoDb.Put([]byte(Ram), []byte(fmt.Sprintf("%.2f", float64(m)*float64(tm.Total)*10e-9)), nil) // write mem usage
+					_ = gdb.infoDb.Put([]byte(Ram), []byte(fmt.Sprintf("%.2f", float64(m)*float64(tm.Total)*10e-9)), nil) // write mem usage
 				}
 			}
-			ts, _ := gdb.InfoDb.Get([]byte(TimeKey), nil)
+			ts, _ := gdb.infoDb.Get([]byte(TimeKey), nil)
 			cs, _ := strconv.ParseInt(fmt.Sprintf("%s", ts), 10, 64)
 			// un fresh
 			if time.Now().Unix()-cs > 5 {
-				_ = gdb.InfoDb.Put([]byte(WrittenItems), []byte(fmt.Sprintf("%d", 0)), nil)
-				_ = gdb.InfoDb.Put([]byte(Speed), []byte(fmt.Sprintf("0ms/0")), nil)
+				_ = gdb.infoDb.Put([]byte(WrittenItems), []byte(fmt.Sprintf("%d", 0)), nil)
+				_ = gdb.infoDb.Put([]byte(Speed), []byte(fmt.Sprintf("0ms/0")), nil)
 			}
 		}
 	}
@@ -663,7 +663,7 @@ func (gdb *Gdb) Calc() error {
 	for {
 		select {
 		case startTime := <-startTicker.C:
-			rows, _ := sqlite.Query("select id, expression, status, duration from calc_cfg where 1=1")
+			rows, _ := sqlite.Query(gdb.ItemDbPath, "select id, expression, status, duration from calc_cfg where 1=1")
 			for _, row := range rows {
 				go func(r map[string]string) {
 					status, _ := strconv.ParseBool(r["status"]) // if calc
@@ -690,7 +690,7 @@ func (gdb *Gdb) Calc() error {
 									program, _ := goja.Compile("main.js", expression, false)
 									_, err := vm.RunProgram(program)
 									if err != nil {
-										_, _ = sqlite.UpdateItem("update calc_cfg set errorMessage='" + err.Error() + "' where id=" + r["id"])
+										_, _ = sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+r["id"])
 									}
 								})
 							}

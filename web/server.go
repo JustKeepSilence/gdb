@@ -54,10 +54,6 @@ func appRouter(g *db.Gdb) http.Handler {
 			time.Sleep(60 * time.Second)
 		}
 	}()
-	if err := g.InitialDb(-1); err != nil {
-		utils.WriteError("", "", "", err.Error())
-		return nil
-	}
 	router := gin.New()
 	pprof.Register(router)
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
@@ -159,49 +155,7 @@ func appRouter(g *db.Gdb) http.Handler {
 	return router
 }
 
-func documentRouter() http.Handler {
-	router := gin.New()
-	router.Use(gin.LoggerWithFormatter(func(params gin.LogFormatterParams) string {
-		return ""
-	})) // customer console writing
-	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		if err, ok := recovered.(string); ok {
-			utils.WriteError("", "", "", err)
-		}
-		c.AbortWithStatus(http.StatusInternalServerError)
-	}))
-	router.Use(cors.New(cors.Config{
-		AllowAllOrigins: true,
-		AllowHeaders:    []string{"Authorization", ""},
-	}))
-	router.Use(cors.Default()) // allow all cors
-	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
-	})
-	router.GET("/search_index.json", func(c *gin.Context) {
-		c.File("./documents/_book/search_index.json")
-	})
-	router.GET("/images/db.png", func(c *gin.Context) {
-		c.File("./documents/images/db.png")
-	})
-	router.GET("/GROUP.html", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "GROUP.html", nil)
-	})
-	router.GET("/ITEM.html", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "ITEM.html", nil)
-	})
-	router.GET("/RESTFUL.html", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "RESTFUL.html", nil)
-	})
-	router.GET("/DATA.html", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "DATA.html", nil)
-	})
-	router.Static("/gitbook", "./documents/_book/gitbook") // load static files
-	router.LoadHTMLGlob("./documents/_book/*.html")        // render html template
-	return router
-}
-
-func InitialDbServer(ip string, port int64, dbPath string, startReadConfigTime time.Time) error {
+func InitialDbServer(ip string, port int64, dbPath string, itemDbPath string, startReadConfigTime time.Time) error {
 	checkResult, err := portInUse(port)
 	if err != nil {
 		return fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(utils.TimeFormatString), port, err)
@@ -210,26 +164,15 @@ func InitialDbServer(ip string, port int64, dbPath string, startReadConfigTime t
 		// used
 		return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult)
 	}
-	checkResult1, err := portInUse(8087)
-	if err != nil {
-		return fmt.Errorf("%s: fail in checking port %d : %s", time.Now().Format(utils.TimeFormatString), port, err)
-	}
-	if checkResult1 != -1 {
-		// used
-		return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), 8087, checkResult1, checkResult1)
-	}
 	gin.SetMode(gin.ReleaseMode)                  // production
 	address := ip + ":" + fmt.Sprintf("%d", port) // base url of web server
-	gdb := db.NewGdb(dbPath)
+	gdb, err := db.NewGdb(dbPath, itemDbPath)
+	if err != nil {
+		return err
+	}
 	appServer := &http.Server{
 		Addr:         address,
 		Handler:      appRouter(gdb),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-	documentServer := &http.Server{
-		Addr:         ip + ":8087",
-		Handler:      documentRouter(),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -238,13 +181,6 @@ func InitialDbServer(ip string, port int64, dbPath string, startReadConfigTime t
 	fmt.Printf("%s: launch web service successfully!: %s \n", time.Now().Format(utils.TimeFormatString), address)
 	g.Go(func() error {
 		err := appServer.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			utils.WriteError("", "", "", err.Error()) // write logs
-		}
-		return err
-	})
-	g.Go(func() error {
-		err := documentServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			utils.WriteError("", "", "", err.Error()) // write logs
 		}

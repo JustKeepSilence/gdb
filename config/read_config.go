@@ -12,9 +12,10 @@ import (
 )
 
 type Config struct {
-	Port int64  `json:"port"`
-	Path string `json:"path"`
-	IP   string `json:"ip"`
+	Port       int64  `json:"port"`
+	DbPath     string `json:"dbPath"`
+	ItemDbPath string `json:"itemDbPath"`
+	IP         string `json:"ip"`
 }
 
 func ReadDbConfig(path string) (Config, error) {

@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-const sqlitePath = "./db/ldb.db" // SQLite path
+//const sqlitePath = "./db/ldb.db" // SQLite path
 
 type insertResult struct {
 	Err error
@@ -53,7 +53,7 @@ func (st sqliteTransactionError) Error() string {
 }
 
 // connect SQLite, if not exist then create
-func connectSqlite() (*sql.DB, error) {
+func connectSqlite(sqlitePath string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", sqlitePath)
 	if db == nil {
 		return nil, sqliteConnectionError{"sqliteConnectionError: null sqlite pointer"}
@@ -64,25 +64,9 @@ func connectSqlite() (*sql.DB, error) {
 	return db, nil
 }
 
-// initial db,create db if not existed and created group_cfg table
-func InitialSQLite() error {
-	sqlCreateGroupCfg := `create table if not exists group_cfg (id integer not null primary key, groupName text UNIQUE)`
-	if err := UpdateItems([]string{sqlCreateGroupCfg}...); err != nil {
-		return err
-	}
-	sqlAddCalc := `insert into group_cfg (groupName) values ('calc')` // add calc group
-	_ = UpdateItems([]string{sqlAddCalc}...)
-	sqlAddCalcTable := `create table if not exists calc (id integer not null primary key, itemName text UNIQUE, description text)`                                                                                                                                      // add calc group
-	sqlAddCalcCfgTable := `create table if not exists calc_cfg (id integer not null primary key, description text, expression text, status text default 'false', duration text default 10, errorMessage text default '', createTime text, updatedTime text default '')` //  add calc cfg table
-	if err := UpdateItems([]string{sqlAddCalcTable, sqlAddCalcCfgTable}...); err != nil {
-		return err
-	}
-	return nil
-}
-
 // query data from SQLite, the format of return value is: [{columnName1: value1, columnName2: value2}]
-func Query(queryString string) ([]map[string]string, error) {
-	db, err := connectSqlite()
+func Query(sqlitePath, queryString string) ([]map[string]string, error) {
+	db, err := connectSqlite(sqlitePath)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +107,8 @@ func Query(queryString string) ([]map[string]string, error) {
 }
 
 // insert items into group
-func InsertItems(insertString string, rowValues ...[]string) error {
-	db, err := connectSqlite()
+func InsertItems(sqlitePath, insertString string, rowValues ...[]string) error {
+	db, err := connectSqlite(sqlitePath)
 	if err != nil {
 		return sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
 	}
@@ -197,8 +181,8 @@ func InsertItems(insertString string, rowValues ...[]string) error {
 }
 
 // update items with transaction
-func UpdateItems(sqlStrings ...string) error {
-	db, err := connectSqlite()
+func UpdateItems(sqlitePath string, sqlStrings ...string) error {
+	db, err := connectSqlite(sqlitePath)
 	if err != nil {
 		return sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
 	}
@@ -220,8 +204,8 @@ func UpdateItems(sqlStrings ...string) error {
 }
 
 // update item
-func UpdateItem(sqlString string) (int64, error) {
-	db, err := connectSqlite()
+func UpdateItem(sqlitePath, sqlString string) (int64, error) {
+	db, err := connectSqlite(sqlitePath)
 	if err != nil {
 		return -1, sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
 	}

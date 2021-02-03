@@ -39,7 +39,7 @@ func (gdb *Gdb) testCalculation(expression string) (interface{}, error) {
 }
 
 func (gdb *Gdb) getCalculationItem(condition string) ([]map[string]string, error) {
-	rows, err := sqlite.Query("select id, description, expression, status, duration, errorMessage, createTime, updatedTime from calc_cfg where " + condition)
+	rows, err := sqlite.Query(gdb.ItemDbPath, "select id, description, expression, status, duration, errorMessage, createTime, updatedTime from calc_cfg where "+condition)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (gdb *Gdb) getCalculationItem(condition string) ([]map[string]string, error
 
 func (gdb *Gdb) updateCalculationItem(info updatedCalculationInfo) (Rows, error) {
 	id, description, expression, duration := info.Id, info.Description, info.Expression, info.Duration
-	r, err := sqlite.UpdateItem("update calc_cfg set description='" + description + "', expression='" + expression + "', duration='" + duration + "' where id=" + id)
+	r, err := sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set description='"+description+"', expression='"+expression+"', duration='"+duration+"' where id="+id)
 	if err != nil {
 		return Rows{}, nil
 	}

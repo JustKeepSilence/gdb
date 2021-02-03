@@ -10,6 +10,7 @@ package db
 import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
+	. "github.com/ahmetb/go-linq/v3"
 	"os"
 	"regexp"
 	"strings"
@@ -18,7 +19,7 @@ import (
 // user login
 func (gdb *Gdb) userLogin(info authInfo) error {
 	userName := info.UserName
-	v, err := gdb.InfoDb.Get([]byte(userName), nil)
+	v, err := gdb.infoDb.Get([]byte(userName), nil)
 	if err != nil {
 		return userNameError{"userNameError: " + userName}
 	} else {
@@ -36,7 +37,7 @@ func (gdb *Gdb) userLogin(info authInfo) error {
 }
 
 func (gdb *Gdb) getUserInfo(userName string) (map[string]interface{}, error) {
-	v, err := gdb.InfoDb.Get([]byte(userName), nil)
+	v, err := gdb.infoDb.Get([]byte(userName), nil)
 	if err != nil {
 		return nil, userNameError{"userNameError: " + userName}
 	} else {
@@ -62,7 +63,7 @@ func (gdb *Gdb) addItemsByExcel(info fileInfo) (Rows, error) {
 		rows, err := f.Rows(sheetName)   // get all rows
 		var headers []string             // headers
 		var items AddItemInfo
-		values := []map[string]string{}
+		var values []map[string]string
 		if err != nil {
 			return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
 		} else {
@@ -76,12 +77,16 @@ func (gdb *Gdb) addItemsByExcel(info fileInfo) (Rows, error) {
 						return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
 					} else {
 						// get headers successfully
-						cols, err := GetGroupProperty([]string{groupName}...)
+						cols, err := gdb.GetGroupProperty([]string{groupName}...)
 						if err != nil {
 							return Rows{-1}, err
 						}
 						tableHeaders := cols[groupName].ItemColumnNames
-						if !equal(headers, tableHeaders) {
+						var h []string
+						From(headers).Where(func(item interface{}) bool {
+							return len(item.(string)) != 0
+						}).ToSlice(&h)
+						if !equal(h, tableHeaders) {
 							return Rows{-1}, ExcelError{"ExcelError: Inconsistent header"}
 						}
 					}
@@ -148,7 +153,7 @@ func getLogs() ([]logsInfo, error) {
 		return nil, nil
 	}
 	matchedResults := reg.FindAllString(fmt.Sprintf("%s", content), -1)
-	result := []logsInfo{}
+	var result []logsInfo
 	for _, matchedResult := range matchedResults {
 		r := logsInfo{}
 		_ = Json.Unmarshal([]byte(matchedResult), &r)

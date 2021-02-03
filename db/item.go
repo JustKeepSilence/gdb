@@ -23,13 +23,13 @@ ItemHandler
 func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	itemValues := itemInfo.Values
-	c, err := sqlite.Query("PRAGMA table_info([" + groupName + "])") // get column names
+	c, err := sqlite.Query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names
 	if err != nil {
 		return Rows{-1}, err
 	}
-	c = c[1:]                      // abort first item id
-	columnNames := []string{}      // without '
-	addedColumnNames := []string{} // with '
+	c = c[1:]                     // abort first item id
+	var columnNames []string      // without '
+	var addedColumnNames []string // with '
 	for i := 0; i < len(c); i++ {
 		columnNames = append(columnNames, c[i]["name"])
 		addedColumnNames = append(addedColumnNames, "'"+c[i]["name"]+"'")
@@ -45,9 +45,9 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 	sb.Write([]byte(")"))
 	insertSqlString := sb.String()
 	var addedItemValues [][]string
-	itemNames := []string{}
+	var itemNames []string
 	for _, itemValue := range itemValues {
-		t := []string{}
+		var t []string
 		for i := 0; i < len(columnNames); i++ {
 			cv, ok := itemValue[columnNames[i]]
 			if ok {
@@ -64,11 +64,11 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 		}
 		addedItemValues = append(addedItemValues, t)
 	}
-	if err := sqlite.InsertItems(insertSqlString, addedItemValues...); err != nil {
+	if err := sqlite.InsertItems(gdb.ItemDbPath, insertSqlString, addedItemValues...); err != nil {
 		return Rows{-1}, err
 	}
 	for _, itemName := range itemNames {
-		gdb.RtDbFilter.Set(itemName, struct{}{})
+		gdb.rtDbFilter.Set(itemName, struct{}{})
 	}
 	// initial write realTime data, all key write ''
 	wg := sync.WaitGroup{}
@@ -79,7 +79,7 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 		for i := 0; i < len(itemNames); i++ {
 			batch.Put([]byte(itemNames[i]), []byte("0"))
 		}
-		_ = gdb.RtDb.Write(&batch, nil)
+		_ = gdb.rtDb.Write(&batch, nil)
 		return
 	}()
 	wg.Wait()
@@ -89,22 +89,22 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 func (gdb *Gdb) DeleteItems(itemInfo ItemInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
-	item, err := sqlite.Query("select itemName from '" + groupName + "' where " + condition)
+	item, err := sqlite.Query(gdb.ItemDbPath, "select itemName from '"+groupName+"' where "+condition)
 	if len(item) == 0 {
 		return Rows{}, conditionError{"conditionError: " + condition}
 	}
 	if err != nil {
 		return Rows{}, err
 	}
-	rows, err := sqlite.UpdateItem("delete from '" + groupName + "' where " + condition)
+	rows, err := sqlite.UpdateItem(gdb.ItemDbPath, "delete from '"+groupName+"' where "+condition)
 	if err != nil {
 		return Rows{}, err
 	}
-	gdb.RtDbFilter.Remove(item[0]["itemName"]) // remove key from bloom filter
+	gdb.rtDbFilter.Remove(item[0]["itemName"]) // remove key from bloom filter
 	return Rows{int(rows)}, nil
 }
 
-func GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
+func (gdb *Gdb) GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
 	groupName := itemInfo.GroupName // groupName
 	columns := itemInfo.Column      // column
 	startRow := itemInfo.StartRow   // startRow
@@ -113,14 +113,14 @@ func GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
 	var err error
 	if startRow == -1 {
 		// all rows
-		rows, err = sqlite.Query("select " + columns + " from '" + groupName + "' where " + condition)
+		rows, err = sqlite.Query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// Limit query
 		rowCount := itemInfo.RowCount
-		rows, err = sqlite.Query("select " + columns + " from '" + groupName + "' where " + condition + " Limit " + strconv.Itoa(rowCount) + " offset " + strconv.Itoa(startRow))
+		rows, err = sqlite.Query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition+" Limit "+strconv.Itoa(rowCount)+" offset "+strconv.Itoa(startRow))
 		if err != nil {
 			return nil, err
 		}
@@ -128,14 +128,14 @@ func GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
 	return rows, nil
 }
 
-func GetItemsWithCount(itemInfo ItemInfo) (Items, error) {
+func (gdb *Gdb) GetItemsWithCount(itemInfo ItemInfo) (Items, error) {
 	condition := itemInfo.Condition
 	groupName := itemInfo.GroupName
-	c, err := sqlite.Query("select count(*) as count from '" + groupName + "' where " + condition)
+	c, err := sqlite.Query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
 	if err != nil {
 		return Items{}, err
 	}
-	itemValues, err := GetItems(itemInfo)
+	itemValues, err := gdb.GetItems(itemInfo)
 	if err != nil {
 		return Items{}, nil
 	}
@@ -155,7 +155,7 @@ func (gdb *Gdb) UpdateItems(itemInfo ItemInfo) (Rows, error) {
 	if !regPoint.Match([]byte(clause)) {
 		// no itemName
 		// update SQLite
-		rows, err := sqlite.UpdateItem("update '" + groupName + "' set " + clause + " where " + condition)
+		rows, err := sqlite.UpdateItem(gdb.ItemDbPath, "update '"+groupName+"' set "+clause+" where "+condition)
 		if err != nil {
 			return Rows{}, err
 		}
