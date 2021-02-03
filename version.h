@@ -1,2 +1,0 @@
-#define VER_REVISION 0
-#define VER_REVISION_HASH 0
