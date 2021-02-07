@@ -8,6 +8,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/JustKeepSilence/gdb/config"
 	"github.com/JustKeepSilence/gdb/sqlite"
 	"github.com/JustKeepSilence/gdb/utils"
 	"github.com/dop251/goja"
@@ -32,7 +33,7 @@ func handleError(c *gin.Context, message string) {
 }
 
 // group handler
-func (gdb *Gdb) AddGroupsHandler(c *gin.Context) {
+func (gdb *Gdb) addGroupsHandler(c *gin.Context) {
 	var g []AddGroupInfo
 	request := c.Request
 	defer request.Body.Close()
@@ -50,7 +51,7 @@ func (gdb *Gdb) AddGroupsHandler(c *gin.Context) {
 
 }
 
-func (gdb *Gdb) DeleteGroupsHandler(c *gin.Context) {
+func (gdb *Gdb) deleteGroupsHandler(c *gin.Context) {
 	g := DeletedGroupInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -68,7 +69,7 @@ func (gdb *Gdb) DeleteGroupsHandler(c *gin.Context) {
 
 }
 
-func (gdb *Gdb) GetGroupsHandler(c *gin.Context) {
+func (gdb *Gdb) getGroupsHandler(c *gin.Context) {
 	responseData, err := gdb.GetGroups()
 	if err != nil {
 		handleError(c, err.Error())
@@ -78,7 +79,7 @@ func (gdb *Gdb) GetGroupsHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetGroupPropertyHandler(c *gin.Context) {
+func (gdb *Gdb) getGroupPropertyHandler(c *gin.Context) {
 	g := map[string][]string{}
 	request := c.Request
 	defer request.Body.Close()
@@ -97,7 +98,7 @@ func (gdb *Gdb) GetGroupPropertyHandler(c *gin.Context) {
 
 }
 
-func (gdb *Gdb) UpdateGroupNamesHandler(c *gin.Context) {
+func (gdb *Gdb) updateGroupNamesHandler(c *gin.Context) {
 	var g []UpdatedGroupInfo
 	request := c.Request
 	defer request.Body.Close()
@@ -114,7 +115,7 @@ func (gdb *Gdb) UpdateGroupNamesHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) UpdateGroupColumnNamesHandler(c *gin.Context) {
+func (gdb *Gdb) updateGroupColumnNamesHandler(c *gin.Context) {
 	g := UpdatedGroupColumnInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -131,7 +132,7 @@ func (gdb *Gdb) UpdateGroupColumnNamesHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) DeleteGroupColumnsHandler(c *gin.Context) {
+func (gdb *Gdb) deleteGroupColumnsHandler(c *gin.Context) {
 	g := DeletedGroupColumnInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -148,7 +149,7 @@ func (gdb *Gdb) DeleteGroupColumnsHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) AddGroupColumnsHandler(c *gin.Context) {
+func (gdb *Gdb) addGroupColumnsHandler(c *gin.Context) {
 	g := AddGroupColumnInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -167,7 +168,7 @@ func (gdb *Gdb) AddGroupColumnsHandler(c *gin.Context) {
 }
 
 // item handler
-func (gdb *Gdb) AddItemsHandler(c *gin.Context) {
+func (gdb *Gdb) addItemsHandler(c *gin.Context) {
 	g := AddItemInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -185,7 +186,7 @@ func (gdb *Gdb) AddItemsHandler(c *gin.Context) {
 
 }
 
-func (gdb *Gdb) DeleteItemsHandler(c *gin.Context) {
+func (gdb *Gdb) deleteItemsHandler(c *gin.Context) {
 	g := ItemInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -203,7 +204,7 @@ func (gdb *Gdb) DeleteItemsHandler(c *gin.Context) {
 
 }
 
-func (gdb *Gdb) GetItemsHandler(c *gin.Context) {
+func (gdb *Gdb) getItemsHandler(c *gin.Context) {
 	g := ItemInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -220,7 +221,7 @@ func (gdb *Gdb) GetItemsHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) UpdateItemsHandler(c *gin.Context) {
+func (gdb *Gdb) updateItemsHandler(c *gin.Context) {
 	g := ItemInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -238,7 +239,7 @@ func (gdb *Gdb) UpdateItemsHandler(c *gin.Context) {
 }
 
 // data handler
-func (gdb *Gdb) BatchWriteHandler(c *gin.Context) {
+func (gdb *Gdb) batchWriteHandler(c *gin.Context) {
 	//startTime := time.Now()
 	var endTime, endTime1 time.Time
 	request := c.Request
@@ -247,34 +248,17 @@ func (gdb *Gdb) BatchWriteHandler(c *gin.Context) {
 	if err := Json.NewDecoder(request.Body).Decode(&batchWriteString); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		kv := batchWriteString.ItemValues
+		//kv := batchWriteString.ItemValues
 		var responseData Rows
-		var err error
-		if len(kv) == 3 {
-			// with time stamps
-			if len(kv[0]) == len(kv[1]) && len(kv[1]) == len(kv[2]) {
-				endTime = time.Now()
-				responseData, err = gdb.BatchWrite(kv, true)
-				endTime1 = time.Now()
-			} else {
-				err = fmt.Errorf("%s: The number of ItemNames, Values, and TimeStamps of the written data must be consistent", time.Now().Format(utils.TimeFormatString))
-			}
-		} else {
-			// without time stamp
-			if len(kv[0]) == len(kv[1]) {
-				endTime = time.Now()
-				responseData, err = gdb.BatchWrite(kv, false)
-				endTime1 = time.Now()
-				//fmt.Printf("[%s]: reading configs: %d ms,writing: %d ms\n", time.Now().Format(utils.TimeFormatString), endTime.Sub(startTime).Milliseconds(), endTime1.Sub(endTime).Milliseconds())
-			} else {
-				err = fmt.Errorf("%s: The number of ItemNames and Values must be consistent", time.Now().Format(utils.TimeFormatString))
-			}
-		}
+		//var err error
+		endTime = time.Now()
+		responseData, err := gdb.BatchWrite(batchWriteString)
+		endTime1 = time.Now()
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
-			_ = gdb.infoDb.Put([]byte(WrittenItems), []byte(fmt.Sprintf("%d", len(kv[0]))), nil)
-			_ = gdb.infoDb.Put([]byte(Speed), []byte(fmt.Sprintf("%dms/%d", endTime1.Sub(endTime).Milliseconds(), len(kv[0]))), nil)
+			_ = gdb.infoDb.Put([]byte(WrittenItems), []byte(fmt.Sprintf("%d", len(batchWriteString.ItemValues))), nil)
+			_ = gdb.infoDb.Put([]byte(Speed), []byte(fmt.Sprintf("%dms/%d", endTime1.Sub(endTime).Milliseconds(), len(batchWriteString.ItemValues))), nil)
 			ts, _ := gdb.infoDb.Get([]byte(TimeKey), nil)
 			_ = gdb.infoDb.Put([]byte(Speed+fmt.Sprintf("%s", ts)), []byte(fmt.Sprintf("%s", endTime1.Sub(endTime))), nil) // write history
 			r, _ := Json.Marshal(ResponseData{200, "", responseData})
@@ -283,7 +267,7 @@ func (gdb *Gdb) BatchWriteHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetRealTimeDataHandler(c *gin.Context) {
+func (gdb *Gdb) getRealTimeDataHandler(c *gin.Context) {
 	startTime := time.Now()
 	request := c.Request
 	var realTimeDataString RealTimeDataString
@@ -305,7 +289,7 @@ func (gdb *Gdb) GetRealTimeDataHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetHistoricalDataHandler(c *gin.Context) {
+func (gdb *Gdb) getHistoricalDataHandler(c *gin.Context) {
 	startTime1 := time.Now()
 	request := c.Request
 	historicalDataString := HistoricalDataInfo{}
@@ -331,7 +315,7 @@ func (gdb *Gdb) GetHistoricalDataHandler(c *gin.Context) {
 
 }
 
-func (gdb *Gdb) GetHistoricalDataWithConditionHandler(c *gin.Context) {
+func (gdb *Gdb) getHistoricalDataWithConditionHandler(c *gin.Context) {
 	startTime1 := time.Now()
 	request := c.Request
 	g := HistoricalDataInfo{}
@@ -359,7 +343,7 @@ func (gdb *Gdb) GetHistoricalDataWithConditionHandler(c *gin.Context) {
 }
 
 // delete historical data, you should stop other operation when deleting historical data
-func (gdb *Gdb) DeleteHistoricalDataHandler(c *gin.Context) {
+func (gdb *Gdb) deleteHistoricalDataHandler(c *gin.Context) {
 	request := c.Request
 	g := DeletedHistoricalDataInfo{}
 	defer request.Body.Close()
@@ -381,7 +365,7 @@ func (gdb *Gdb) DeleteHistoricalDataHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetHistoricalDataWithStampHandler(c *gin.Context) {
+func (gdb *Gdb) getHistoricalDataWithStampHandler(c *gin.Context) {
 	startTime1 := time.Now()
 	request := c.Request
 	g := HistoricalDataInfo{}
@@ -405,7 +389,7 @@ func (gdb *Gdb) GetHistoricalDataWithStampHandler(c *gin.Context) {
 }
 
 // get db info : ram, writtenItems, timestamp, speed
-func (gdb *Gdb) GetDbInfoHandler(c *gin.Context) {
+func (gdb *Gdb) getDbInfoHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
 	responseData, err := gdb.getDbInfo()
@@ -417,7 +401,7 @@ func (gdb *Gdb) GetDbInfoHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetDbSpeedHistoryHandler(c *gin.Context) {
+func (gdb *Gdb) getDbSpeedHistoryHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
 	g := HistoricalDataInfo{}
@@ -435,7 +419,7 @@ func (gdb *Gdb) GetDbSpeedHistoryHandler(c *gin.Context) {
 }
 
 // page handler
-func (gdb *Gdb) HandleUserLogin(c *gin.Context) {
+func (gdb *Gdb) handleUserLogin(c *gin.Context) {
 	g := authInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -452,7 +436,7 @@ func (gdb *Gdb) HandleUserLogin(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) HandleGetUerInfo(c *gin.Context) {
+func (gdb *Gdb) handleGetUerInfo(c *gin.Context) {
 	g := map[string]string{} // userName
 	request := c.Request
 	defer request.Body.Close()
@@ -470,7 +454,7 @@ func (gdb *Gdb) HandleGetUerInfo(c *gin.Context) {
 
 }
 
-func (gdb *Gdb) HandleUploadFile(c *gin.Context) {
+func (gdb *Gdb) handleUploadFile(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
@@ -484,14 +468,15 @@ func (gdb *Gdb) HandleUploadFile(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) HandleAddItemsByExcel(c *gin.Context) {
+func (gdb *Gdb) handleAddItemsByExcel(c *gin.Context) {
 	g := fileInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := Json.NewDecoder(request.Body).Decode(&g); err != nil {
 		handleError(c, fmt.Sprintf("fail parsing string: %s", err))
 	} else {
-		responseData, err := gdb.addItemsByExcel(g) // add groups
+		fileName, groupName := g.FileName, g.GroupName
+		responseData, err := gdb.AddItemsByExcel(groupName, "./uploadFiles/"+fileName) // add groups
 		if err != nil {
 			handleError(c, err.Error())
 		} else {
@@ -501,7 +486,7 @@ func (gdb *Gdb) HandleAddItemsByExcel(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) HandleGetItemsWithCount(c *gin.Context) {
+func (gdb *Gdb) handleGetItemsWithCount(c *gin.Context) {
 	g := ItemInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -518,7 +503,7 @@ func (gdb *Gdb) HandleGetItemsWithCount(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetJsCodeHandler(c *gin.Context) {
+func (gdb *Gdb) getJsCodeHandler(c *gin.Context) {
 	fileName := c.Param("fileName")
 	request := c.Request
 	defer request.Body.Close()
@@ -531,7 +516,7 @@ func (gdb *Gdb) GetJsCodeHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetLogsHandler(c *gin.Context) {
+func (gdb *Gdb) getLogsHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
 	responseData, err := getLogs() // add groups
@@ -543,7 +528,7 @@ func (gdb *Gdb) GetLogsHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) AddCalcItemHandler(c *gin.Context) {
+func (gdb *Gdb) addCalcItemHandler(c *gin.Context) {
 	g := calcInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -563,7 +548,7 @@ func (gdb *Gdb) AddCalcItemHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) GetCalcItemHandler(c *gin.Context) {
+func (gdb *Gdb) getCalcItemHandler(c *gin.Context) {
 	g := map[string]string{} // condition
 	request := c.Request
 	defer request.Body.Close()
@@ -580,7 +565,7 @@ func (gdb *Gdb) GetCalcItemHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) UpdateCalcItemHandler(c *gin.Context) {
+func (gdb *Gdb) updateCalcItemHandler(c *gin.Context) {
 	g := updatedCalculationInfo{}
 	request := c.Request
 	defer request.Body.Close()
@@ -598,7 +583,7 @@ func (gdb *Gdb) UpdateCalcItemHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) StartCalculationItemHandler(c *gin.Context) {
+func (gdb *Gdb) startCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id") // get id
 	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set status='true' where id="+id)
 	if err != nil {
@@ -609,7 +594,7 @@ func (gdb *Gdb) StartCalculationItemHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) StopCalculationItemHandler(c *gin.Context) {
+func (gdb *Gdb) stopCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id") // get id
 	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set status='false' where id="+id)
 	if err != nil {
@@ -620,7 +605,7 @@ func (gdb *Gdb) StopCalculationItemHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) DeleteCalculationItemHandler(c *gin.Context) {
+func (gdb *Gdb) deleteCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id")
 	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "delete from calc_cfg where id="+id)
 	if err != nil {
@@ -632,16 +617,21 @@ func (gdb *Gdb) DeleteCalculationItemHandler(c *gin.Context) {
 }
 
 // monitor
-func (gdb *Gdb) GetProcessInfo() error {
+func (gdb *Gdb) getProcessInfo() error {
 	tm, _ := mem.VirtualMemory() // total RAM of machine
 	ps, _ := process.Processes()
+	dbConfigs, err := config.ReadDbConfig("./config.json")
+	appName := dbConfigs.ApplicationName
+	if err != nil {
+		return err
+	}
 	t := time.NewTicker(5 * time.Second)
 	for {
 		select {
 		case <-t.C:
 			for _, p := range ps {
 				name, _ := p.Name()
-				if name == "db.exe" {
+				if name == appName {
 					m, _ := p.MemoryPercent()
 					_ = gdb.infoDb.Put([]byte(Ram), []byte(fmt.Sprintf("%.2f", float64(m)*float64(tm.Total)*10e-9)), nil) // write mem usage
 				}
@@ -658,7 +648,7 @@ func (gdb *Gdb) GetProcessInfo() error {
 }
 
 // calc
-func (gdb *Gdb) Calc() error {
+func (gdb *Gdb) calc() error {
 	startTicker := time.NewTicker(60 * time.Second) // every 60s update configs
 	for {
 		select {

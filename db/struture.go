@@ -89,7 +89,7 @@ type TimeStamp struct {
 
 type HistoricalDataInfo struct {
 	ItemNames       []string   `json:"itemNames"`       // ItemNames
-	TimeStamps      []string   `json:"timeStamps"`      // time stamp
+	TimeStamps      [][]int    `json:"timeStamps"`      // time stamp
 	StartTimes      []int      `json:"startTimes"`      // startTime Unix TimeStamp
 	EndTimes        []int      `json:"endTimes"`        // endTime Unix TimeStamp
 	Intervals       []int      `json:"intervals"`       // interval
@@ -131,8 +131,15 @@ type authInfo struct {
 }
 
 type BatchWriteString struct {
-	GroupName  string     `json:"groupName"`  // 要写入的组名
-	ItemValues [][]string `json:"itemValues"` // 要写入的数据[[ItemNames...],[Values...]] or [[ItemNames...],[Values...],[TimeStamp...]]
+	GroupName     string      `json:"groupName"`
+	ItemValues    []ItemValue `json:"itemValues"`
+	WithTimeStamp bool        `json:"withTimeStamp"`
+}
+
+type ItemValue struct {
+	ItemName  string `json:"itemName"`
+	Value     string `json:"value"`
+	TimeStamp string `json:"timeStamp"`
 }
 
 type RealTimeDataString struct {

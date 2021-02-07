@@ -51,10 +51,9 @@ func (gdb *Gdb) getUserInfo(userName string) (map[string]interface{}, error) {
 	}
 }
 
-// add items by excel ,web app
-func (gdb *Gdb) addItemsByExcel(info fileInfo) (Rows, error) {
-	fileName, groupName := info.FileName, info.GroupName
-	f, err := excelize.OpenFile("./uploadFiles/" + fileName) // open excel
+// add items by excel
+func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
+	f, err := excelize.OpenFile(filePath)
 	if err != nil {
 		return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
 	} else {

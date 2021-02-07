@@ -8,7 +8,6 @@ goVersion: 1.15.3
 package db
 
 import (
-	"errors"
 	"fmt"
 	"github.com/JustKeepSilence/gdb/cmap"
 	"github.com/JustKeepSilence/gdb/utils"
@@ -16,6 +15,7 @@ import (
 	"github.com/dop251/goja"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
+	"golang.org/x/sync/errgroup"
 	"regexp"
 	"strconv"
 	"strings"
@@ -23,14 +23,33 @@ import (
 	"time"
 )
 
-/* Batch write real-time data
-   kv : Key-value pair to be written
-   withTimeStamp: Whether there is a time stamp when writing, if not, the default is the current time Unix timestamp
-   if it is true, then v should be like [[ItemNames...],[Values...],[UnixTimeStamp... ]]
-*/
-func (gdb *Gdb) BatchWrite(kv [][]string, withTimeStamp bool) (Rows, error) {
-	itemNames := kv[0]  // itemNames
-	itemValues := kv[1] // itemValues
+func (gdb *Gdb) BatchWrite(b BatchWriteString) (Rows, error) {
+	itemNames, itemValues, timeStamps := []string{}, []string{}, []string{}
+	if b.WithTimeStamp {
+		// with TimeStamp
+		for _, itemValue := range b.ItemValues {
+			k := itemValue.ItemName
+			t := itemValue.TimeStamp
+			if len(k) == 0 || len(t) == 0 {
+				return Rows{}, fmt.Errorf("error itemName or timeStamp")
+			}
+			v := itemValue.Value
+			itemNames = append(itemNames, k)
+			itemValues = append(itemValues, v)
+			timeStamps = append(timeStamps, t)
+		}
+	} else {
+		// without timeStamp
+		for _, itemValue := range b.ItemValues {
+			k := itemValue.ItemName
+			if len(k) == 0 {
+				return Rows{}, fmt.Errorf("error itemName")
+			}
+			v := itemValue.Value
+			itemNames = append(itemNames, k)
+			itemValues = append(itemValues, v)
+		}
+	}
 	index, ok := gdb.checkItems(itemNames...)
 	// check if all items given exist
 	if !ok {
@@ -38,33 +57,28 @@ func (gdb *Gdb) BatchWrite(kv [][]string, withTimeStamp bool) (Rows, error) {
 	}
 	currentTimeStamp := int(time.Now().Unix()) // unix timestamp
 	currentTimeStampString := strconv.Itoa(currentTimeStamp)
-	wg := sync.WaitGroup{}
-	messageChan := make(chan error, 2) // message chan
-	wg.Add(3)
+	g := errgroup.Group{}
 	// write currentTimeStamp
-	go func() {
-		defer wg.Done()
-		_ = gdb.infoDb.Put([]byte(TimeKey), []byte(currentTimeStampString), nil)
-	}()
+	g.Go(func() error {
+		if err := gdb.infoDb.Put([]byte(TimeKey), []byte(currentTimeStampString), nil); err != nil {
+			return err
+		}
+		return nil
+	})
 	// write Realtime data
-	go func() {
-		defer wg.Done()
+	g.Go(func() error {
 		batch := leveldb.Batch{}
 		for i := 0; i < len(itemNames); i++ {
 			batch.Put([]byte(itemNames[i]), []byte(itemValues[i]))
 		}
 		if err := gdb.rtDb.Write(&batch, nil); err != nil {
-			messageChan <- err
-		} else {
-			messageChan <- nil
+			return err
 		}
-		return
-	}()
-	if withTimeStamp {
-		// write historical data with timestamp
-		timeStamps := kv[2]
-		go func() {
-			defer wg.Done()
+		return nil
+	})
+	// write historical data
+	g.Go(func() error {
+		if b.WithTimeStamp {
 			batch := leveldb.Batch{}
 			for i := 0; i < len(itemNames); i++ {
 				sb := strings.Builder{}
@@ -73,17 +87,11 @@ func (gdb *Gdb) BatchWrite(kv [][]string, withTimeStamp bool) (Rows, error) {
 				batch.Put([]byte(sb.String()), []byte(itemValues[i]))
 			}
 			if err := gdb.hisDb.Write(&batch, nil); err != nil {
-				messageChan <- err
+				return err
 			} else {
-				messageChan <- nil
+				return nil
 			}
-			return
-		}()
-
-	} else {
-		// write historical data without timestamp
-		go func() {
-			defer wg.Done()
+		} else {
 			batch := leveldb.Batch{}
 			for i := 0; i < len(itemNames); i++ {
 				sb := strings.Builder{}
@@ -92,30 +100,17 @@ func (gdb *Gdb) BatchWrite(kv [][]string, withTimeStamp bool) (Rows, error) {
 				batch.Put([]byte(sb.String()), []byte(itemValues[i]))
 			}
 			if err := gdb.hisDb.Write(&batch, nil); err != nil {
-				messageChan <- err
+				return err
 			} else {
-				messageChan <- nil
+				return nil
 			}
-			return
-		}()
-	}
-	// monitor
-	go func() {
-		wg.Wait()
-		close(messageChan)
-	}()
-	errorFlag := false
-	errorMsg := ""
-	for msg := range messageChan {
-		if msg != nil {
-			errorFlag = true
-			errorMsg += msg.Error()
 		}
+	})
+	if err := g.Wait(); err != nil {
+		return Rows{}, err
+	} else {
+		return Rows{len(itemNames)}, nil
 	}
-	if errorFlag {
-		return Rows{}, errors.New(errorMsg)
-	}
-	return Rows{len(itemNames)}, nil
 }
 
 //  get realTime data
@@ -206,13 +201,43 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int, end
 	return rawData, nil
 }
 
+// get raw(that is all ) historical data, it should only be used for debugging
+func (gdb *Gdb) GetRawHistoricalData(itemNames ...string) (cmap.ConcurrentMap, error) {
+	rawData := cmap.New()
+	g := errgroup.Group{}
+	sn, err := gdb.hisDb.GetSnapshot()
+	if sn == nil || err != nil {
+		return nil, snError{"snError"}
+	}
+	defer sn.Release()
+	for _, name := range itemNames {
+		itemName := name
+		g.Go(func() error {
+			itemValues, timeStamps := []string{}, []int64{}
+			it := sn.NewIterator(util.BytesPrefix([]byte(itemName)), nil)
+			for it.Next() {
+				t, err := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), itemName, "", -1), 10, 64)
+				if err != nil {
+					return err
+				}
+				v := fmt.Sprintf("%s", it.Value())
+				itemValues = append(itemValues, v)
+				timeStamps = append(timeStamps, t)
+			}
+			rawData.Set(itemName, []interface{}{itemValues, timeStamps})
+			return nil
+		})
+	}
+	_ = g.Wait()
+	return rawData, nil
+}
+
 func (gdb *Gdb) DeleteHistoricalData(itemNames []string, timeStamps []TimeStamp) (Rows, error) {
 	sn, err := gdb.hisDb.GetSnapshot()
 	if sn == nil || err != nil {
 		return Rows{}, snError{"snError"}
 	}
 	defer sn.Release()
-	//g := errgroup.Group{} // error group
 	wg := sync.WaitGroup{}
 	for i := 0; i < len(itemNames); i++ {
 		//index := i
@@ -251,7 +276,10 @@ func (gdb *Gdb) DeleteHistoricalData(itemNames []string, timeStamps []TimeStamp)
 }
 
 // get history data according to the given time stamps
-func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...string) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]int) (cmap.ConcurrentMap, error) {
+	if len(itemNames) != len(timeStamps) {
+		return nil, fmt.Errorf("inconsistent length of itemNames and timeStamps")
+	}
 	rawData := cmap.New()
 	wg := sync.WaitGroup{}
 	sn, err := gdb.hisDb.GetSnapshot()
@@ -259,17 +287,17 @@ func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...str
 		return nil, snError{"snError"}
 	}
 	defer sn.Release() // release
-	for _, itemName := range itemNames {
+	for index, itemName := range itemNames {
 		wg.Add(1)
-		go func(name string) {
+		go func(name string, i int) {
 			defer wg.Done()
 			var values []string
-			for i := 0; i < len(timeStamps); i++ {
-				v, _ := sn.Get([]byte(name+timeStamps[i]), nil)
+			for j := 0; j < len(timeStamps[i]); j++ {
+				v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[i][j])), nil)
 				values = append(values, fmt.Sprintf("%s", v))
 			}
-			rawData.Set(name, [][]string{timeStamps, values})
-		}(itemName)
+			rawData.Set(name, []interface{}{values, timeStamps[i]})
+		}(itemName, index)
 	}
 	wg.Wait()
 	return rawData, nil
@@ -327,12 +355,36 @@ func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []i
 			return data, nil
 		}
 	} else {
-		if data, err := gdb.GetHistoricalDataWithStamp(itemNames, timeStamps...); err != nil {
+		if data, err := gdb.getHistoricalDataWithStringTimeStamp(itemNames, timeStamps...); err != nil {
 			return nil, err
 		} else {
 			return data, nil
 		}
 	}
+}
+
+func (gdb *Gdb) getHistoricalDataWithStringTimeStamp(itemNames []string, timeStamps ...string) (cmap.ConcurrentMap, error) {
+	rawData := cmap.New()
+	wg := sync.WaitGroup{}
+	sn, err := gdb.hisDb.GetSnapshot()
+	if sn == nil || err != nil {
+		return nil, snError{"snError"}
+	}
+	defer sn.Release() // release
+	for _, itemName := range itemNames {
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+			var values []string
+			for j := 0; j < len(timeStamps); j++ {
+				v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[j])), nil)
+				values = append(values, fmt.Sprintf("%s", v))
+			}
+			rawData.Set(name, []interface{}{values, timeStamps})
+		}(itemName)
+	}
+	wg.Wait()
+	return rawData, nil
 }
 
 func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(itemNames []string, timeStamps []string, zones ...DeadZone) (cmap.ConcurrentMap, error) {
@@ -535,7 +587,7 @@ func (gdb *Gdb) getRtData(itemNames []string) ([]string, error) {
 }
 
 func (gdb *Gdb) getHData(itemNames []string, timeStamps []string) ([]string, error) {
-	r, err := gdb.GetHistoricalDataWithStamp(itemNames, timeStamps...)
+	r, err := gdb.getHistoricalDataWithStringTimeStamp(itemNames, timeStamps...)
 	var result []string
 	if err != nil {
 		return nil, err

@@ -11,11 +11,3 @@ package filter
 // and https://github.com/tylertreat/BoomFilters
 
 type gdbBloomFilter int
-
-func (gdbBloomFilter) Name() string {
-	return "gdbBloomFilter"
-}
-
-func (g gdbBloomFilter) Contains(filter, key []byte) bool {
-
-}

@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/JustKeepSilence/gdb/config"
+	"github.com/JustKeepSilence/gdb/db"
 	"github.com/JustKeepSilence/gdb/utils"
-	"github.com/JustKeepSilence/gdb/web"
 	"os"
 	"time"
 )
@@ -38,7 +38,7 @@ func main() {
 	endReadConfigTimer := time.Now()
 	fmt.Printf("%s: Read the configuration successfully, time consuming :%dms\n", time.Now().Format(utils.TimeFormatString),
 		endReadConfigTimer.Sub(startReadConfigTime).Milliseconds())
-	if err := web.InitialDbServer(dbIp, dbPort, dbPath, itemDbPath, startReadConfigTime); err != nil {
+	if err := db.InitialDbServer(dbIp, dbPort, dbPath, itemDbPath, startReadConfigTime); err != nil {
 		utils.WriteError("", "", "", err.Error())
 		return
 	}

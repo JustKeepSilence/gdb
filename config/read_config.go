@@ -7,15 +7,16 @@ github: https://github.com/JustKeepSilence
 package config
 
 import (
-	"github.com/JustKeepSilence/gdb/db"
+	"encoding/json"
 	"os"
 )
 
 type Config struct {
-	Port       int64  `json:"port"`
-	DbPath     string `json:"dbPath"`
-	ItemDbPath string `json:"itemDbPath"`
-	IP         string `json:"ip"`
+	Port            int64  `json:"port"`
+	DbPath          string `json:"dbPath"`
+	ItemDbPath      string `json:"itemDbPath"`
+	IP              string `json:"ip"`
+	ApplicationName string `json:"applicationName"`
 }
 
 func ReadDbConfig(path string) (Config, error) {
@@ -28,6 +29,6 @@ func ReadDbConfig(path string) (Config, error) {
 	b := make([]byte, fileInfo.Size())
 	_, _ = file.Read(b)
 	c := Config{}
-	_ = db.Json.Unmarshal(b, &c)
+	_ = json.Unmarshal(b, &c)
 	return c, nil
 }
