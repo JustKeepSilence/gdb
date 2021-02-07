@@ -165,7 +165,7 @@ Notes: you need set db.exe,config.json, and dist folder in the same path to sure
 
 ## Restful 
 If you use other language to access gdb, you can use resutful interface, before use
-you need [build gdb](#Build GDB), and after running the application,you can interact with 
+you need [build gdb](https://github.com/JustKeepSilence/gdb#build-gdb), and after running the application,you can interact with 
 gdb by the restful interface easily.Here is the examples of python.For more details see
 [document](https://justkeepsilence.gitbook.io/gdb/)
 ```python
