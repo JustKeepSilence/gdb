@@ -1,53 +1,214 @@
 # GDB
+GDB is a real-time database encapsulated based on [goleveldb](https://pkg.go.dev/github.com/syndtr/goleveldb/leveldb)
+it can be used to obtain and store large amount of historical data,it provides rest interface and web client , and it 
+allows you to generate your own data based on existing data by coding js on web client.If you need deal with big data,
+you will love GDB.
+
+## Installation
+Gdb is a cgo project, to run or build it, you need gcc ,and install [GO](https://golang.org/) (**version 1.12+ is required**), then set GO111MODULE=ON
+```sh
+go get github.com/JustKeepSilence/gdb
 ```
-GDB是基于Leveldb使用Go语言编写的高性能实时数据库,可以实现对大量数据实时值的存储和历史值的读取.并且提供了restful api以及
-网页客户端来操作数据库,同时还提供了基于JS的二次计算开发功能，可以允许用户使用js语言来进行已有数据的二次数据开发工作.同时对于
-Go语言使用者,还可以直接下载src中的源代码进行二次开发工作.
-整个GDB的数据结构分为grou和item,使用之前必须先添加group,再向group中添加item,之后就可以向item中写入实时数据
+
+Then import gdb in your own code
+```go
+import "github.com/JustKeepSilence/gdb/db"
 ```
 
-# Quick Start
+## Quick Start
+```go
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/JustKeepSilence/gdb/db"
+	"log"
+	"time"
+)
+
+func main() {
+	dbPath := "./db"  // path of data
+	itemDbPath := "./itemDb"  // path of itemDb
+	g, err := db.NewGdb(dbPath, itemDbPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Open db successfully")
+	//add groups:
+	groupInfos := []db.AddGroupInfo{{
+		GroupName:   "1DCS",
+		ColumnNames: []string{"groupName", "type", "description", "unit", "source"},  // every group has two cols: id and itemName
+	}}
+	if _, err := g.AddGroups(groupInfos...);err!=nil{
+		log.Fatal(err)
+	}else{
+		fmt.Println("add group successfully")
+	}
+	//add items
+	if _, err  := g.AddItems(db.AddItemInfo{
+		GroupName: "1DCS",
+		Values: []map[string]string{{"itemName": "testItem1", "groupName": "1DCS", "type": "","description": "testItem1", "unit": "", "source": ""},
+			{"itemName": "testItem2", "type": "","groupName": "1DCS", "description": "testItem2", "unit": "", "source": ""},
+			{"itemName": "testItem3", "type": "","groupName": "1DCS", "description": "testItem3", "unit": "", "source": ""},
+			{"itemName": "testItem4", "type": "","groupName": "1DCS", "description": "testItem4", "unit": "", "source": ""},
+			{"itemName": "testItem5", "type": "","groupName": "1DCS", "description": "testItem5", "unit": "", "source": ""},
+			{"itemName": "testItem6", "type": "","groupName": "1DCS", "description": "testItem6", "unit": "", "source": ""},
+			{"itemName": "testItem7", "type": "","groupName": "1DCS", "description": "testItem7", "unit": "", "source": ""},
+			{"itemName": "testItem8", "type": "","groupName": "1DCS", "description": "testItem8", "unit": "", "source": ""}},
+	});err!=nil{
+		log.Fatal(err)
+	}else{
+		fmt.Println("add items successfully!")
+	}
+	//add items by excel
+	if _, err := g.AddItemsByExcel("1DCS", "./test.xlsx");err!=nil{
+		log.Fatal(err)
+	}else{
+		fmt.Println("add items by excel successfully!")
+	}
+	//write realTime Data without timeStamp
+	if _, err := g.BatchWrite(db.BatchWriteString{
+		GroupName:     "1DCS",
+		ItemValues:    []db.ItemValue{{
+			ItemName: "testItem1",
+			Value:    "-100",
+		},{
+			ItemName: "testItem2",
+			Value: "0",
+		},{
+			ItemName: "testItem3",
+			Value: "100",
+		},{
+			ItemName: "testItem4",
+			Value: "200",
+		},{
+			ItemName: "testItem5",
+			Value: "300",
+		}},
+		WithTimeStamp: false,
+	});err!=nil{
+		log.Fatal(err)
+	}else{
+		fmt.Println("Write successfully")
+	}
+	// write realTime data without timeStamp
+	t := fmt.Sprintf("%d", time.Now().Add(-1 * time.Hour).Unix())  // unix timeStamp
+	if _, err := g.BatchWrite(db.BatchWriteString{
+		GroupName:     "1DCS",
+		ItemValues:    []db.ItemValue{{
+			ItemName: "testItem6",
+			Value: "400",
+			TimeStamp: t,
+		},{
+			ItemName: "testItem7",
+			Value: "500",
+			TimeStamp: t,
+		},{
+			ItemName: "testItem8",
+			Value: "600",
+			TimeStamp: t,
+		}},
+		WithTimeStamp: true,
+	});err!=nil{
+		log.Fatal(err)
+	}else{
+		fmt.Println("Write with timeStamp successfully")
+	}
+	// get realTime data, return the latest updated data
+	itemNames := []string{"testItem1", "testItem2", "testItem3", "testItem4", "testItem5", "testItem6", "testItem7", "testItem8"}
+	if c, err := g.GetRealTimeData(itemNames...);err!=nil{
+		log.Fatal(err)
+	}else{
+		r, _ := json.Marshal(c)
+		fmt.Println(fmt.Sprintf("%s", r))
+	}
+	if c, err := g.GetRawHistoricalData(itemNames...);err!=nil{
+		log.Fatal(err)
+	}else{
+		r, _ := json.Marshal(c)
+		fmt.Println(fmt.Sprintf("%s", r))
+	}
+	// get historical data with timeStamp
+	timeStamps := [][]int{{1612413561}, {1612413561}, {1612413561}, {1612413561}, {1612413561}}
+	if c, err := g.GetHistoricalDataWithStamp([]string{"testItem1", "testItem2", "testItem3", "testItem4", "testItem5"}, timeStamps...);err!=nil{
+		log.Fatal(err)
+	}else{
+		r, _ := json.Marshal(c)
+		fmt.Println(fmt.Sprintf("%s", r))
+	}
+}
 ```
-下载编译后的代码文件夹bin,其中config为配置文件夹,其中的config.json中为整个数据库的基本配置文件,ip指定了整个web服务的ip
-地址,如果为空则会默认读取本机的ip，port指定了整个web服务的端口号,默认值为8082, path指定了整个实时数据库的存储位置.你可以
-保持设置为默认值,然后启动db.exe,此时结果应该如下图所示:
+
+## Build GDB
+If you want to use gdb with other language or web application, you need build GDB.
+First you need change directory to gdb\main, and build with the following command.
+```sh
+go build -o ../db.exe main.go
 ```
-![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/launch.png)
+you can custom your own configs in config.json.
+```json
+{
+  "ip": "", 
+  "port": 9000,
+  "dbPath": "./leveldb",
+  "itemDbPath": "./itemDb",
+  "applicationName": "db.exe"
+}
+```
+```gotemplate
+ip: ip of gdb web application and restful interface,if empty string, gdb will get ip of local machine
+port: port of gdb web application and restful interface, default 9000
+dbPath: path of leveldb to store data
+itemDbPath: path of SQLite to store items
+applicationName: name of gdb application, we need this to trace the running info of porgram
+```
+Notes: you need set db.exe,config.json, and dist folder in the same path to sure gdb work normally.
+
+## Restful 
+If you use other language to access gdb, you can use resutful interface, before use
+you need [build gdb](#Build GDB), and after running the application,you can interact with 
+gdb by the restful interface easily.Here is the examples of python.For more details see
+[document](https://justkeepsilence.gitbook.io/gdb/)
+```python
+import json
+import time
+from itertools import repeat
+
+import requests
 
 
+if __name__ == "__main__":
+    ip = "http://192.168.1.2:9000"
+    # add groups
+    group_infos = [{"groupName": "1DCS", "columnNames": "groupName,type,description,unit,source".split(",")}]
+    requests.post(url=f"{ip}/group/addGroups", data=json.dumps(group_infos, ensure_ascii=False))
+    # add items
+    items = [{"itemName": "testItem1", "groupName": "1DCS", "type": "","description": "testItem1", "unit": "", "source": ""},
+             {"itemName": "testItem2", "type": "","groupName": "1DCS", "description": "testItem2", "unit": "", "source": ""},
+             {"itemName": "testItem3", "type": "","groupName": "1DCS", "description": "testItem3", "unit": "", "source": ""},
+             {"itemName": "testItem4", "type": "","groupName": "1DCS", "description": "testItem4", "unit": "", "source": ""},
+             {"itemName": "testItem5", "type": "","groupName": "1DCS", "description": "testItem5", "unit": "", "source": ""},
+             {"itemName": "testItem6", "type": "","groupName": "1DCS", "description": "testItem6", "unit": "", "source": ""},
+             {"itemName": "testItem7", "type": "","groupName": "1DCS", "description": "testItem7", "unit": "", "source": ""},
+             {"itemName": "testItem8", "type": "","groupName": "1DCS", "description": "testItem8", "unit": "", "source": ""}]
+    requests.post(f"{ip}/item/addItems", data=json.dumps({"groupName": "1DCS", "values": items}))
+    # write realTime data without timeStamps
+    item_values = [{"itemName": f"testItem{i}", "value": str(i * 100)} for i in range(1, 6)]
+    requests.post(url=f"{ip}/data/batchWrite", data=json.dumps({"groupName": "1DCS", "itemValues": item_values, "withTimeStamp": False}))
+    # write data with timestamp
+    t = int(time.time())
+    item_values = [{"itemName": f"testItem{i}", "value": str(i * 100), "timeStamp": str(t)} for i in range(6, 9)]
+    requests.post(url=f"{ip}/data/batchWrite", data=json.dumps({"groupName": "1DCS", "itemValues": item_values, "withTimeStamp": True}))
+    # get realTime data, return the latest updated data
+    requests.post(url=f"{ip}/data/getRealTimeData", data=json.dumps({"itemNames": [f"testItem{i}" for i in range(1, 9)]}))
+    # get historical data with timestamp
+    requests.post(url=f"{ip}/data/getHistoricalDataWithStamp",
+                  data=json.dumps({"itemNames": [f"testItem{i}" for i in range(6, 9)],
+                                   "timeStamps": list(repeat([t], 3))}))
 
-# Web Application Serve
-1.login
+```
 
-```在支持es6的浏览器上输入对应的url: http:// + ip + port + "/index",初次运行没有cookie信息,会跳转到如下的登陆界面```
-![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/login.png)
+## Web Application
+see [web application](https://github.com/JustKeepSilence/gdb-web-app) for more details
 
-```其中远端服务器的地址即为整个服务运行的ip+port,这里就是192.168.0.114:8082,用户名为admin,密码为admin@123```
-
-2.index
-
-```首页的界面如下```
-![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/index.png)
-
-```分别显示了当前程序的内存使用情况，当前写入的item数量，最近一次写入的unix时间戳以及写入速率```
-
-
-3.group
-
-```group的界面如下```
-![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/group.png)
-
-```通过这个界面可以加组,加点,下载点表,查看点的实时值和历史值，下载指定时间的历史数据,编辑item的属性等一系列操作```
-
-4.calc
-
-```calc是和二次计算操作有关的界面```
-![Image text](https://github.com/JustKeepSilence/gdb/blob/master/images/calc.png)
-
-```通过这个界面可以添加基于二次js的二次计算项,也可以实时修改，监测计算项的运行情况.```
-
-# Restful Api
-[接口文档](https://justkeepsilence.gitbook.io/gdb/)
-
-# gRPC
-正在开发中...
+## Windows Desktop Application
+see [windows ui](https://github.com/JustKeepSilence/gdb-windows-ui) for more details 
