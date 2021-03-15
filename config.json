@@ -1,6 +1,8 @@
 {
   "ip": "",
-  "port": 8084,
-  "dbPath": "./leveldb",
-  "itemDbPath": "./itemDb"
+  "port": 8082,
+  "dbPath": "F:\\bin\\leveldb",
+  "itemDbPath": "F:\\bin\\itemDb",
+  "applicationName": "go_build_github_com_JustKeepSilence_gdb_main.exe",
+  "authorization": true
 }
