@@ -8,16 +8,9 @@ package sqlite
 
 import (
 	"database/sql"
-	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	"sync"
+	"golang.org/x/sync/errgroup"
 )
-
-//const sqlitePath = "./db/ldb.db" // SQLite path
-
-type insertResult struct {
-	Err error
-}
 
 // SQLite errors
 type sqliteConnectionError struct {
@@ -120,14 +113,10 @@ func InsertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 	if err != nil {
 		return sqliteTransactionError{"sqliteTransactionError: " + err.Error()}
 	}
-	var resultChan = make(chan insertResult, len(rowValues)) // Create an error type channel to handle errors
-	var errorFlag bool                                       // Whether an error occurred, the default value is false
-	var errorMessage string
-	var wg sync.WaitGroup
-	for index, rowValue := range rowValues {
-		wg.Add(1)
-		go func(insertedRows []string, st *sql.Stmt, j int) {
-			defer wg.Done()
+	eg := errgroup.Group{}
+	for _, rowValue := range rowValues {
+		insertedRows := rowValue
+		eg.Go(func() error {
 			var data []interface{} // data to be inserted
 			for i := 0; i < len(insertedRows); i++ {
 				data = append(data, insertedRows[i]) // can't use []string as []interface directly
@@ -138,28 +127,18 @@ func InsertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 				tx.Rollback() is the key ,see https://github.com/mattn/go-sqlite3/issues/184
 				*/
 				//flagChan <- true
-				resultChan <- insertResult{sqliteExecutionError{"sqliteExecutionError: " + err.Error() + "\n"}}
-				return
+				return sqliteExecutionError{"sqliteExecutionError: " + err.Error() + "\n"}
 			} else {
-				resultChan <- insertResult{nil}
-				return
+				return nil
 			}
-		}(rowValue, stmt, index)
+		})
 	}
-	go func() {
-		wg.Wait()
-		close(resultChan) // close channel
-	}()
-	// The for loop is used in the pipeline. When the channel is closed and there is no value to receive,
-	// it jumps out of the loop, so you need to close the channel in the goroutine
-	for rc := range resultChan {
-		if rc.Err != nil {
-			errorFlag = true // errors
-			errorMessage += rc.Err.Error()
-		}
-	}
-	if !errorFlag {
-		// There is no error in the whole execution process
+	if err := eg.Wait(); err != nil {
+		defer tx.Rollback()
+		defer db.Close()
+		defer stmt.Close()
+		return err
+	} else {
 		if err := tx.Commit(); err != nil {
 			defer tx.Rollback()
 			defer db.Close()
@@ -171,12 +150,6 @@ func InsertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 			defer stmt.Close()
 			return nil
 		}
-	} else {
-		// errors
-		defer tx.Rollback()
-		defer db.Close()
-		defer stmt.Close()
-		return fmt.Errorf(errorMessage)
 	}
 }
 
