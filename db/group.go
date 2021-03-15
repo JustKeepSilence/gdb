@@ -7,7 +7,9 @@ github: https://github.com/JustKeepSilence
 package db
 
 import (
+	"fmt"
 	"github.com/JustKeepSilence/gdb/sqlite"
+	. "github.com/ahmetb/go-linq/v3"
 	"github.com/deckarep/golang-set"
 	"strings"
 )
@@ -103,9 +105,13 @@ notes: Since leveldb uses the default bloom filter deleting the key may affect p
 Therefore, when deleting groups and items in the current version, only the content in SQLite
 will be deleted, and the keys in the real-time and historical databases of leveldb will not be deleted.
 */
-func (gdb *Gdb) DeleteGroups(groupInfos DeletedGroupInfo) (Rows, error) {
+func (gdb *Gdb) DeleteGroups(groupInfos GroupNameInfos) (Rows, error) {
 	c := 0
 	groupNames := groupInfos.GroupNames
+	// you can't delete calc group
+	if From(groupNames).Contains("calc") {
+		return Rows{}, fmt.Errorf("groupError: you can't delete calc group")
+	}
 	for _, groupName := range groupNames {
 		// delete columns from group_cfg
 		err := sqlite.UpdateItems(gdb.ItemDbPath, []string{"delete from group_cfg where groupName='" + groupName + "'"}...)
@@ -122,38 +128,33 @@ func (gdb *Gdb) DeleteGroups(groupInfos DeletedGroupInfo) (Rows, error) {
 }
 
 // get group name
-func (gdb *Gdb) GetGroups() (GroupInfo, error) {
+func (gdb *Gdb) GetGroups() (GroupNameInfos, error) {
 	r, err := sqlite.Query(gdb.ItemDbPath, "select groupName from group_cfg")
 	if err != nil {
-		return GroupInfo{}, err
+		return GroupNameInfos{}, err
 	}
 	groupNames := []string{}
 	for _, item := range r {
 		groupNames = append(groupNames, item["groupName"])
 	}
-	return GroupInfo{groupNames}, nil
+	return GroupNameInfos{groupNames}, nil
 }
 
 // get the column and item count of the given groupName
-func (gdb *Gdb) GetGroupProperty(groupNames ...string) (map[string]GroupProperty, error) {
-	groupProperties := map[string]GroupProperty{}
-	for _, groupName := range groupNames {
-		c, err := sqlite.Query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names of given table
-		if err != nil {
-			return nil, err
-		}
-		itemCount, err := sqlite.Query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"'")
-		if err != nil {
-			return nil, err
-		}
-		columnNames := []string{} //
-		for i := 0; i < len(c); i++ {
-			columnNames = append(columnNames, c[i]["name"])
-		}
-		g := GroupProperty{ItemCount: itemCount[0]["count"], ItemColumnNames: columnNames[1:]}
-		groupProperties[groupName] = g
+func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo, error) {
+	c, err := sqlite.Query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names of given table
+	if err != nil {
+		return GroupPropertyInfo{}, err
 	}
-	return groupProperties, nil
+	itemCount, err := sqlite.Query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
+	if err != nil {
+		return GroupPropertyInfo{}, err
+	}
+	columnNames := []string{}
+	for i := 0; i < len(c); i++ {
+		columnNames = append(columnNames, c[i]["name"])
+	}
+	return GroupPropertyInfo{ItemCount: itemCount[0]["count"], ItemColumnNames: columnNames[1:]}, nil
 }
 
 //  update groupNames, the operation is atomic
@@ -211,19 +212,19 @@ func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnInfo) (Cols, error
 }
 
 // delete columns from group, the operation is atomic
-func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnInfo) (Cols, error) {
+func (gdb *Gdb) DeleteGroupColumns(info DeleteGroupColumnInfo) (Cols, error) {
 	groupName, deletedColumnNames := info.GroupName, info.ColumnNames
 	if contains(deletedColumnNames...) {
 		return Cols{}, ColumnNameError{"columnNameError"}
 	}
-	r, err := gdb.GetGroupProperty([]string{groupName}...)
+	r, err := gdb.GetGroupProperty(groupName, "1=1") // get existed columns of given group
 	if err != nil {
 		return Cols{}, err
 	}
 	// try drop t1_backup
 	_ = sqlite.UpdateItems(gdb.ItemDbPath, []string{"drop table 't1_backup'"}...)
-	cs := mapset.NewSet(convertStringToInterface(r[groupName].ItemColumnNames...)...) // existed columns, include itemName, not include id
-	ds := mapset.NewSet(convertStringToInterface(deletedColumnNames...)...)           // deleted groups
+	cs := mapset.NewSet(convertStringToInterface(r.ItemColumnNames...)...)  // existed columns, include itemName, not include id
+	ds := mapset.NewSet(convertStringToInterface(deletedColumnNames...)...) // deleted groups
 	// check whether the column to be deleted exist
 	if !ds.IsSubset(cs) {
 		return Cols{}, ColumnNameError{"columnNameError: some columns don't exist"}
@@ -286,10 +287,13 @@ func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnInfo) (Cols, error) {
 
 // add columns to group, all columns type are text
 func (gdb *Gdb) AddGroupColumns(info AddGroupColumnInfo) (Cols, error) {
-	groupName, addedColumnNames := info.GroupName, info.ColumnNames
+	groupName, addedColumnNames, defaultValues := info.GroupName, info.ColumnNames, info.DefaultValues
+	if len(addedColumnNames) != len(defaultValues) {
+		return Cols{}, fmt.Errorf("inconsist of columnNames and defaultValues")
+	}
 	sqlStrings := []string{}
-	for _, name := range addedColumnNames {
-		sqlStrings = append(sqlStrings, "alter table '"+groupName+"' add column '"+name+"' text")
+	for index, name := range addedColumnNames {
+		sqlStrings = append(sqlStrings, "alter table '"+groupName+"' add column '"+name+"' text default '"+defaultValues[index]+"'")
 	}
 	if err := sqlite.UpdateItems(gdb.ItemDbPath, sqlStrings...); err != nil {
 		return Cols{}, err
