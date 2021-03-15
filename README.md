@@ -5,7 +5,7 @@ allows you to generate your own data based on existing data by coding js on web 
 you will love GDB.
 
 ## Installation
-Gdb is a cgo project, to run or build it, you need gcc ,and install [GO](https://golang.org/) (**version 1.12+ is required**), then set GO111MODULE=ON
+Gdb is a cgo project, to run or build it, you need gcc ,and install [GO](https://golang.org/) (**version 1.16+ is required**), then set GO111MODULE=ON
 ```sh
 go get github.com/JustKeepSilence/gdb
 ```
@@ -212,3 +212,29 @@ see [web application](https://github.com/JustKeepSilence/gdb-web-app) for more d
 
 ## Windows Desktop Application
 see [windows ui](https://github.com/JustKeepSilence/gdb-windows-ui) for more details 
+
+## FAQ
+1. How to obtain the timeStamp consistent with gdb
+```go
+# The timestamp in gdb uses the unix timestamp that comes with go,timeZone is UTC
+import (
+ "time"
+)
+n := time.Now
+timeStamp := time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Minute(), 0, time.UTC)
+```
+So, above this, here are some examples to show how to get the timeStamp consistent with gdb
+### C#
+```C#
+var t1 = new DateTime(2021, 2, 11, 14, 26, 26);
+long timeStamp1 = (long)(t1 - new DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds;
+```
+### Js(In China)
+```js
+new Date(2021, 1, 11 , 14, 26, 26).getTime()/1000 + 8 * 3600
+```
+### Python(In China)
+```python
+from datetime import datetime
+int(datetime(2021, 2, 11, 14, 26, 26).timestamp()) + 8 * 3600
+```
