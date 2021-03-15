@@ -17,6 +17,7 @@ type Config struct {
 	ItemDbPath      string `json:"itemDbPath"`
 	IP              string `json:"ip"`
 	ApplicationName string `json:"applicationName"`
+	Authorization   bool   `json:"authorization"`
 }
 
 func ReadDbConfig(path string) (Config, error) {
