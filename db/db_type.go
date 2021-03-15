@@ -31,7 +31,7 @@ const (
 	WrittenItems    = "writtenItems"
 	Speed           = "speed"
 	initialUserName = "admin"
-	initialUserInfo = `{"passWord": "admin@123", "roles": ["super_user"]}`
+	initialUserInfo = `{"passWord": "685a6b21dc732a9702a96e6731811ec9", "roles": ["super_user"]}` // md5 of admin@123@seu
 )
 
 func (gdb *Gdb) initialDb() error {
@@ -83,15 +83,14 @@ func (gdb *Gdb) initialDb() error {
 }
 
 func (gdb *Gdb) initialSQLite() error {
-	sqlCreateGroupCfg := `create table if not exists group_cfg (id integer not null primary key, groupName text UNIQUE)`
-	if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfg}...); err != nil {
-		return err
-	}
-	sqlAddCalc := `insert into group_cfg (groupName) values ('calc')` // add calc group
-	_ = sqlite.UpdateItems(gdb.ItemDbPath, []string{sqlAddCalc}...)
-	sqlAddCalcTable := `create table if not exists calc (id integer not null primary key, itemName text UNIQUE, description text)`                                                                                                                                      // add calc group
-	sqlAddCalcCfgTable := `create table if not exists calc_cfg (id integer not null primary key, description text, expression text, status text default 'false', duration text default 10, errorMessage text default '', createTime text, updatedTime text default '')` //  add calc cfg table
-	if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{sqlAddCalcTable, sqlAddCalcCfgTable}...); err != nil {
+	sqlCreateGroupCfgTable := `create table if not exists group_cfg (id integer not null primary key, groupName text UNIQUE)`                                                                                                                                                                           // add group_cfg table
+	sqlAddCalc := `insert into group_cfg (groupName) values ('calc')`                                                                                                                                                                                                                                   // add calc group
+	sqlAddCalcTable := `create table if not exists calc (id integer not null primary key, itemName text UNIQUE, description text)`                                                                                                                                                                      // add calc group
+	sqlAddCalcCfgTable := `create table if not exists calc_cfg (id integer not null primary key, description text, expression text, status text default 'false', duration text default 10, errorMessage text default '', createTime text, updatedTime text default '')`                                 //  add calc cfg table
+	sqlAddLogCfgTable := `create table if not exists log_cfg (id integer not null primary key, logType text default 'error', requestString text default '', requestMethod text default 'post', requestUrl text default '', logMessage text, insertTime  NUMERIC DEFAULT (datetime('now','localtime')))` // create log table
+	// columns are id, logType,  requestString, requestMethod, requestUrl, logMessage, insertTime
+	_, _ = sqlite.UpdateItem(gdb.ItemDbPath, sqlAddCalc)
+	if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable}...); err != nil {
 		return err
 	}
 	return nil
