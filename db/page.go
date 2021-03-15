@@ -10,9 +10,8 @@ package db
 import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	. "github.com/ahmetb/go-linq/v3"
+	"github.com/JustKeepSilence/gdb/sqlite"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -71,21 +70,18 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 			for rows.Next() {
 				if count == 0 {
 					// check headers
-					headers, err = rows.Columns()
+					h, err := rows.Columns()
 					if err != nil {
 						return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
 					} else {
 						// get headers successfully
-						cols, err := gdb.GetGroupProperty([]string{groupName}...)
+						cols, err := gdb.GetGroupProperty(groupName, "1=1")
 						if err != nil {
 							return Rows{-1}, err
 						}
-						tableHeaders := cols[groupName].ItemColumnNames
-						var h []string
-						From(headers).Where(func(item interface{}) bool {
-							return len(item.(string)) != 0
-						}).ToSlice(&h)
-						if !equal(h, tableHeaders) {
+						tableHeaders := cols.ItemColumnNames
+						headers = h[:len(tableHeaders)] // get first len(tableHeaders) cols
+						if !equal(headers, tableHeaders) {
 							return Rows{-1}, ExcelError{"ExcelError: Inconsistent header"}
 						}
 					}
@@ -131,34 +127,31 @@ func getJsCode(fileName string) (string, error) {
 	return c1, nil
 }
 
-func getLogs() ([]logsInfo, error) {
-	const logPath = "./logs/gdb_log.log"
-	f, err := os.OpenFile(logPath, os.O_RDONLY, 0755)
-	if err != nil {
+func (gdb *Gdb) getLogs(logType, condition, startTime, endTime string) ([]map[string]string, error) {
+	var queryString string
+	st, et := strings.Trim(startTime, " "), strings.Trim(endTime, " ")
+	if logType == "all" {
+		if len(st) == 0 && len(et) == 0 {
+			queryString = "select * from log_cfg where logMessage like '%" + condition + "%' order by insertTime desc"
+		} else if len(st) == 0 && len(et) != 0 {
+			queryString = "select * from log_cfg where insertTime <= '" + et + "' and logMessage like '%" + condition + "%' order by insertTime desc"
+		} else {
+			queryString = "select * from log_cfg where insertTime >= '" + st + "' and logMessage like '%" + condition + "%' order by insertTime desc"
+		}
+	} else {
+		if len(st) == 0 && len(et) == 0 {
+			queryString = "select * from log_cfg where logType='" + logType + "' " + " and logMessage like '%" + condition + "%' order by insertTime desc"
+		} else if len(st) == 0 && len(et) != 0 {
+			queryString = "select * from log_cfg where logType='" + logType + "' " + " and insertTime <= '" + et + "' and logMessage like '%" + condition + "%' order by insertTime desc"
+		} else {
+			queryString = "select * from log_cfg where logType='" + logType + "' " + " and insertTime >= '" + st + "' and logMessage like '%" + condition + "%' order by insertTime desc"
+		}
+	}
+	if result, err := sqlite.Query(gdb.ItemDbPath, queryString); err != nil {
 		return nil, err
+	} else {
+		return result, nil
 	}
-	defer f.Close()
-	info, _ := f.Stat()
-	content := make([]byte, info.Size())
-	n, err := f.Read(content)
-	if err != nil {
-		return nil, err
-	}
-	if n != int(info.Size()) {
-		return nil, fmt.Errorf("read Error")
-	}
-	reg := regexp.MustCompile("(?is){(.*?)}")
-	if !reg.Match(content) {
-		return nil, nil
-	}
-	matchedResults := reg.FindAllString(fmt.Sprintf("%s", content), -1)
-	var result []logsInfo
-	for _, matchedResult := range matchedResults {
-		r := logsInfo{}
-		_ = Json.Unmarshal([]byte(matchedResult), &r)
-		result = append(result, r)
-	}
-	return result, nil
 }
 
 func equal(a []string, b []string) bool {
