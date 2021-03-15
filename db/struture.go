@@ -37,23 +37,33 @@ type Items struct {
 
 // function return GroupName, every item of slice is the name of group
 // {"groupNames": ["1DCS", "2DCS"]}
-type GroupInfo struct {
+type GroupNameInfos struct {
 	GroupNames []string `json:"groupNames"`
 }
 
 // function return GroupProperty {"itemCount": 10, "itemColumnNames": ["units", "type"]}
-type GroupProperty struct {
+type GroupPropertyInfo struct {
 	ItemCount       string   `json:"itemCount"`
 	ItemColumnNames []string `json:"itemColumnNames"`
 }
 
+type GetGroupPropertyInfo struct {
+	GroupName string `json:"groupName" binding:"required"`
+	Condition string `json:"condition" binding:"required"`
+}
+
 type AddGroupInfo struct {
-	GroupName   string   `json:"groupName"`
-	ColumnNames []string `json:"columnNames"`
+	GroupName   string   `json:"groupName" binding:"required"`
+	ColumnNames []string `json:"columnNames" binding:"required"`
+}
+
+type AddGroupInfos struct {
+	GroupInfos []AddGroupInfo `json:"groupInfos" binding:"required"`
 }
 
 type DeletedGroupInfo struct {
-	GroupNames []string `json:"groupNames"`
+	GroupNames  []string `json:"groupNames" binding:"required"`
+	ColumnNames string   `json:"columnNames" binding:"required"`
 }
 
 type UpdatedGroupInfo struct {
@@ -67,14 +77,15 @@ type UpdatedGroupColumnInfo struct {
 	NewColumnNames []string `json:"newColumnNames"`
 }
 
-type DeletedGroupColumnInfo struct {
+type DeleteGroupColumnInfo struct {
 	GroupName   string   `json:"groupName"`
 	ColumnNames []string `json:"columnNames"`
 }
 
 type AddGroupColumnInfo struct {
-	GroupName   string   `json:"groupName"`
-	ColumnNames []string `json:"columnNames"`
+	GroupName     string   `json:"groupName"`
+	ColumnNames   []string `json:"columnNames"`
+	DefaultValues []string `json:"defaultValues"`
 }
 
 type DeletedHistoricalDataInfo struct {
@@ -88,6 +99,13 @@ type TimeStamp struct {
 }
 
 type HistoricalDataInfo struct {
+	ItemNames  []string `json:"itemNames"`  // ItemNames
+	StartTimes []int    `json:"startTimes"` // startTime Unix TimeStamp
+	EndTimes   []int    `json:"endTimes"`   // endTime Unix TimeStamp
+	Intervals  []int    `json:"intervals"`  // interval
+}
+
+type HistoricalDataInfoWithCondition struct {
 	ItemNames       []string   `json:"itemNames"`       // ItemNames
 	TimeStamps      [][]int    `json:"timeStamps"`      // time stamp
 	StartTimes      []int      `json:"startTimes"`      // startTime Unix TimeStamp
@@ -95,6 +113,11 @@ type HistoricalDataInfo struct {
 	Intervals       []int      `json:"intervals"`       // interval
 	FilterCondition string     `json:"filterCondition"` // filter condition: item["itemNames1"] > 100
 	DeadZones       []DeadZone `json:"deadZones"`       // deadZone filter condition
+}
+
+type HistoricalDataInfoWithTimeStamp struct {
+	ItemNames  []string `json:"itemNames"`  // ItemNames
+	TimeStamps [][]int  `json:"timeStamps"` // time stamp
 }
 
 type DeadZone struct {
@@ -163,14 +186,19 @@ type updatedCalculationInfo struct {
 	Duration    string `json:"duration"`
 }
 
-type logsInfo struct {
-	Level         string `json:"level"`
-	Method        string `json:"method"`
-	Message       string `json:"msg"`
-	RequestString string `json:"requestString"`
-	Url           string `json:"url"`
-	Time          string `json:"time"`
+type getLogsInfo struct {
+	LogType   string `json:"logType"`
+	Condition string `json:"condition"` // used to search according to message
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
 }
+
+type logLevel int
+
+const (
+	Info logLevel = iota
+	Error
+)
 
 // errors, some errors imported , some not
 
