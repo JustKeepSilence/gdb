@@ -55,7 +55,8 @@ func (gdb *Gdb) BatchWrite(b BatchWriteString) (Rows, error) {
 	if !ok {
 		return Rows{}, itemError{"itemError: " + itemNames[index]}
 	}
-	currentTimeStamp := int(time.Now().Unix()) // unix timestamp
+	n := time.Now()
+	currentTimeStamp := int(time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Second(), 0, time.UTC).Unix()) // unix timestamp
 	currentTimeStampString := strconv.Itoa(currentTimeStamp)
 	g := errgroup.Group{}
 	// write currentTimeStamp
@@ -218,7 +219,7 @@ func (gdb *Gdb) GetRawHistoricalData(itemNames ...string) (cmap.ConcurrentMap, e
 			for it.Next() {
 				t, err := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), itemName, "", -1), 10, 64)
 				if err != nil {
-					return err
+					//return err
 				}
 				v := fmt.Sprintf("%s", it.Value())
 				itemValues = append(itemValues, v)
@@ -228,8 +229,11 @@ func (gdb *Gdb) GetRawHistoricalData(itemNames ...string) (cmap.ConcurrentMap, e
 			return nil
 		})
 	}
-	_ = g.Wait()
-	return rawData, nil
+	if err := g.Wait(); err != nil {
+		return nil, err
+	} else {
+		return rawData, nil
+	}
 }
 
 func (gdb *Gdb) DeleteHistoricalData(itemNames []string, timeStamps []TimeStamp) (Rows, error) {
@@ -377,7 +381,7 @@ func (gdb *Gdb) getHistoricalDataWithStringTimeStamp(itemNames []string, timeSta
 			defer wg.Done()
 			var values []string
 			for j := 0; j < len(timeStamps); j++ {
-				v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[j])), nil)
+				v, _ := sn.Get([]byte(name+timeStamps[j]), nil)
 				values = append(values, fmt.Sprintf("%s", v))
 			}
 			rawData.Set(name, []interface{}{values, timeStamps})
