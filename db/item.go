@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 /*
@@ -70,19 +69,12 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 	for _, itemName := range itemNames {
 		gdb.rtDbFilter.Set(itemName, struct{}{})
 	}
-	// initial write realTime data, all key write ''
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		batch := leveldb.Batch{}
-		for i := 0; i < len(itemNames); i++ {
-			batch.Put([]byte(itemNames[i]), []byte("0"))
-		}
-		_ = gdb.rtDb.Write(&batch, nil)
-		return
-	}()
-	wg.Wait()
+	// initial write realTime data, all key write ""
+	batch := leveldb.Batch{}
+	for i := 0; i < len(itemNames); i++ {
+		batch.Put([]byte(itemNames[i]), []byte(""))
+	}
+	_ = gdb.rtDb.Write(&batch, nil)
 	return Rows{len(itemValues)}, nil
 }
 
