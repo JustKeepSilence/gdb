@@ -16,13 +16,6 @@ const (
 	logPath = "./logs/gdb_log.log"
 )
 
-func WriteInfo(info string) {
-	f, _ := os.OpenFile(logPath, os.O_APPEND, 0666)
-	log.SetOutput(f)
-	log.SetFormatter(&log.JSONFormatter{})
-	log.WithFields(log.Fields{}).Info(info)
-}
-
 func WriteError(requestUrl string, requestMethod string, requestString string, content string) {
 	f, _ := os.OpenFile(logPath, os.O_APPEND, 0666)
 	log.SetOutput(f)
