@@ -10,7 +10,6 @@ package db
 import (
 	"fmt"
 	"github.com/JustKeepSilence/gdb/cmap"
-	"github.com/JustKeepSilence/gdb/utils"
 	. "github.com/ahmetb/go-linq/v3"
 	"github.com/dop251/goja"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -567,11 +566,11 @@ func (gdb *Gdb) getUnixTimeStamp(t string) int64 {
 }
 
 func (gdb *Gdb) getNowTime() string {
-	return time.Now().Format(utils.TimeFormatString)
+	return time.Now().Format(timeFormatString)
 }
 
 func (gdb *Gdb) getTime(d int) string {
-	return time.Now().Add(time.Duration(d) * time.Second).Format(utils.TimeFormatString)
+	return time.Now().Add(time.Duration(d) * time.Second).Format(timeFormatString)
 }
 
 func (gdb *Gdb) getRtData(itemNames []string) ([]string, error) {

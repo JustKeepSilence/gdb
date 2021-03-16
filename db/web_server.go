@@ -9,7 +9,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/JustKeepSilence/gdb/utils"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -163,7 +162,7 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 func InitialDbServer(ip string, port int64, dbPath, itemDbPath string, startReadConfigTime time.Time, authorization bool) error {
 	checkResult, err := portInUse(port)
 	if err != nil {
-		return fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(utils.TimeFormatString), port, err)
+		return fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(timeFormatString), port, err)
 	}
 	if checkResult != -1 {
 		// used
@@ -183,7 +182,7 @@ func InitialDbServer(ip string, port int64, dbPath, itemDbPath string, startRead
 	}
 	finalTime := time.Now()
 	_ = gdb.writeLog(Info, "", fmt.Sprintf("The system starts successfully, time consuming :%d ms", finalTime.Sub(startReadConfigTime).Milliseconds()), "", "")
-	fmt.Printf("%s: launch web service successfully!: %s \n", time.Now().Format(utils.TimeFormatString), address)
+	fmt.Printf("%s: launch web service successfully!: %s \n", time.Now().Format(timeFormatString), address)
 	g.Go(func() error {
 		err := appServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {

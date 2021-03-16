@@ -10,7 +10,21 @@ package db
 /*
 The data structure and errors returned by GDB
 */
+
+const (
+	timeFormatString = "2006-01-02 15:04:05"
+)
+
 // structure
+
+type Config struct {
+	Port            int64  `json:"port"`
+	DbPath          string `json:"dbPath"`
+	ItemDbPath      string `json:"itemDbPath"`
+	IP              string `json:"ip"`
+	ApplicationName string `json:"applicationName"`
+	Authorization   bool   `json:"authorization"`
+}
 
 type ResponseData struct {
 	Code    int         `json:"code"`
@@ -191,6 +205,10 @@ type getLogsInfo struct {
 	Condition string `json:"condition"` // used to search according to message
 	StartTime string `json:"startTime"`
 	EndTime   string `json:"endTime"`
+}
+
+type userToken struct {
+	Token string `json:"token"`
 }
 
 type logLevel int

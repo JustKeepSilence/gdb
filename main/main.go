@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/JustKeepSilence/gdb/db"
-	"github.com/JustKeepSilence/gdb/utils"
 	"log"
 	"os"
 	"time"
@@ -12,9 +10,10 @@ import (
 
 func main() {
 	startReadConfigTime := time.Now()
-	dbConfigs, err := readDbConfig("./config.json")
+	dbConfigs, err := db.ReadDbConfig("./config.json")
 	if err != nil {
-		utils.WriteError("", "", "", err.Error())
+		log.Print(fmt.Errorf("System initialization failed: " + err.Error()))
+		time.Sleep(60 * time.Second)
 		return
 	}
 	dbPath, itemDbPath, authorization := dbConfigs.DbPath, dbConfigs.ItemDbPath, dbConfigs.Authorization
@@ -23,7 +22,7 @@ func main() {
 	dbPort := dbConfigs.Port
 	if len(dbIp) == 0 {
 		// not config
-		dbIp = utils.GetLocalIp()
+		dbIp = db.GetLocalIp()
 	}
 	// generate uploadFiles folder
 	_, err = os.Lstat("./uploadFiles")
@@ -31,35 +30,11 @@ func main() {
 		_ = os.MkdirAll("./uploadFiles", 0766)
 	}
 	endReadConfigTimer := time.Now()
-	fmt.Printf("%s: Read the configuration successfully, time consuming :%dms\n", time.Now().Format(utils.TimeFormatString),
+	fmt.Printf("%s: Read the configuration successfully, time consuming :%dms\n", time.Now().Format("2006-01-02 15:04:05"),
 		endReadConfigTimer.Sub(startReadConfigTime).Milliseconds())
 	if err := db.InitialDbServer(dbIp, dbPort, dbPath, itemDbPath, startReadConfigTime, authorization); err != nil {
-		//utils.WriteError("", "", "", err.Error())
 		log.Print(fmt.Errorf("System initialization failed: " + err.Error()))
 		time.Sleep(60 * time.Second)
+		return
 	}
-}
-
-type config struct {
-	Port            int64  `json:"port"`
-	DbPath          string `json:"dbPath"`
-	ItemDbPath      string `json:"itemDbPath"`
-	IP              string `json:"ip"`
-	ApplicationName string `json:"applicationName"`
-	Authorization   bool   `json:"authorization"`
-}
-
-// get configs of db
-func readDbConfig(path string) (config, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return config{}, err
-	}
-	defer file.Close()
-	fileInfo, _ := os.Stat(path)
-	b := make([]byte, fileInfo.Size())
-	_, _ = file.Read(b)
-	c := config{}
-	_ = json.Unmarshal(b, &c)
-	return c, nil
 }

@@ -8,7 +8,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/JustKeepSilence/gdb/sqlite"
 	. "github.com/ahmetb/go-linq/v3"
 	"github.com/deckarep/golang-set"
 	"strings"
@@ -71,7 +70,7 @@ func (gdb *Gdb) AddGroups(groupInfos ...AddGroupInfo) (Rows, error) {
 		columnNames = append(columnNames, r)
 		groupNames = append(groupNames, []string{groupName})
 	}
-	err1 := sqlite.InsertItems(gdb.ItemDbPath, "insert into group_cfg (groupName) values(?)", groupNames...) // add group to group_cfg
+	err1 := insertItems(gdb.ItemDbPath, "insert into group_cfg (groupName) values(?)", groupNames...) // add group to group_cfg
 	if err1 != nil {
 		// fail adding
 		return Rows{}, err1
@@ -90,7 +89,7 @@ func (gdb *Gdb) AddGroups(groupInfos ...AddGroupInfo) (Rows, error) {
 			sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE )"))
 		}
 		createTableSqlString := sb.String()
-		if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{createTableSqlString}...); err != nil {
+		if err := updateItems(gdb.ItemDbPath, []string{createTableSqlString}...); err != nil {
 			// fail in creating table
 			gdb.rollBack(groupNames...)
 			return Rows{}, err
@@ -114,12 +113,12 @@ func (gdb *Gdb) DeleteGroups(groupInfos GroupNameInfos) (Rows, error) {
 	}
 	for _, groupName := range groupNames {
 		// delete columns from group_cfg
-		err := sqlite.UpdateItems(gdb.ItemDbPath, []string{"delete from group_cfg where groupName='" + groupName + "'"}...)
+		err := updateItems(gdb.ItemDbPath, []string{"delete from group_cfg where groupName='" + groupName + "'"}...)
 		if err != nil {
 			return Rows{}, err
 		}
 		// drop table
-		if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{"drop table '" + groupName + "'"}...); err != nil {
+		if err := updateItems(gdb.ItemDbPath, []string{"drop table '" + groupName + "'"}...); err != nil {
 			return Rows{}, err
 		}
 		c++
@@ -129,7 +128,7 @@ func (gdb *Gdb) DeleteGroups(groupInfos GroupNameInfos) (Rows, error) {
 
 // get group name
 func (gdb *Gdb) GetGroups() (GroupNameInfos, error) {
-	r, err := sqlite.Query(gdb.ItemDbPath, "select groupName from group_cfg")
+	r, err := query(gdb.ItemDbPath, "select groupName from group_cfg")
 	if err != nil {
 		return GroupNameInfos{}, err
 	}
@@ -142,11 +141,11 @@ func (gdb *Gdb) GetGroups() (GroupNameInfos, error) {
 
 // get the column and item count of the given groupName
 func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo, error) {
-	c, err := sqlite.Query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names of given table
+	c, err := query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names of given table
 	if err != nil {
 		return GroupPropertyInfo{}, err
 	}
-	itemCount, err := sqlite.Query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
+	itemCount, err := query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
 	if err != nil {
 		return GroupPropertyInfo{}, err
 	}
@@ -170,16 +169,16 @@ func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupInfo) (Rows, error) {
 		sqlStrings = append(sqlStrings, "update group_cfg set groupName='"+newGroupName+"' where groupName='"+oldGroupName+"'")
 		c++ // update successfully
 	}
-	if err := sqlite.UpdateItems(gdb.ItemDbPath, sqlStrings...); err != nil {
+	if err := updateItems(gdb.ItemDbPath, sqlStrings...); err != nil {
 		return Rows{}, err
 	}
 	for _, groupInfo := range groupInfos {
 		oldGroupName := groupInfo.OldGroupName
 		newGroupName := groupInfo.NewGroupName
 		//alter table name
-		if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{"alter table '" + oldGroupName + "' rename to '" + newGroupName + "'"}...); err != nil {
+		if err := updateItems(gdb.ItemDbPath, []string{"alter table '" + oldGroupName + "' rename to '" + newGroupName + "'"}...); err != nil {
 			// rollback
-			_ = sqlite.UpdateItems(gdb.ItemDbPath, []string{"update group_cfg set groupName='" + oldGroupName + "' where groupName='" + newGroupName + "'"}...)
+			_ = updateItems(gdb.ItemDbPath, []string{"update group_cfg set groupName='" + oldGroupName + "' where groupName='" + newGroupName + "'"}...)
 			return Rows{}, err
 		}
 	}
@@ -204,7 +203,7 @@ func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnInfo) (Cols, error
 	for i := 0; i < len(checkedOldColumnNames); i++ {
 		sqlStrings = append(sqlStrings, "alter table '"+groupName+"' rename column '"+checkedOldColumnNames[i]+"' to '"+addedColumnNames[i]+"'")
 	}
-	err := sqlite.UpdateItems(gdb.ItemDbPath, sqlStrings...)
+	err := updateItems(gdb.ItemDbPath, sqlStrings...)
 	if err != nil {
 		return Cols{}, err
 	}
@@ -222,7 +221,7 @@ func (gdb *Gdb) DeleteGroupColumns(info DeleteGroupColumnInfo) (Cols, error) {
 		return Cols{}, err
 	}
 	// try drop t1_backup
-	_ = sqlite.UpdateItems(gdb.ItemDbPath, []string{"drop table 't1_backup'"}...)
+	_ = updateItems(gdb.ItemDbPath, []string{"drop table 't1_backup'"}...)
 	cs := mapset.NewSet(convertStringToInterface(r.ItemColumnNames...)...)  // existed columns, include itemName, not include id
 	ds := mapset.NewSet(convertStringToInterface(deletedColumnNames...)...) // deleted groups
 	// check whether the column to be deleted exist
@@ -279,7 +278,7 @@ func (gdb *Gdb) DeleteGroupColumns(info DeleteGroupColumnInfo) (Cols, error) {
 	sb.Write([]byte(" from 't1_backup' "))
 	sb.Write([]byte("; drop table t1_backup"))
 	sqlString := sb.String()
-	if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{sqlString}...); err != nil {
+	if err := updateItems(gdb.ItemDbPath, []string{sqlString}...); err != nil {
 		return Cols{}, err
 	}
 	return Cols{len(deletedColumnNames)}, nil
@@ -295,7 +294,7 @@ func (gdb *Gdb) AddGroupColumns(info AddGroupColumnInfo) (Cols, error) {
 	for index, name := range addedColumnNames {
 		sqlStrings = append(sqlStrings, "alter table '"+groupName+"' add column '"+name+"' text default '"+defaultValues[index]+"'")
 	}
-	if err := sqlite.UpdateItems(gdb.ItemDbPath, sqlStrings...); err != nil {
+	if err := updateItems(gdb.ItemDbPath, sqlStrings...); err != nil {
 		return Cols{}, err
 	}
 	return Cols{len(addedColumnNames)}, nil
@@ -306,12 +305,12 @@ func (gdb *Gdb) rollBack(groupNames ...[]string) {
 	var deletedGroupNames []string
 	for j := 0; j < len(groupNames); j++ {
 		deletedGroupNames = append(deletedGroupNames, "'"+groupNames[j][0]+"'")
-		_ = sqlite.UpdateItems(gdb.ItemDbPath, []string{"drop table '" + groupNames[j][0] + "'"}...) // delete added table
+		_ = updateItems(gdb.ItemDbPath, []string{"drop table '" + groupNames[j][0] + "'"}...) // delete added table
 		// An error indicates that the table does not exist
 	}
 	// Delete columns that have been added to group_cfg
 	deleteGroupCfg := "delete from group_cfg where groupName=" + strings.Join(deletedGroupNames, " or groupName=")
-	_ = sqlite.UpdateItems(gdb.ItemDbPath, []string{deleteGroupCfg}...)
+	_ = updateItems(gdb.ItemDbPath, []string{deleteGroupCfg}...)
 }
 
 // check whether column name is valid, trim ‘ and empty string between the column name

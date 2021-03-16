@@ -8,31 +8,37 @@ goVersion: 1.15.3
 package db
 
 import (
+	"crypto/md5"
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	"github.com/JustKeepSilence/gdb/sqlite"
 	"os"
 	"strings"
+	"time"
 )
 
 // user login
-func (gdb *Gdb) userLogin(info authInfo) error {
+func (gdb *Gdb) userLogin(info authInfo) (userToken, error) {
 	userName := info.UserName
 	v, err := gdb.infoDb.Get([]byte(userName), nil)
-	if err != nil {
-		return userNameError{"userNameError: " + userName}
+	if err != nil || v == nil {
+		return userToken{}, userNameError{"userNameError: " + userName}
 	} else {
 		ui := userInfo{}
 		err := Json.Unmarshal(v, &ui)
 		if err != nil {
-			return fmt.Errorf("fail parsing userInfo: " + err.Error())
+			return userToken{}, fmt.Errorf("fail parsing userInfo: " + err.Error())
 		} else {
 			if fmt.Sprintf("%s", ui.PassWord) != info.PassWord {
-				return userNameError{"userNameError: " + userName}
+				return userToken{}, userNameError{"userNameError: " + userName}
+			} else {
+				// correct userInfo, generate token
+				b := []byte("seu" + time.Now().Format(timeFormatString) + "JustKeepSilence")
+				token := fmt.Sprintf("%x", md5.Sum(b))                            // result is 32-bit lowercase
+				_ = gdb.infoDb.Put([]byte(userName+"_token"), []byte(token), nil) // write token to gdb
+				return userToken{token}, nil
 			}
 		}
 	}
-	return nil
 }
 
 func (gdb *Gdb) getUserInfo(userName string) (map[string]interface{}, error) {
@@ -147,7 +153,7 @@ func (gdb *Gdb) getLogs(logType, condition, startTime, endTime string) ([]map[st
 			queryString = "select * from log_cfg where logType='" + logType + "' " + " and insertTime >= '" + st + "' and logMessage like '%" + condition + "%' order by insertTime desc"
 		}
 	}
-	if result, err := sqlite.Query(gdb.ItemDbPath, queryString); err != nil {
+	if result, err := query(gdb.ItemDbPath, queryString); err != nil {
 		return nil, err
 	} else {
 		return result, nil

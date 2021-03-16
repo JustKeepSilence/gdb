@@ -8,9 +8,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/JustKeepSilence/gdb/config"
-	"github.com/JustKeepSilence/gdb/sqlite"
-	"github.com/JustKeepSilence/gdb/utils"
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/eventloop"
 	"github.com/gin-gonic/gin"
@@ -280,7 +277,7 @@ func (gdb *Gdb) getRealTimeDataHandler(c *gin.Context) {
 		endTime := time.Now()
 		responseData, err := gdb.GetRealTimeData(itemNames...)
 		endTime1 := time.Now()
-		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(utils.TimeFormatString), endTime.Sub(startTime).Milliseconds(), endTime1.Sub(endTime).Milliseconds())
+		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(timeFormatString), endTime.Sub(startTime).Milliseconds(), endTime1.Sub(endTime).Milliseconds())
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
@@ -305,7 +302,7 @@ func (gdb *Gdb) getHistoricalDataHandler(c *gin.Context) {
 		endTime1 := time.Now()
 		responseData, err := gdb.GetHistoricalData(itemNames, startTimes, endTimes, intervals)
 		endTime2 := time.Now()
-		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(utils.TimeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
+		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(timeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
@@ -333,7 +330,7 @@ func (gdb *Gdb) getHistoricalDataWithConditionHandler(c *gin.Context) {
 		endTime1 := time.Now()
 		responseData, err := gdb.GetHistoricalDataWithCondition(itemNames, startTimes, endTimes, intervals, filterCondition, deadZones...)
 		endTime2 := time.Now()
-		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(utils.TimeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
+		fmt.Printf("[%s]: reading configs: %d ms,getting: %d ms\n", time.Now().Format(timeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
@@ -379,7 +376,7 @@ func (gdb *Gdb) getHistoricalDataWithStampHandler(c *gin.Context) {
 		endTime1 := time.Now()
 		responseData, err := gdb.GetHistoricalDataWithStamp(itemNames, timeStamps...)
 		endTime2 := time.Now()
-		fmt.Printf("[%s]: reading configs: %d ms,writing: %d ms\n", time.Now().Format(utils.TimeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
+		fmt.Printf("[%s]: reading configs: %d ms,writing: %d ms\n", time.Now().Format(timeFormatString), endTime1.Sub(startTime1).Milliseconds(), endTime2.Sub(endTime1).Milliseconds())
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
@@ -444,11 +441,11 @@ func (gdb *Gdb) handleUserLogin(c *gin.Context) {
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
 	} else {
-		err := gdb.userLogin(g) // add groups
+		token, err := gdb.userLogin(g) // add groups
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
-			r, _ := Json.Marshal(ResponseData{200, "", nil})
+			r, _ := Json.Marshal(ResponseData{200, "", token})
 			c.String(200, "%s", r)
 		}
 	}
@@ -563,8 +560,8 @@ func (gdb *Gdb) addCalcItemHandler(c *gin.Context) {
 			gdb.handleError(c, err.Error())
 		} else {
 			// add item to calc_cfg
-			createTime := time.Now().Format(utils.TimeFormatString)
-			_, _ = sqlite.UpdateItem(gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime) values ('"+g.Description+"', '"+g.Expression+"' , '"+createTime+"')")
+			createTime := time.Now().Format(timeFormatString)
+			_, _ = updateItem(gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime) values ('"+g.Description+"', '"+g.Expression+"' , '"+createTime+"')")
 			r, _ := Json.Marshal(ResponseData{200, "", responseData})
 			c.String(200, "%s", r)
 		}
@@ -608,7 +605,7 @@ func (gdb *Gdb) updateCalcItemHandler(c *gin.Context) {
 
 func (gdb *Gdb) startCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id") // get id
-	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set status='true' where id="+id)
+	_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='true' where id="+id)
 	if err != nil {
 		gdb.handleError(c, err.Error())
 	} else {
@@ -619,7 +616,7 @@ func (gdb *Gdb) startCalculationItemHandler(c *gin.Context) {
 
 func (gdb *Gdb) stopCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id") // get id
-	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set status='false' where id="+id)
+	_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='false' where id="+id)
 	if err != nil {
 		gdb.handleError(c, err.Error())
 	} else {
@@ -630,7 +627,7 @@ func (gdb *Gdb) stopCalculationItemHandler(c *gin.Context) {
 
 func (gdb *Gdb) deleteCalculationItemHandler(c *gin.Context) {
 	id := c.Param("id")
-	_, err := sqlite.UpdateItem(gdb.ItemDbPath, "delete from calc_cfg where id="+id)
+	_, err := updateItem(gdb.ItemDbPath, "delete from calc_cfg where id="+id)
 	if err != nil {
 		gdb.handleError(c, err.Error())
 	} else {
@@ -643,7 +640,7 @@ func (gdb *Gdb) deleteCalculationItemHandler(c *gin.Context) {
 func (gdb *Gdb) getProcessInfo() error {
 	tm, _ := mem.VirtualMemory() // total RAM of machine
 	ps, _ := process.Processes()
-	dbConfigs, err := config.ReadDbConfig("./config.json")
+	dbConfigs, err := ReadDbConfig("./config.json")
 	appName := dbConfigs.ApplicationName
 	if err != nil {
 		return err
@@ -676,7 +673,7 @@ func (gdb *Gdb) calc() error {
 	for {
 		select {
 		case startTime := <-startTicker.C:
-			rows, _ := sqlite.Query(gdb.ItemDbPath, "select id, expression, status, duration from calc_cfg where 1=1")
+			rows, _ := query(gdb.ItemDbPath, "select id, expression, status, duration from calc_cfg where 1=1")
 			for _, row := range rows {
 				go func(r map[string]string) {
 					status, _ := strconv.ParseBool(r["status"]) // if calc
@@ -703,7 +700,7 @@ func (gdb *Gdb) calc() error {
 									program, _ := goja.Compile("main.js", expression, false)
 									_, err := vm.RunProgram(program)
 									if err != nil {
-										_, _ = sqlite.UpdateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+r["id"])
+										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+r["id"])
 									}
 								})
 							}
@@ -736,7 +733,7 @@ func (gdb *Gdb) writeLog(level logLevel, requestMethod, message, requestString, 
 		sqlStringBuilder.Write([]byte(message + "')"))
 	}
 	sqlString := sqlStringBuilder.String() // for debugging
-	_, err := sqlite.UpdateItem(gdb.ItemDbPath, sqlString)
+	_, err := updateItem(gdb.ItemDbPath, sqlString)
 	if err != nil {
 		return err
 	}

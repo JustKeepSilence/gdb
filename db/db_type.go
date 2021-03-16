@@ -9,7 +9,6 @@ package db
 import (
 	"github.com/JustKeepSilence/gdb/cmap"
 	"github.com/JustKeepSilence/gdb/compare"
-	"github.com/JustKeepSilence/gdb/sqlite"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
@@ -69,10 +68,10 @@ func (gdb *Gdb) initialDb() error {
 	_ = gdb.infoDb.Put([]byte(initialUserName), []byte(initialUserInfo), nil) // initial user info
 	gdb.rtDbFilter = cmap.New()
 	// add all items in SQLite to bloom filter
-	groups, _ := sqlite.Query(gdb.ItemDbPath, "select groupName from group_cfg")
+	groups, _ := query(gdb.ItemDbPath, "select groupName from group_cfg")
 	for _, group := range groups {
 		groupName := group["groupName"]
-		items, _ := sqlite.Query(gdb.ItemDbPath, "select itemName from '"+groupName+"'")
+		items, _ := query(gdb.ItemDbPath, "select itemName from '"+groupName+"'")
 		for _, item := range items {
 			itemName := item["itemName"]
 			gdb.rtDbFilter.Set(itemName, struct{}{}) // add key to filter, don't lock
@@ -89,8 +88,8 @@ func (gdb *Gdb) initialSQLite() error {
 	sqlAddCalcCfgTable := `create table if not exists calc_cfg (id integer not null primary key, description text, expression text, status text default 'false', duration text default 10, errorMessage text default '', createTime text, updatedTime text default '')`                                 //  add calc cfg table
 	sqlAddLogCfgTable := `create table if not exists log_cfg (id integer not null primary key, logType text default 'error', requestString text default '', requestMethod text default 'post', requestUrl text default '', logMessage text, insertTime  NUMERIC DEFAULT (datetime('now','localtime')))` // create log table
 	// columns are id, logType,  requestString, requestMethod, requestUrl, logMessage, insertTime
-	_, _ = sqlite.UpdateItem(gdb.ItemDbPath, sqlAddCalc)
-	if err := sqlite.UpdateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable}...); err != nil {
+	_, _ = updateItem(gdb.ItemDbPath, sqlAddCalc)
+	if err := updateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable}...); err != nil {
 		return err
 	}
 	return nil

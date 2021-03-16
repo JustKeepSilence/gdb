@@ -8,7 +8,6 @@ goVersion: 1.15.3
 package db
 
 import (
-	"github.com/JustKeepSilence/gdb/sqlite"
 	"github.com/syndtr/goleveldb/leveldb"
 	"regexp"
 	"strconv"
@@ -22,7 +21,7 @@ ItemHandler
 func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	itemValues := itemInfo.Values
-	c, err := sqlite.Query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names
+	c, err := query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names
 	if err != nil {
 		return Rows{-1}, err
 	}
@@ -63,7 +62,7 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 		}
 		addedItemValues = append(addedItemValues, t)
 	}
-	if err := sqlite.InsertItems(gdb.ItemDbPath, insertSqlString, addedItemValues...); err != nil {
+	if err := insertItems(gdb.ItemDbPath, insertSqlString, addedItemValues...); err != nil {
 		return Rows{-1}, err
 	}
 	for _, itemName := range itemNames {
@@ -81,14 +80,14 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 func (gdb *Gdb) DeleteItems(itemInfo ItemInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
-	item, err := sqlite.Query(gdb.ItemDbPath, "select itemName from '"+groupName+"' where "+condition)
+	item, err := query(gdb.ItemDbPath, "select itemName from '"+groupName+"' where "+condition)
 	if len(item) == 0 {
 		return Rows{}, conditionError{"conditionError: " + condition}
 	}
 	if err != nil {
 		return Rows{}, err
 	}
-	rows, err := sqlite.UpdateItem(gdb.ItemDbPath, "delete from '"+groupName+"' where "+condition)
+	rows, err := updateItem(gdb.ItemDbPath, "delete from '"+groupName+"' where "+condition)
 	if err != nil {
 		return Rows{}, err
 	}
@@ -105,14 +104,14 @@ func (gdb *Gdb) GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
 	var err error
 	if startRow == -1 {
 		// all rows
-		rows, err = sqlite.Query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition)
+		rows, err = query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// Limit query
 		rowCount := itemInfo.RowCount
-		rows, err = sqlite.Query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition+" Limit "+strconv.Itoa(rowCount)+" offset "+strconv.Itoa(startRow))
+		rows, err = query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition+" Limit "+strconv.Itoa(rowCount)+" offset "+strconv.Itoa(startRow))
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +122,7 @@ func (gdb *Gdb) GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
 func (gdb *Gdb) GetItemsWithCount(itemInfo ItemInfo) (Items, error) {
 	condition := itemInfo.Condition
 	groupName := itemInfo.GroupName
-	c, err := sqlite.Query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
+	c, err := query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
 	if err != nil {
 		return Items{}, err
 	}
@@ -147,7 +146,7 @@ func (gdb *Gdb) UpdateItems(itemInfo ItemInfo) (Rows, error) {
 	if !regPoint.Match([]byte(clause)) {
 		// no itemName
 		// update SQLite
-		rows, err := sqlite.UpdateItem(gdb.ItemDbPath, "update '"+groupName+"' set "+clause+" where "+condition)
+		rows, err := updateItem(gdb.ItemDbPath, "update '"+groupName+"' set "+clause+" where "+condition)
 		if err != nil {
 			return Rows{}, err
 		}
