@@ -138,7 +138,6 @@ func main() {
 // mock writing data
 
 func mockWritingData(filePath string) {
-	getUnixTimeStamp()
 	contents, err := readExcel(filePath)
 	if err != nil {
 		fmt.Println(err)
@@ -239,19 +238,4 @@ func SendPost(requestBody []byte, count int) ([]byte, error) {
 		return nil, fmt.Errorf("fail in reading response: %s", err)
 	}
 	return respBytes, nil
-}
-
-func getUnixTimeStamp() {
-	fmt.Println(2 % 1)
-	t := time.Date(2021, 2, 11, 13, 15, 0, 0, time.UTC)
-	ts := t.Unix()
-	t1 := time.Date(2021, 2, 11, 13, 30, 0, 0, time.UTC)
-	ts1 := t1.Unix()
-	n := time.Now()
-	nts := n.Unix()
-	fmt.Println(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Minute())
-	t3 := time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Minute(), 0, time.UTC)
-	ts3 := t3.Unix()
-	fmt.Println(n.Nanosecond(), t3.Nanosecond())
-	fmt.Println(ts, ts1, nts, ts3)
 }
