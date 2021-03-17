@@ -188,46 +188,75 @@ type GdbInfoData struct {
 
 // page
 
-type calcInfo struct {
-	Expression  string `json:"expression"`
-	Flag        string `json:"flag"`
-	Duration    string `json:"duration"`
-	CreateTime  string `json:"createTime"`
-	UpdatedTime string `json:"updatedTime"`
-	Description string `json:"description"`
-}
-
 type authInfo struct {
 	UserName string `json:"userName"`
 	PassWord string `json:"passWord"`
 }
 
-type fileInfo struct {
-	FileName  string `json:"fileName"`
-	GroupName string `json:"groupName"`
+type userToken struct {
+	Token string `json:"token"`
 }
 
-type userInfo struct {
+type UserName struct {
+	Name string `json:"name"`
+}
+
+type UserInfo struct {
+	UserName
+	Role []string `json:"role"`
+}
+
+type gdbUserInfo struct {
 	PassWord string   `json:"passWord"`
 	Roles    []string `json:"roles"`
 }
 
-type updatedCalculationInfo struct {
-	Id          string `json:"id"`
-	Description string `json:"description"`
-	Expression  string `json:"expression"`
-	Duration    string `json:"duration"`
-}
-
-type getLogsInfo struct {
+type queryLogsInfo struct {
 	LogType   string `json:"logType"`
 	Condition string `json:"condition"` // used to search according to message
 	StartTime string `json:"startTime"`
 	EndTime   string `json:"endTime"`
 }
 
-type userToken struct {
-	Token string `json:"token"`
+type LogsInfo struct {
+	Infos []map[string]string `json:"infos"`
+}
+
+// calc
+
+type addedCalcItemInfo struct {
+	Expression  string `json:"expression"`
+	Flag        string `json:"flag"`
+	Duration    string `json:"duration"`
+	Description string `json:"description"`
+}
+
+type CalculationResult struct {
+	Result interface{} `json:"result"`
+}
+
+type queryCalcItemsInfo struct {
+	Condition string `json:"condition"`
+}
+
+type CalcItemsInfo struct {
+	Infos []map[string]string `json:"infos"`
+}
+
+type updatedCalcInfo struct {
+	Id          string `json:"id"`
+	Description string `json:"description"`
+	Expression  string `json:"expression"`
+	Duration    string `json:"duration"`
+}
+
+type calcId struct {
+	Id []string `json:"id"`
+}
+
+type fileInfo struct {
+	FileName  string `json:"fileName"`
+	GroupName string `json:"groupName"`
 }
 
 type logLevel int

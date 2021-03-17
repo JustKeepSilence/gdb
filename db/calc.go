@@ -13,7 +13,7 @@ import (
 )
 
 // test
-func (gdb *Gdb) testCalculation(expression string) (interface{}, error) {
+func (gdb *Gdb) testCalculation(expression string) (CalculationResult, error) {
 	loop := eventloop.NewEventLoop()
 	var runError error
 	var result goja.Value
@@ -32,20 +32,20 @@ func (gdb *Gdb) testCalculation(expression string) (interface{}, error) {
 		result, runError = vm.RunProgram(p)
 	})
 	if runError != nil {
-		return nil, runTimeError{"runTimeError:" + runError.Error()}
+		return CalculationResult{}, runTimeError{"runTimeError:" + runError.Error()}
 	}
-	return result.Export(), nil
+	return CalculationResult{result.Export()}, nil
 }
 
-func (gdb *Gdb) getCalculationItem(condition string) ([]map[string]string, error) {
+func (gdb *Gdb) getCalculationItem(condition string) (CalcItemsInfo, error) {
 	rows, err := query(gdb.ItemDbPath, "select id, description, expression, status, duration, errorMessage, createTime, updatedTime from calc_cfg where "+condition)
 	if err != nil {
-		return nil, err
+		return CalcItemsInfo{}, err
 	}
-	return rows, nil
+	return CalcItemsInfo{rows}, nil
 }
 
-func (gdb *Gdb) updateCalculationItem(info updatedCalculationInfo) (Rows, error) {
+func (gdb *Gdb) updateCalculationItem(info updatedCalcInfo) (Rows, error) {
 	id, description, expression, duration := info.Id, info.Description, info.Expression, info.Duration
 	r, err := updateItem(gdb.ItemDbPath, "update calc_cfg set description='"+description+"', expression='"+expression+"', duration='"+duration+"' where id="+id)
 	if err != nil {

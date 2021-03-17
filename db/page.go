@@ -23,7 +23,7 @@ func (gdb *Gdb) userLogin(info authInfo) (userToken, error) {
 	if err != nil || v == nil {
 		return userToken{}, userNameError{"userNameError: " + userName}
 	} else {
-		ui := userInfo{}
+		ui := gdbUserInfo{}
 		err := Json.Unmarshal(v, &ui)
 		if err != nil {
 			return userToken{}, fmt.Errorf("fail parsing userInfo: " + err.Error())
@@ -41,17 +41,20 @@ func (gdb *Gdb) userLogin(info authInfo) (userToken, error) {
 	}
 }
 
-func (gdb *Gdb) getUserInfo(userName string) (map[string]interface{}, error) {
+func (gdb *Gdb) getUserInfo(userName string) (UserInfo, error) {
 	v, err := gdb.infoDb.Get([]byte(userName), nil)
 	if err != nil {
-		return nil, userNameError{"userNameError: " + userName}
+		return UserInfo{}, userNameError{"userNameError: " + userName}
 	} else {
-		ui := userInfo{}
+		ui := gdbUserInfo{}
 		err := Json.Unmarshal(v, &ui)
 		if err != nil {
-			return nil, fmt.Errorf("fail parsing userInfo: " + err.Error())
+			return UserInfo{}, fmt.Errorf("fail parsing userInfo: " + err.Error())
 		} else {
-			return map[string]interface{}{"userName": userName, "role": ui.Roles}, nil
+			return UserInfo{
+				UserName: UserName{userName},
+				Role:     ui.Roles,
+			}, nil
 		}
 	}
 }
@@ -133,7 +136,7 @@ func getJsCode(fileName string) (string, error) {
 	return c1, nil
 }
 
-func (gdb *Gdb) getLogs(logType, condition, startTime, endTime string) ([]map[string]string, error) {
+func (gdb *Gdb) getLogs(logType, condition, startTime, endTime string) (LogsInfo, error) {
 	var queryString string
 	st, et := strings.Trim(startTime, " "), strings.Trim(endTime, " ")
 	if logType == "all" {
@@ -154,9 +157,9 @@ func (gdb *Gdb) getLogs(logType, condition, startTime, endTime string) ([]map[st
 		}
 	}
 	if result, err := query(gdb.ItemDbPath, queryString); err != nil {
-		return nil, err
+		return LogsInfo{}, err
 	} else {
-		return result, nil
+		return LogsInfo{result}, nil
 	}
 }
 

@@ -446,13 +446,13 @@ func (gdb *Gdb) handleUserLogin(c *gin.Context) {
 }
 
 func (gdb *Gdb) handleGetUerInfo(c *gin.Context) {
-	g := map[string]string{} // userName
+	g := UserName{} // userName
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
 	} else {
-		responseData, err := gdb.getUserInfo(g["userName"]) // add groups
+		responseData, err := gdb.getUserInfo(g.Name) // add groups
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
@@ -509,7 +509,7 @@ func (gdb *Gdb) getJsCodeHandler(c *gin.Context) {
 
 func (gdb *Gdb) getLogsHandler(c *gin.Context) {
 	request := c.Request
-	g := getLogsInfo{}
+	g := queryLogsInfo{}
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, err.Error())
@@ -526,7 +526,7 @@ func (gdb *Gdb) getLogsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) addCalcItemHandler(c *gin.Context) {
-	g := calcInfo{}
+	g := addedCalcItemInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -538,21 +538,24 @@ func (gdb *Gdb) addCalcItemHandler(c *gin.Context) {
 		} else {
 			// add item to calc_cfg
 			createTime := time.Now().Format(timeFormatString)
-			_, _ = updateItem(gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime) values ('"+g.Description+"', '"+g.Expression+"' , '"+createTime+"')")
-			r, _ := Json.Marshal(ResponseData{200, "", responseData})
-			c.String(200, "%s", r)
+			if _, err := updateItem(gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime, updatedTime, duration, status) values ('"+g.Description+"', '"+g.Expression+"' , '"+createTime+"', '"+createTime+"', '"+g.Duration+"', '"+g.Flag+"')"); err != nil {
+				gdb.handleError(c, err.Error())
+			} else {
+				r, _ := Json.Marshal(ResponseData{200, "", responseData})
+				c.String(200, "%s", r)
+			}
 		}
 	}
 }
 
-func (gdb *Gdb) getCalcItemHandler(c *gin.Context) {
-	g := map[string]string{} // condition
+func (gdb *Gdb) getCalcItemsHandler(c *gin.Context) {
+	g := queryCalcItemsInfo{} // condition
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
 	} else {
-		responseData, err := gdb.getCalculationItem(g["condition"]) // add groups
+		responseData, err := gdb.getCalculationItem(g.Condition) // add groups
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
@@ -563,7 +566,7 @@ func (gdb *Gdb) getCalcItemHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateCalcItemHandler(c *gin.Context) {
-	g := updatedCalculationInfo{}
+	g := updatedCalcInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -573,43 +576,77 @@ func (gdb *Gdb) updateCalcItemHandler(c *gin.Context) {
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
-			_, _ = gdb.updateCalculationItem(g)
-			r, _ := Json.Marshal(ResponseData{200, "", responseData})
-			c.String(200, "%s", r)
+			if _, err := gdb.updateCalculationItem(g); err != nil {
+				gdb.handleError(c, err.Error())
+			} else {
+				r, _ := Json.Marshal(ResponseData{200, "", responseData})
+				c.String(200, "%s", r)
+			}
+
 		}
 	}
 }
 
 func (gdb *Gdb) startCalculationItemHandler(c *gin.Context) {
-	id := c.Param("id") // get id
-	_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='true' where id="+id)
-	if err != nil {
-		gdb.handleError(c, err.Error())
+	g := calcId{}
+	request := c.Request
+	defer request.Body.Close()
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.handleError(c, "incorrect json form")
 	} else {
-		r, _ := Json.Marshal(ResponseData{200, "", Rows{1}})
-		c.String(200, "%s", r)
+		id := []string{}
+		for _, item := range g.Id {
+			id = append(id, "id = '"+item+"'")
+		}
+		_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='true' where "+strings.Join(id, " or "))
+		if err != nil {
+			gdb.handleError(c, err.Error())
+		} else {
+			r, _ := Json.Marshal(ResponseData{200, "", Rows{len(g.Id)}})
+			c.String(200, "%s", r)
+		}
 	}
 }
 
 func (gdb *Gdb) stopCalculationItemHandler(c *gin.Context) {
-	id := c.Param("id") // get id
-	_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='false' where id="+id)
-	if err != nil {
-		gdb.handleError(c, err.Error())
+	g := calcId{}
+	request := c.Request
+	defer request.Body.Close()
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.handleError(c, "incorrect json form")
 	} else {
-		r, _ := Json.Marshal(ResponseData{200, "", Rows{1}})
-		c.String(200, "%s", r)
+		id := []string{}
+		for _, item := range g.Id {
+			id = append(id, "id = '"+item+"'")
+		}
+		_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='false' where "+strings.Join(id, " or "))
+		if err != nil {
+			gdb.handleError(c, err.Error())
+		} else {
+			r, _ := Json.Marshal(ResponseData{200, "", Rows{len(g.Id)}})
+			c.String(200, "%s", r)
+		}
 	}
 }
 
 func (gdb *Gdb) deleteCalculationItemHandler(c *gin.Context) {
-	id := c.Param("id")
-	_, err := updateItem(gdb.ItemDbPath, "delete from calc_cfg where id="+id)
-	if err != nil {
-		gdb.handleError(c, err.Error())
+	g := calcId{}
+	request := c.Request
+	defer request.Body.Close()
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.handleError(c, "incorrect json form")
 	} else {
-		r, _ := Json.Marshal(ResponseData{200, "", Rows{1}})
-		c.String(200, "%s", r)
+		id := []string{}
+		for _, item := range g.Id {
+			id = append(id, "id = '"+item+"'")
+		}
+		_, err := updateItem(gdb.ItemDbPath, "delete from where "+strings.Join(id, " or "))
+		if err != nil {
+			gdb.handleError(c, err.Error())
+		} else {
+			r, _ := Json.Marshal(ResponseData{200, "", Rows{len(g.Id)}})
+			c.String(200, "%s", r)
+		}
 	}
 }
 

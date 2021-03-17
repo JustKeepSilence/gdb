@@ -120,11 +120,11 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 	calcRequest := router.Group("/calculation")
 	{
 		calcRequest.POST("/addCalcItem", g.addCalcItemHandler) // add calc item
-		calcRequest.POST("/getCalcItem", g.getCalcItemHandler)
+		calcRequest.POST("/getCalcItems", g.getCalcItemsHandler)
 		calcRequest.POST("/updateCalcItem", g.updateCalcItemHandler)
-		calcRequest.GET("/startCalcItem/:id", g.startCalculationItemHandler)
-		calcRequest.GET("/stopCalcItem/:id", g.stopCalculationItemHandler)
-		calcRequest.GET("/deleteCalcItem/:id", g.deleteCalculationItemHandler)
+		calcRequest.POST("/startCalcItem", g.startCalculationItemHandler)
+		calcRequest.POST("/stopCalcItem", g.stopCalculationItemHandler)
+		calcRequest.POST("/deleteCalcItem", g.deleteCalculationItemHandler)
 	}
 	// web page handler
 	router.GET("/index", func(c *gin.Context) {
