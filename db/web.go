@@ -33,7 +33,7 @@ func (gdb *Gdb) handleError(c *gin.Context, message string) {
 // group handler, add json binding to all request data, for details see:
 // https://github.com/gin-gonic/gin#model-binding-and-validation
 func (gdb *Gdb) addGroupsHandler(c *gin.Context) {
-	g := AddGroupInfos{}
+	g := AddedGroupInfos{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -50,7 +50,7 @@ func (gdb *Gdb) addGroupsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) deleteGroupsHandler(c *gin.Context) {
-	g := GroupNameInfos{}
+	g := GroupNamesInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -78,7 +78,7 @@ func (gdb *Gdb) getGroupsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) getGroupPropertyHandler(c *gin.Context) {
-	g := GetGroupPropertyInfo{}
+	g := QueryGroupPropertyInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -97,13 +97,13 @@ func (gdb *Gdb) getGroupPropertyHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateGroupNamesHandler(c *gin.Context) {
-	var g []UpdatedGroupInfo
+	g := UpdatedGroupNamesInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
 	} else {
-		responseData, err := gdb.UpdateGroupNames(g...)
+		responseData, err := gdb.UpdateGroupNames(g.Infos...)
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
@@ -114,7 +114,7 @@ func (gdb *Gdb) updateGroupNamesHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateGroupColumnNamesHandler(c *gin.Context) {
-	g := UpdatedGroupColumnInfo{}
+	g := UpdatedGroupColumnNamesInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -131,7 +131,7 @@ func (gdb *Gdb) updateGroupColumnNamesHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) deleteGroupColumnsHandler(c *gin.Context) {
-	g := DeleteGroupColumnInfo{}
+	g := DeletedGroupColumnNamesInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -148,7 +148,7 @@ func (gdb *Gdb) deleteGroupColumnsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) addGroupColumnsHandler(c *gin.Context) {
-	g := AddGroupColumnInfo{}
+	g := AddedGroupColumnsInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -167,7 +167,7 @@ func (gdb *Gdb) addGroupColumnsHandler(c *gin.Context) {
 
 // item handler
 func (gdb *Gdb) addItemsHandler(c *gin.Context) {
-	g := AddItemInfo{}
+	g := AddedItemsInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -185,7 +185,7 @@ func (gdb *Gdb) addItemsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) deleteItemsHandler(c *gin.Context) {
-	g := ItemInfo{}
+	g := DeletedItemsInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -203,7 +203,7 @@ func (gdb *Gdb) deleteItemsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) getItemsHandler(c *gin.Context) {
-	g := ItemInfo{}
+	g := ItemsInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -219,8 +219,25 @@ func (gdb *Gdb) getItemsHandler(c *gin.Context) {
 	}
 }
 
+func (gdb *Gdb) handleGetItemsWithCount(c *gin.Context) {
+	g := ItemsInfo{}
+	request := c.Request
+	defer request.Body.Close()
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.handleError(c, "incorrect json form")
+	} else {
+		responseData, err := gdb.GetItemsWithCount(g) // add groups
+		if err != nil {
+			gdb.handleError(c, err.Error())
+		} else {
+			r, _ := Json.Marshal(ResponseData{200, "", responseData})
+			c.String(200, "%s", r)
+		}
+	}
+}
+
 func (gdb *Gdb) updateItemsHandler(c *gin.Context) {
-	g := ItemInfo{}
+	g := ItemsInfoWithoutRow{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -268,7 +285,7 @@ func (gdb *Gdb) batchWriteHandler(c *gin.Context) {
 func (gdb *Gdb) getRealTimeDataHandler(c *gin.Context) {
 	startTime := time.Now()
 	request := c.Request
-	var realTimeDataString RealTimeDataString
+	var realTimeDataString QueryRealTimeDataString
 	defer request.Body.Close()
 	if err := Json.NewDecoder(request.Body).Decode(&realTimeDataString); err != nil {
 		gdb.handleError(c, fmt.Sprintf("fail parsing string: %s", err))
@@ -290,7 +307,7 @@ func (gdb *Gdb) getRealTimeDataHandler(c *gin.Context) {
 func (gdb *Gdb) getHistoricalDataHandler(c *gin.Context) {
 	startTime1 := time.Now()
 	request := c.Request
-	historicalDataString := HistoricalDataInfo{}
+	historicalDataString := QueryHistoricalDataString{}
 	defer request.Body.Close()
 	if err := Json.NewDecoder(request.Body).Decode(&historicalDataString); err != nil {
 		gdb.handleError(c, fmt.Sprintf("fail parsing string: %s", err))
@@ -316,7 +333,7 @@ func (gdb *Gdb) getHistoricalDataHandler(c *gin.Context) {
 func (gdb *Gdb) getHistoricalDataWithConditionHandler(c *gin.Context) {
 	startTime1 := time.Now()
 	request := c.Request
-	g := HistoricalDataInfoWithCondition{}
+	g := QueryHistoricalDataWithConditionString{}
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
@@ -340,33 +357,10 @@ func (gdb *Gdb) getHistoricalDataWithConditionHandler(c *gin.Context) {
 	}
 }
 
-// delete historical data, you should stop other operation when deleting historical data
-func (gdb *Gdb) deleteHistoricalDataHandler(c *gin.Context) {
-	request := c.Request
-	g := DeletedHistoricalDataInfo{}
-	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.handleError(c, "incorrect json form")
-	} else {
-		itemNames := g.ItemNames
-		timeStamps := g.TimeStamps
-		if len(itemNames) != len(timeStamps) {
-			gdb.handleError(c, "inconsistent length of itemNames and timeStamps")
-		} else {
-			if responseData, err := gdb.DeleteHistoricalData(itemNames, timeStamps); err != nil {
-				gdb.handleError(c, err.Error())
-			} else {
-				r, _ := Json.Marshal(ResponseData{200, "", responseData})
-				c.String(200, "%s", r)
-			}
-		}
-	}
-}
-
 func (gdb *Gdb) getHistoricalDataWithStampHandler(c *gin.Context) {
 	startTime1 := time.Now()
 	request := c.Request
-	g := HistoricalDataInfoWithTimeStamp{}
+	g := QueryHistoricalDataWithTimeStampString{}
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
@@ -402,7 +396,7 @@ func (gdb *Gdb) getDbInfoHandler(c *gin.Context) {
 func (gdb *Gdb) getDbSpeedHistoryHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := HistoricalDataInfo{}
+	g := QueryHistoricalDataString{}
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
 	} else {
@@ -491,23 +485,6 @@ func (gdb *Gdb) handleAddItemsByExcel(c *gin.Context) {
 	} else {
 		fileName, groupName := g.FileName, g.GroupName
 		responseData, err := gdb.AddItemsByExcel(groupName, "./uploadFiles/"+fileName) // add groups
-		if err != nil {
-			gdb.handleError(c, err.Error())
-		} else {
-			r, _ := Json.Marshal(ResponseData{200, "", responseData})
-			c.String(200, "%s", r)
-		}
-	}
-}
-
-func (gdb *Gdb) handleGetItemsWithCount(c *gin.Context) {
-	g := ItemInfo{}
-	request := c.Request
-	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.handleError(c, "incorrect json form")
-	} else {
-		responseData, err := gdb.GetItemsWithCount(g) // add groups
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {

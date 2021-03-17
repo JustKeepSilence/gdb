@@ -94,6 +94,7 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 		item.POST("/addItems", g.addItemsHandler)
 		item.POST("/deleteItems", g.deleteItemsHandler)
 		item.POST("/getItems", g.getItemsHandler)
+		item.POST("/getItemsWithCount", g.handleGetItemsWithCount) // get item with  count
 		item.POST("/updateItems", g.updateItemsHandler)
 	}
 	data := router.Group("/data") // data handler
@@ -103,20 +104,18 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 		data.POST("/getHistoricalData", g.getHistoricalDataHandler)
 		data.POST("/getHistoricalDataWithStamp", g.getHistoricalDataWithStampHandler)
 		data.POST("/getHistoricalDataWithCondition", g.getHistoricalDataWithConditionHandler)
-		data.POST("/deleteHistoricalData", g.deleteHistoricalDataHandler)
 		data.POST("/getDbInfo", g.getDbInfoHandler)
 		data.POST("/getDbSpeedHistory", g.getDbSpeedHistoryHandler)
 		data.POST("/getRawData", g.getRawDataHandler)
 	}
 	pageRequest := router.Group("/page") // page request handler
 	{
-		pageRequest.POST("/userLogin", g.handleUserLogin)                 // user login
-		pageRequest.POST("/getUserInfo", g.handleGetUerInfo)              // get user info
-		pageRequest.POST("/uploadFile", g.handleUploadFile)               // upload file
-		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcel)     // add item by excel
-		pageRequest.POST("/getItemsWithCount", g.handleGetItemsWithCount) // get item with  count
-		pageRequest.GET("/getJsCode/:fileName", g.getJsCodeHandler)       // get js code
-		pageRequest.GET("/getLogs", g.getLogsHandler)                     // get logs
+		pageRequest.POST("/userLogin", g.handleUserLogin)             // user login
+		pageRequest.POST("/getUserInfo", g.handleGetUerInfo)          // get user info
+		pageRequest.POST("/uploadFile", g.handleUploadFile)           // upload file
+		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcel) // add item by excel
+		pageRequest.GET("/getJsCode/:fileName", g.getJsCodeHandler)   // get js code
+		pageRequest.GET("/getLogs", g.getLogsHandler)                 // get logs
 	}
 	calcRequest := router.Group("/calculation")
 	{

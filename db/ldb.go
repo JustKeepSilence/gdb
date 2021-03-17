@@ -114,10 +114,10 @@ func (gdb *Gdb) BatchWrite(b BatchWriteString) (Rows, error) {
 }
 
 //  get realTime data
-func (gdb *Gdb) GetRealTimeData(itemNames ...string) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetRealTimeData(itemNames ...string) (GdbRealTimeData, error) {
 	sn, err := gdb.rtDb.GetSnapshot()
 	if sn == nil || err != nil {
-		return nil, snError{"snError"}
+		return GdbRealTimeData{}, snError{"snError"}
 	}
 	defer sn.Release() // release
 	m := cmap.New()
@@ -136,16 +136,16 @@ func (gdb *Gdb) GetRealTimeData(itemNames ...string) (cmap.ConcurrentMap, error)
 		}(itemName)
 	}
 	wg.Wait()
-	return m, nil
+	return GdbRealTimeData{m}, nil
 }
 
 // get historical data
-func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int, endTimeStamps []int, intervals []int) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int32, endTimeStamps []int32, intervals []int32) (GdbHistoricalData, error) {
 	rawData := cmap.New()
 	wg := sync.WaitGroup{}
 	sn, err := gdb.hisDb.GetSnapshot()
 	if sn == nil || err != nil {
-		return nil, snError{"snError"}
+		return GdbHistoricalData{}, snError{"snError"}
 	}
 	defer sn.Release() // release
 	latestTimeStampString, _ := gdb.infoDb.Get([]byte(TimeKey), nil)
@@ -164,15 +164,15 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int, end
 				}
 				startKey := strings.Builder{}
 				startKey.Write([]byte(name))
-				startKey.Write([]byte(strconv.Itoa(s)))
+				startKey.Write([]byte(strconv.Itoa(int(s))))
 				endKey := strings.Builder{}
 				endKey.Write([]byte(name))
-				if e > int(latestTimeStamp) {
+				if e > int32(latestTimeStamp) {
 					// startTime to currentTimeStamp
 					endKey.Write([]byte(strconv.Itoa(int(latestTimeStamp))))
 				} else {
 					// startTime to endTime
-					endKey.Write([]byte(strconv.Itoa(e)))
+					endKey.Write([]byte(strconv.Itoa(int(e))))
 				}
 				it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 				var values []string
@@ -198,7 +198,7 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int, end
 		}(itemName)
 	}
 	wg.Wait()
-	return rawData, nil
+	return GdbHistoricalData{rawData}, nil
 }
 
 // get raw(that is all ) historical data, it should only be used for debugging
@@ -235,59 +235,16 @@ func (gdb *Gdb) GetRawHistoricalData(itemNames ...string) (cmap.ConcurrentMap, e
 	}
 }
 
-func (gdb *Gdb) DeleteHistoricalData(itemNames []string, timeStamps []TimeStamp) (Rows, error) {
-	sn, err := gdb.hisDb.GetSnapshot()
-	if sn == nil || err != nil {
-		return Rows{}, snError{"snError"}
-	}
-	defer sn.Release()
-	wg := sync.WaitGroup{}
-	for i := 0; i < len(itemNames); i++ {
-		//index := i
-		wg.Add(1)
-		go func(index int) {
-			defer wg.Done()
-			startKey := []byte(itemNames[index] + timeStamps[index].StartTime)
-			endKey := []byte(itemNames[index] + timeStamps[index].EndTime)
-			it := sn.NewIterator(&util.Range{Start: startKey, Limit: endKey}, nil)
-			for it.Next() {
-				if err := gdb.hisDb.Delete(it.Key(), nil); err != nil {
-					return
-				} // delete keys
-			}
-		}(i)
-		//g.Go(func() error {
-		//	startKey := []byte(itemNames[index] + timeStamps[index].StartTime)
-		//	endKey := []byte(itemNames[index] + timeStamps[index].EndTime)
-		//	it := sn.NewIterator(&util.Range{Start: startKey, Limit: endKey}, nil)
-		//	for it.Next() {
-		//		if err := gdb.hisDb.Delete(it.Key(), nil);err!=nil{
-		//			return err
-		//		} // delete keys
-		//	}
-		//	return nil
-		//})
-	}
-	//if err := g.Wait();err!=nil{
-	//	return Rows{}, err
-	//}else{
-	//	return Rows{len(itemNames)}, nil
-	//}
-	wg.Wait()
-	return Rows{len(itemNames)}, nil
-
-}
-
 // get history data according to the given time stamps
-func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]int) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]int32) (GdbHistoricalData, error) {
 	if len(itemNames) != len(timeStamps) {
-		return nil, fmt.Errorf("inconsistent length of itemNames and timeStamps")
+		return GdbHistoricalData{}, fmt.Errorf("inconsistent length of itemNames and timeStamps")
 	}
 	rawData := cmap.New()
 	wg := sync.WaitGroup{}
 	sn, err := gdb.hisDb.GetSnapshot()
 	if sn == nil || err != nil {
-		return nil, snError{"snError"}
+		return GdbHistoricalData{}, snError{"snError"}
 	}
 	defer sn.Release() // release
 	for index, itemName := range itemNames {
@@ -303,7 +260,7 @@ func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]i
 		}(itemName, index)
 	}
 	wg.Wait()
-	return rawData, nil
+	return GdbHistoricalData{rawData}, nil
 }
 
 // filter condition must be correct js expression,itemName should be startedWith by item.
@@ -313,7 +270,7 @@ func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]i
 //Just imagine the history of Item1 It is [3,4,5], and item2 is [10,11]. If item1 is used as the benchmark,
 //we cannot determine how much other elements of item2 should be expanded, because the condition may have complicated
 //logic about item1 and item2 And or logic, no matter what the number is expanded, there may be a judgment error.
-func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []int, endTime []int, intervals []int, filterCondition string, zones ...DeadZone) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []int, endTime []int, intervals []int, filterCondition string, zones ...DeadZone) (GdbHistoricalData, error) {
 	var filterItemNames []string // filter item
 	if strings.Trim(filterCondition, " ") == "true" {
 		filterItemNames = itemNames
@@ -325,25 +282,25 @@ func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []i
 				filterItemNames = append(filterItemNames, mr[1])
 			}
 		} else {
-			return nil, conditionError{"conditionError: invalid condition, items must be included by [] and condition can't be null "}
+			return GdbHistoricalData{}, conditionError{"conditionError: invalid condition, items must be included by [] and condition can't be null "}
 		}
 	}
 	filterHistoryData, err := gdb.getHistoricalDataWithMinLength(filterItemNames, startTime, endTime, intervals) // get history of filter item
 	if err != nil {
-		return nil, err
+		return GdbHistoricalData{}, err
 	}
 	vm := goja.New()
 	f := `function filterData(s){return s.filter(function(item){return ` + filterCondition + `})}`
 	if _, err := vm.RunString(f); err != nil {
-		return nil, conditionError{"conditionError: " + err.Error()}
+		return GdbHistoricalData{}, conditionError{"conditionError: " + err.Error()}
 	}
 	filterData, ok := goja.AssertFunction(vm.Get("filterData"))
 	if !ok {
-		return nil, conditionError{"conditionError: fail compiling function"}
+		return GdbHistoricalData{}, conditionError{"conditionError: fail compiling function"}
 	}
 	res, err := filterData(goja.Undefined(), vm.ToValue(filterHistoryData))
 	if err != nil {
-		return nil, conditionError{"conditionError: " + err.Error()}
+		return GdbHistoricalData{}, conditionError{"conditionError: " + err.Error()}
 	}
 	filterResults := res.Export().([]interface{})
 	var timeStamps []string // time stamp
@@ -353,15 +310,15 @@ func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []i
 	}
 	if zones != nil && len(zones) != 0 {
 		if data, err := gdb.getHistoricalDataWithStampAndDeadZoneCount(itemNames, timeStamps, zones...); err != nil {
-			return nil, err
+			return GdbHistoricalData{}, err
 		} else {
-			return data, nil
+			return GdbHistoricalData{data}, nil
 		}
 	} else {
 		if data, err := gdb.getHistoricalDataWithStringTimeStamp(itemNames, timeStamps...); err != nil {
-			return nil, err
+			return GdbHistoricalData{}, err
 		} else {
-			return data, nil
+			return GdbHistoricalData{data}, nil
 		}
 	}
 }
@@ -580,7 +537,7 @@ func (gdb *Gdb) getRtData(itemNames []string) ([]string, error) {
 	}
 	var result []string
 	for _, name := range itemNames {
-		rv, _ := v.Get(name)
+		rv, _ := v.RealTimeData.Get(name)
 		if rv == nil {
 			return nil, fmt.Errorf("invalid itemName: " + name)
 		}
@@ -605,11 +562,11 @@ func (gdb *Gdb) getHData(itemNames []string, timeStamps []string) ([]string, err
 	return result, nil
 }
 
-func (gdb *Gdb) getDbInfo() (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getDbInfo() (GdbInfoData, error) {
 	sn, err := gdb.infoDb.GetSnapshot()
 	itemNames := []string{Ram, WrittenItems, TimeKey, Speed}
 	if sn == nil || err != nil {
-		return nil, snError{"snError"}
+		return GdbInfoData{}, snError{"snError"}
 	}
 	defer sn.Release() // release
 	m := cmap.New()
@@ -628,10 +585,10 @@ func (gdb *Gdb) getDbInfo() (cmap.ConcurrentMap, error) {
 		}(itemName)
 	}
 	wg.Wait()
-	return m, nil
+	return GdbInfoData{m}, nil
 }
 
-func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int, endTimeStamps []int, interval int) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int32, endTimeStamps []int32, interval int32) (cmap.ConcurrentMap, error) {
 	rawData := cmap.New()
 	sn, err := gdb.infoDb.GetSnapshot()
 	if sn == nil || err != nil {
@@ -649,19 +606,19 @@ func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int, endTim
 		}
 		startKey := strings.Builder{}
 		startKey.Write([]byte(itemName))
-		startKey.Write([]byte(strconv.Itoa(s)))
+		startKey.Write([]byte(fmt.Sprintf("%d", s)))
 		endKey := strings.Builder{}
 		endKey.Write([]byte(itemName))
-		if e > int(latestTimeStamp) {
+		if e > int32(latestTimeStamp) {
 			// startTime to currentTimeStamp
 			endKey.Write([]byte(strconv.Itoa(int(latestTimeStamp))))
 		} else {
 			// startTime to endTime
-			endKey.Write([]byte(strconv.Itoa(e)))
+			endKey.Write([]byte(fmt.Sprintf("%d", e)))
 		}
 		it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 		var values []string
-		count := 0
+		var count int32
 		var timeStamps []string
 		for it.Next() {
 			if count%interval == 0 {

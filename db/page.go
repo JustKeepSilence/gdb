@@ -66,7 +66,7 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 		sheetName := f.GetSheetList()[0] // use first worksheet
 		rows, err := f.Rows(sheetName)   // get all rows
 		var headers []string             // headers
-		var items AddItemInfo
+		var items AddedItemsInfo
 		var values []map[string]string
 		if err != nil {
 			return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
@@ -110,7 +110,7 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 			}
 		}
 		items.GroupName = groupName
-		items.Values = values
+		items.GdbItems.ItemValues = values
 		if r, err := gdb.AddItems(items); err != nil {
 			return Rows{-1}, err
 		} else {

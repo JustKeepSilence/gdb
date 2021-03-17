@@ -7,6 +7,8 @@ goVersion: 1.15.3
 
 package db
 
+import "github.com/JustKeepSilence/gdb/cmap"
+
 /*
 The data structure and errors returned by GDB
 */
@@ -24,102 +26,149 @@ type Config struct {
 	IP              string `json:"ip"`
 	ApplicationName string `json:"applicationName"`
 	Authorization   bool   `json:"authorization"`
+	Mode            string `json:"mode"`
 }
 
+// common
 type ResponseData struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
 
-// function return effectedRow
-// {"effectedRows": 1}
 type Rows struct {
 	EffectedRows int `json:"effectedRows"`
 }
 
-// function return effectedCol
-// {"effectedCols": 1}
 type Cols struct {
 	EffectedCols int `json:"effectedCols"`
 }
 
-type Items struct {
-	ItemCount  int64               `json:"itemCount"`
-	ItemValues []map[string]string `json:"itemValues"`
+// groups
+
+type AddedGroupInfo struct {
+	GroupName   string   `json:"groupName" binding:"required"`
+	ColumnNames []string `json:"columnNames" binding:"required"`
 }
 
-// function return GroupName, every item of slice is the name of group
-// {"groupNames": ["1DCS", "2DCS"]}
-type GroupNameInfos struct {
+type AddedGroupInfos struct {
+	GroupInfos []AddedGroupInfo `json:"groupInfos" binding:"required"`
+}
+
+type GroupNamesInfo struct {
 	GroupNames []string `json:"groupNames"`
 }
 
-// function return GroupProperty {"itemCount": 10, "itemColumnNames": ["units", "type"]}
 type GroupPropertyInfo struct {
 	ItemCount       string   `json:"itemCount"`
 	ItemColumnNames []string `json:"itemColumnNames"`
 }
 
-type GetGroupPropertyInfo struct {
+type QueryGroupPropertyInfo struct {
 	GroupName string `json:"groupName" binding:"required"`
 	Condition string `json:"condition" binding:"required"`
 }
 
-type AddGroupInfo struct {
-	GroupName   string   `json:"groupName" binding:"required"`
-	ColumnNames []string `json:"columnNames" binding:"required"`
-}
-
-type AddGroupInfos struct {
-	GroupInfos []AddGroupInfo `json:"groupInfos" binding:"required"`
-}
-
-type DeletedGroupInfo struct {
-	GroupNames  []string `json:"groupNames" binding:"required"`
-	ColumnNames string   `json:"columnNames" binding:"required"`
-}
-
-type UpdatedGroupInfo struct {
+type UpdatedGroupNameInfo struct {
 	OldGroupName string `json:"oldGroupName"`
 	NewGroupName string `json:"newGroupName"`
 }
 
-type UpdatedGroupColumnInfo struct {
+type UpdatedGroupNamesInfo struct {
+	Infos []UpdatedGroupNameInfo `json:"infos"`
+}
+
+type UpdatedGroupColumnNamesInfo struct {
 	GroupName      string   `json:"groupName"`
 	OldColumnNames []string `json:"oldColumnNames"`
 	NewColumnNames []string `json:"newColumnNames"`
 }
 
-type DeleteGroupColumnInfo struct {
-	GroupName   string   `json:"groupName"`
-	ColumnNames []string `json:"columnNames"`
+type DeletedGroupColumnNamesInfo struct {
+	GroupName   string   `json:"groupNames" binding:"required"`
+	ColumnNames []string `json:"columnNames" binding:"required"`
 }
 
-type AddGroupColumnInfo struct {
+type AddedGroupColumnsInfo struct {
 	GroupName     string   `json:"groupName"`
 	ColumnNames   []string `json:"columnNames"`
 	DefaultValues []string `json:"defaultValues"`
 }
 
-type DeletedHistoricalDataInfo struct {
-	ItemNames  []string    `json:"itemNames"`
-	TimeStamps []TimeStamp `json:"timeStamps"`
+// items
+
+type AddedItemsInfo struct {
+	GroupName string `json:"groupName"`
+	GdbItems
 }
 
-type TimeStamp struct {
-	StartTime string `json:"startTime"`
-	EndTime   string `json:"endTime"`
+type DeletedItemsInfo struct {
+	GroupName string `json:"groupName"`
+	Condition string `json:"condition"`
 }
 
-type HistoricalDataInfo struct {
+type ItemsInfo struct {
+	ItemsInfoWithoutRow
+	ColumnNames string `json:"columnNames"`
+	StartRow    int    `json:"startRow"`
+	RowCount    int    `json:"rowCount"`
+}
+
+type ItemsInfoWithoutRow struct {
+	GroupName string `json:"groupName"`
+	Condition string `json:"condition"`
+	Clause    string `json:"clause"`
+}
+
+type GdbItems struct {
+	ItemValues []map[string]string `json:"itemValues"`
+}
+
+type GdbItemsWithCount struct {
+	ItemCount int64 `json:"itemCount"`
+	GdbItems
+}
+
+// data
+
+type ItemValue struct {
+	ItemName  string `json:"itemName"`
+	Value     string `json:"value"`
+	TimeStamp string `json:"timeStamp"`
+}
+
+type BatchWriteString struct {
+	GroupName     string      `json:"groupName"`
+	ItemValues    []ItemValue `json:"itemValues"`
+	WithTimeStamp bool        `json:"withTimeStamp"`
+}
+
+type QueryRealTimeDataString struct {
+	ItemNames []string `json:"itemNames"` // ItemNames
+}
+
+type GdbRealTimeData struct {
+	RealTimeData cmap.ConcurrentMap `json:"realTimeData"`
+}
+
+type QueryHistoricalDataString struct {
 	ItemNames  []string `json:"itemNames"`  // ItemNames
-	StartTimes []int    `json:"startTimes"` // startTime Unix TimeStamp
-	EndTimes   []int    `json:"endTimes"`   // endTime Unix TimeStamp
-	Intervals  []int    `json:"intervals"`  // interval
+	StartTimes []int32  `json:"startTimes"` // startTime Unix TimeStamp
+	EndTimes   []int32  `json:"endTimes"`   // endTime Unix TimeStamp
+	Intervals  []int32  `json:"intervals"`  // interval
 }
 
-type HistoricalDataInfoWithCondition struct {
+type QueryHistoricalDataWithTimeStampString struct {
+	ItemNames  []string  `json:"itemNames"`  // ItemNames
+	TimeStamps [][]int32 `json:"timeStamps"` // time stamp
+}
+
+type DeadZone struct {
+	ItemName      string `json:"itemName"`
+	DeadZoneCount int    `json:"deadZoneCount"`
+}
+
+type QueryHistoricalDataWithConditionString struct {
 	ItemNames       []string   `json:"itemNames"`       // ItemNames
 	TimeStamps      [][]int    `json:"timeStamps"`      // time stamp
 	StartTimes      []int      `json:"startTimes"`      // startTime Unix TimeStamp
@@ -129,15 +178,15 @@ type HistoricalDataInfoWithCondition struct {
 	DeadZones       []DeadZone `json:"deadZones"`       // deadZone filter condition
 }
 
-type HistoricalDataInfoWithTimeStamp struct {
-	ItemNames  []string `json:"itemNames"`  // ItemNames
-	TimeStamps [][]int  `json:"timeStamps"` // time stamp
+type GdbHistoricalData struct {
+	HistoricalData cmap.ConcurrentMap `json:"historicalData"`
 }
 
-type DeadZone struct {
-	ItemName      string `json:"itemName"`
-	DeadZoneCount int    `json:"deadZoneCount"`
+type GdbInfoData struct {
+	Info cmap.ConcurrentMap `json:"info"`
 }
+
+// page
 
 type calcInfo struct {
 	Expression  string `json:"expression"`
@@ -148,39 +197,9 @@ type calcInfo struct {
 	Description string `json:"description"`
 }
 
-type AddItemInfo struct {
-	GroupName string              `json:"groupName"`
-	Values    []map[string]string `json:"values"`
-}
-
-type ItemInfo struct {
-	GroupName string `json:"groupName"`
-	Column    string `json:"column"`
-	StartRow  int    `json:"startRow"`
-	RowCount  int    `json:"rowCount"`
-	Condition string `json:"condition"`
-	Clause    string `json:"clause"`
-}
-
 type authInfo struct {
 	UserName string `json:"userName"`
 	PassWord string `json:"passWord"`
-}
-
-type BatchWriteString struct {
-	GroupName     string      `json:"groupName"`
-	ItemValues    []ItemValue `json:"itemValues"`
-	WithTimeStamp bool        `json:"withTimeStamp"`
-}
-
-type ItemValue struct {
-	ItemName  string `json:"itemName"`
-	Value     string `json:"value"`
-	TimeStamp string `json:"timeStamp"`
-}
-
-type RealTimeDataString struct {
-	ItemNames []string `json:"itemNames"` // ItemNames
 }
 
 type fileInfo struct {

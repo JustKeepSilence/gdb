@@ -55,7 +55,7 @@ const (
 )
 
 // add group to GDB
-func (gdb *Gdb) AddGroups(groupInfos ...AddGroupInfo) (Rows, error) {
+func (gdb *Gdb) AddGroups(groupInfos ...AddedGroupInfo) (Rows, error) {
 	groupNames := [][]string{}
 	columnNames := [][]string{}
 	for _, groupInfo := range groupInfos {
@@ -104,7 +104,7 @@ notes: Since leveldb uses the default bloom filter deleting the key may affect p
 Therefore, when deleting groups and items in the current version, only the content in SQLite
 will be deleted, and the keys in the real-time and historical databases of leveldb will not be deleted.
 */
-func (gdb *Gdb) DeleteGroups(groupInfos GroupNameInfos) (Rows, error) {
+func (gdb *Gdb) DeleteGroups(groupInfos GroupNamesInfo) (Rows, error) {
 	c := 0
 	groupNames := groupInfos.GroupNames
 	// you can't delete calc group
@@ -127,16 +127,16 @@ func (gdb *Gdb) DeleteGroups(groupInfos GroupNameInfos) (Rows, error) {
 }
 
 // get group name
-func (gdb *Gdb) GetGroups() (GroupNameInfos, error) {
+func (gdb *Gdb) GetGroups() (GroupNamesInfo, error) {
 	r, err := query(gdb.ItemDbPath, "select groupName from group_cfg")
 	if err != nil {
-		return GroupNameInfos{}, err
+		return GroupNamesInfo{}, err
 	}
 	groupNames := []string{}
 	for _, item := range r {
 		groupNames = append(groupNames, item["groupName"])
 	}
-	return GroupNameInfos{groupNames}, nil
+	return GroupNamesInfo{groupNames}, nil
 }
 
 // get the column and item count of the given groupName
@@ -157,7 +157,7 @@ func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo
 }
 
 //  update groupNames, the operation is atomic
-func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupInfo) (Rows, error) {
+func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupNameInfo) (Rows, error) {
 	c := 0
 	sqlStrings := []string{}
 	for _, groupInfo := range groupInfos {
@@ -186,7 +186,7 @@ func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupInfo) (Rows, error) {
 }
 
 // update column names of group, the operation is atomic
-func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnInfo) (Cols, error) {
+func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnNamesInfo) (Cols, error) {
 	oldColumnNames, newColumnNames, groupName := info.OldColumnNames, info.NewColumnNames, info.GroupName
 	if len(oldColumnNames) != len(newColumnNames) {
 		return Cols{}, ColumnNameError{"columnNameError: inconsistent columnNames"}
@@ -211,7 +211,7 @@ func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnInfo) (Cols, error
 }
 
 // delete columns from group, the operation is atomic
-func (gdb *Gdb) DeleteGroupColumns(info DeleteGroupColumnInfo) (Cols, error) {
+func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, error) {
 	groupName, deletedColumnNames := info.GroupName, info.ColumnNames
 	if contains(deletedColumnNames...) {
 		return Cols{}, ColumnNameError{"columnNameError"}
@@ -285,7 +285,7 @@ func (gdb *Gdb) DeleteGroupColumns(info DeleteGroupColumnInfo) (Cols, error) {
 }
 
 // add columns to group, all columns type are text
-func (gdb *Gdb) AddGroupColumns(info AddGroupColumnInfo) (Cols, error) {
+func (gdb *Gdb) AddGroupColumns(info AddedGroupColumnsInfo) (Cols, error) {
 	groupName, addedColumnNames, defaultValues := info.GroupName, info.ColumnNames, info.DefaultValues
 	if len(addedColumnNames) != len(defaultValues) {
 		return Cols{}, fmt.Errorf("inconsist of columnNames and defaultValues")

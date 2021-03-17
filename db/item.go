@@ -18,9 +18,9 @@ import (
 ItemHandler
 */
 
-func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
+func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
-	itemValues := itemInfo.Values
+	itemValues := itemInfo.ItemValues
 	c, err := query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names
 	if err != nil {
 		return Rows{-1}, err
@@ -77,7 +77,7 @@ func (gdb *Gdb) AddItems(itemInfo AddItemInfo) (Rows, error) {
 	return Rows{len(itemValues)}, nil
 }
 
-func (gdb *Gdb) DeleteItems(itemInfo ItemInfo) (Rows, error) {
+func (gdb *Gdb) DeleteItems(itemInfo DeletedItemsInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
 	item, err := query(gdb.ItemDbPath, "select itemName from '"+groupName+"' where "+condition)
@@ -95,9 +95,9 @@ func (gdb *Gdb) DeleteItems(itemInfo ItemInfo) (Rows, error) {
 	return Rows{int(rows)}, nil
 }
 
-func (gdb *Gdb) GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
+func (gdb *Gdb) GetItems(itemInfo ItemsInfo) (GdbItems, error) {
 	groupName := itemInfo.GroupName // groupName
-	columns := itemInfo.Column      // column
+	columns := itemInfo.ColumnNames // column
 	startRow := itemInfo.StartRow   // startRow
 	condition := itemInfo.Condition // condition
 	var rows []map[string]string
@@ -106,38 +106,38 @@ func (gdb *Gdb) GetItems(itemInfo ItemInfo) ([]map[string]string, error) {
 		// all rows
 		rows, err = query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition)
 		if err != nil {
-			return nil, err
+			return GdbItems{}, err
 		}
 	} else {
 		// Limit query
 		rowCount := itemInfo.RowCount
 		rows, err = query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition+" Limit "+strconv.Itoa(rowCount)+" offset "+strconv.Itoa(startRow))
 		if err != nil {
-			return nil, err
+			return GdbItems{}, err
 		}
 	}
-	return rows, nil
+	return GdbItems{ItemValues: rows}, nil
 }
 
-func (gdb *Gdb) GetItemsWithCount(itemInfo ItemInfo) (Items, error) {
+func (gdb *Gdb) GetItemsWithCount(itemInfo ItemsInfo) (GdbItemsWithCount, error) {
 	condition := itemInfo.Condition
 	groupName := itemInfo.GroupName
 	c, err := query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
 	if err != nil {
-		return Items{}, err
+		return GdbItemsWithCount{}, err
 	}
 	itemValues, err := gdb.GetItems(itemInfo)
 	if err != nil {
-		return Items{}, nil
+		return GdbItemsWithCount{}, nil
 	}
 	count, err := strconv.ParseInt(c[0]["count"], 10, 64)
 	if err != nil {
-		return Items{}, nil
+		return GdbItemsWithCount{}, nil
 	}
-	return Items{count, itemValues}, nil
+	return GdbItemsWithCount{count, itemValues}, nil
 }
 
-func (gdb *Gdb) UpdateItems(itemInfo ItemInfo) (Rows, error) {
+func (gdb *Gdb) UpdateItems(itemInfo ItemsInfoWithoutRow) (Rows, error) {
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
 	clause := itemInfo.Clause
