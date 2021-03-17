@@ -1,0 +1,194 @@
+syntax = "proto3";
+package model;
+option go_package="model";
+
+import "google/protobuf/empty.proto";
+
+// >protoc -I=F:\gdb\gdb\model --go-grpc_out=F:\gdb\gdb\model --go_out=F:\gdb\gdb\model F:\gdb\gdb\model\gdb.proto
+
+message Rows{
+  int32 effectedRows = 1;
+}
+
+message Cols{
+  int32 effectedCols = 1;
+}
+
+// group handler
+
+message AddedGroupInfo {
+  string groupName = 1;
+  repeated string columnNames = 2;
+}
+
+message AddedGroupInfos {
+  repeated AddedGroupInfo groupInfos = 1;
+}
+
+message GroupNamesInfo {
+  repeated string groupNames = 1;
+}
+
+message GroupPropertyInfo{
+  string itemCount = 1;
+  repeated string itemColumnNames = 2;
+}
+
+message QueryGroupPropertyInfo{
+  string groupName = 1;
+  string condition = 2;
+}
+
+message UpdatedGroupNameInfo {
+  string oldGroupName = 1;
+  string newGroupName = 2;
+}
+
+message UpdatedGroupNamesInfo {
+  repeated UpdatedGroupNameInfo infos = 1;
+}
+
+message UpdatedGroupColumnNamesInfo {
+  string groupName = 1;
+  repeated string oldColumnNames = 2;
+  repeated string newColumnNames = 3;
+}
+
+message DeletedGroupColumnNamesInfo {
+  string groupName = 1;
+  repeated string columnNames = 2;
+}
+
+message AddedGroupColumnsInfo{
+  string groupName = 1;
+  repeated string columnNames = 2;
+  repeated string defaultValues = 3;
+}
+
+service Group {
+  rpc AddGroups(AddedGroupInfos) returns (Rows){}
+  rpc DeleteGroups(GroupNamesInfo) returns (Rows){}
+  rpc GetGroups(google.protobuf.Empty) returns (GroupNamesInfo) {}
+  rpc GetGroupProperty(QueryGroupPropertyInfo) returns (GroupPropertyInfo){}
+  rpc UpdateGroupNames(UpdatedGroupNamesInfo) returns (Rows){}
+  rpc UpdateGroupColumnNames(UpdatedGroupColumnNamesInfo) returns (Cols){}
+  rpc DeleteGroupColumns(DeletedGroupColumnNamesInfo) returns (Cols){}
+  rpc AddGroupColumns(AddedGroupColumnsInfo) returns (Cols){}
+}
+
+// item handler
+
+message AddedItemsInfo {
+  string groupName = 1;
+  repeated GdbItem values = 2;
+}
+
+message DeletedItemsInfo {
+  string groupName = 1;
+  string condition = 2;
+}
+
+message ItemsInfo {
+  ItemsInfoWithoutRow infos = 1;
+  string columnNames = 2;
+  int32 startRow = 3;
+  int32 rowCount = 4;
+}
+
+message ItemsInfoWithoutRow{
+  string groupName = 1;
+  string condition = 5;
+  string clause = 6;
+}
+
+message GdbItem{
+  map<string, string> items = 1;
+}
+
+message GdbItems {
+  repeated GdbItem itemValues = 2;
+}
+
+message GdbItemsWithCount {
+  int32 itemCount = 1;
+  repeated GdbItem itemValues = 2;
+}
+
+service Item {
+  rpc AddItems(AddedItemsInfo) returns (Rows){}
+  rpc DeleteItems(DeletedItemsInfo) returns (Rows){}
+  rpc GetItems(ItemsInfo) returns (GdbItems){}
+  rpc GetItemsWithCount(ItemsInfo) returns (GdbItemsWithCount){}
+  rpc UpdateItems(ItemsInfoWithoutRow) returns (Rows){}
+}
+
+// data handler
+
+message ItemValue{
+  string itemName = 1;
+  string value = 2;
+  string timeStamp = 3;
+}
+
+message BatchWriteString{
+  string groupName = 1;
+  bool withTimeStamp = 2;
+  repeated ItemValue itemValues = 3;
+}
+
+message QueryRealTimeDataString{
+  repeated string itemNames = 1;
+}
+
+// Notes: because in rpc proto we can't define Current map type,so use string to replace
+// current map, that is we use json.Marshal to convert current map to string
+message GdbRealTimeData{
+  string realTimeData = 1;
+}
+
+message QueryHistoricalDataString{
+  repeated string itemNames = 1;
+  repeated int32 startTimes = 2;
+  repeated int32 endTimes = 3;
+  repeated int32 intervals = 4;
+}
+
+message GdbHistoricalData{
+  string historicalData = 1;
+}
+
+message TimeStamp {
+  repeated int32 timeStamp = 1;
+}
+
+message QueryHistoricalDataWithTimeStampString{
+  repeated string itemNames = 1;
+  repeated TimeStamp timeStamps = 2;
+}
+
+message DeadZone {
+  string itemName = 1;
+  int32 deadZoneCount = 2;
+}
+
+message QueryHistoricalDataWithConditionString{
+  repeated string itemNames = 1;
+  repeated TimeStamp timeStamps = 2;
+  repeated int32 startTimes = 3;
+  repeated int32 endTimes = 4;
+  repeated int32 intervals = 5;
+  string filterCondition = 6;
+  repeated DeadZone deadZones = 7;
+}
+
+message GdbInfoData{
+  string info = 1;
+}
+
+service Data {
+  rpc BatchWrite(BatchWriteString) returns (Rows){}
+  rpc GetRealTimeData(QueryRealTimeDataString) returns (GdbRealTimeData){}
+  rpc GetHistoricalData(QueryHistoricalDataString) returns (GdbHistoricalData){}
+  rpc GetHistoricalDataWithStamp(QueryHistoricalDataWithTimeStampString) returns (GdbHistoricalData){}
+  rpc GetDbInfo(google.protobuf.Empty) returns (GdbInfoData){}
+}
