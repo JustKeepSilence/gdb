@@ -187,8 +187,100 @@ message GdbInfoData{
 
 service Data {
   rpc BatchWrite(BatchWriteString) returns (Rows){}
+  rpc BatchWriteWithStream(stream BatchWriteString) returns (Rows){}
   rpc GetRealTimeData(QueryRealTimeDataString) returns (GdbRealTimeData){}
   rpc GetHistoricalData(QueryHistoricalDataString) returns (GdbHistoricalData){}
   rpc GetHistoricalDataWithStamp(QueryHistoricalDataWithTimeStampString) returns (GdbHistoricalData){}
   rpc GetDbInfo(google.protobuf.Empty) returns (GdbInfoData){}
+}
+
+// page
+
+message AuthInfo {
+  string userName = 1;
+  string passWord = 2;
+}
+
+message UserToken {
+  string token = 1;
+}
+
+message UserName{
+  string name = 1;
+}
+
+message UserInfo{
+  string userName = 1;
+  repeated string role = 2;
+}
+
+message QueryLogsInfo{
+  string logType = 1;
+  string condition = 2;
+  string startTime = 3;
+  string endTime = 4;
+}
+
+message LogInfo {
+  map<string, string> info = 1;
+}
+
+message LogsInfo {
+  repeated LogInfo infos = 2;
+}
+
+service Page {
+  rpc UserLogin(AuthInfo) returns (UserToken){}
+  rpc GetUserInfo(UserName) returns (UserInfo){}
+  rpc GetLogs(QueryLogsInfo) returns (LogsInfo){}
+}
+
+// calculation
+
+message AddedCalcItemInfo{
+  string expression = 1;
+  string flag = 2;
+  string duration = 3;
+  string description = 6;
+}
+
+message CalculationResult{
+  string result = 1;
+}
+
+message CalculationResults{
+  repeated CalculationResult results = 1;
+}
+
+message QueryCalcItemsInfo{
+  string condition = 1;
+}
+
+message CalcItemInfo{
+  map<string, string> info = 1;
+}
+
+message CalcItemsInfo{
+  repeated CalcItemInfo infos = 2;
+}
+
+message UpdatedCalcInfo{
+  string id = 1;
+  string description = 2;
+  string expression = 3;
+  string duration = 4;
+}
+
+message CalcId {
+  repeated string id = 1;
+}
+
+service Calc {
+  rpc AddCalcItem(AddedCalcItemInfo) returns (CalculationResult){}
+  rpc AddCalcItemWithStream(stream AddedCalcItemInfo) returns (CalculationResults){}
+  rpc GetCalcItems(QueryCalcItemsInfo) returns (CalcItemsInfo){}
+  rpc UpdateCalcItem(UpdatedCalcInfo) returns (CalculationResult){}
+  rpc StartCalcItem(CalcId) returns (Rows){}
+  rpc StopCalcItem(CalcId) returns (Rows){}
+  rpc DeleteCalcItem(CalcId) returns (Rows){}
 }

@@ -13,10 +13,13 @@ import (
 	"context"
 	"fmt"
 	pb "github.com/JustKeepSilence/gdb/model"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"io"
 	"log"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -24,6 +27,8 @@ type server struct {
 	pb.UnimplementedGroupServer
 	pb.UnimplementedItemServer
 	pb.UnimplementedDataServer
+	pb.UnimplementedPageServer
+	pb.UnimplementedCalcServer
 	gdb *Gdb
 }
 
@@ -33,35 +38,35 @@ func (s *server) AddGroups(_ context.Context, r *pb.AddedGroupInfos) (*pb.Rows, 
 	for _, groupInfo := range r.GetGroupInfos() {
 		infos = append(infos, AddedGroupInfo{GroupName: groupInfo.GroupName, ColumnNames: groupInfo.ColumnNames})
 	}
-	if r, err := s.gdb.AddGroups(infos...); err != nil {
+	if result, err := s.gdb.AddGroups(infos...); err != nil {
 		return nil, err
 	} else {
-		return &pb.Rows{EffectedRows: int32(r.EffectedRows)}, nil
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
 func (s *server) DeleteGroups(_ context.Context, r *pb.GroupNamesInfo) (*pb.Rows, error) {
 	info := GroupNamesInfo{GroupNames: r.GroupNames}
-	if r, err := s.gdb.DeleteGroups(info); err != nil {
+	if result, err := s.gdb.DeleteGroups(info); err != nil {
 		return nil, err
 	} else {
-		return &pb.Rows{EffectedRows: int32(r.EffectedRows)}, nil
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
 func (s *server) GetGroups(_ context.Context, _ *emptypb.Empty) (*pb.GroupNamesInfo, error) {
-	if groupInfos, err := s.gdb.GetGroups(); err != nil {
+	if result, err := s.gdb.GetGroups(); err != nil {
 		return nil, err
 	} else {
-		return &pb.GroupNamesInfo{GroupNames: groupInfos.GroupNames}, nil
+		return &pb.GroupNamesInfo{GroupNames: result.GroupNames}, nil
 	}
 }
 
 func (s *server) GetGroupProperty(_ context.Context, r *pb.QueryGroupPropertyInfo) (*pb.GroupPropertyInfo, error) {
-	if r, err := s.gdb.GetGroupProperty(r.GetGroupName(), r.GetCondition()); err != nil {
+	if result, err := s.gdb.GetGroupProperty(r.GetGroupName(), r.GetCondition()); err != nil {
 		return nil, err
 	} else {
-		return &pb.GroupPropertyInfo{ItemCount: r.ItemCount, ItemColumnNames: r.ItemColumnNames}, nil
+		return &pb.GroupPropertyInfo{ItemCount: result.ItemCount, ItemColumnNames: result.ItemColumnNames}, nil
 	}
 }
 
@@ -70,37 +75,37 @@ func (s *server) UpdateGroupNames(_ context.Context, r *pb.UpdatedGroupNamesInfo
 	for _, info := range r.GetInfos() {
 		g = append(g, UpdatedGroupNameInfo{NewGroupName: info.GetNewGroupName(), OldGroupName: info.GetOldGroupName()})
 	}
-	if r, err := s.gdb.UpdateGroupNames(g...); err != nil {
+	if result, err := s.gdb.UpdateGroupNames(g...); err != nil {
 		return nil, err
 	} else {
-		return &pb.Rows{EffectedRows: int32(r.EffectedRows)}, nil
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
 func (s *server) UpdateGroupColumnNames(_ context.Context, r *pb.UpdatedGroupColumnNamesInfo) (*pb.Cols, error) {
 	g := UpdatedGroupColumnNamesInfo{GroupName: r.GetGroupName(), OldColumnNames: r.GetOldColumnNames(), NewColumnNames: r.GetNewColumnNames()}
-	if r, err := s.gdb.UpdateGroupColumnNames(g); err != nil {
+	if result, err := s.gdb.UpdateGroupColumnNames(g); err != nil {
 		return nil, err
 	} else {
-		return &pb.Cols{EffectedCols: int32(r.EffectedCols)}, nil
+		return &pb.Cols{EffectedCols: int32(result.EffectedCols)}, nil
 	}
 }
 
 func (s *server) DeleteGroupColumns(_ context.Context, r *pb.DeletedGroupColumnNamesInfo) (*pb.Cols, error) {
 	g := DeletedGroupColumnNamesInfo{GroupName: r.GetGroupName(), ColumnNames: r.GetColumnNames()}
-	if r, err := s.gdb.DeleteGroupColumns(g); err != nil {
+	if result, err := s.gdb.DeleteGroupColumns(g); err != nil {
 		return nil, err
 	} else {
-		return &pb.Cols{EffectedCols: int32(r.EffectedCols)}, nil
+		return &pb.Cols{EffectedCols: int32(result.EffectedCols)}, nil
 	}
 }
 
 func (s *server) AddGroupColumns(_ context.Context, r *pb.AddedGroupColumnsInfo) (*pb.Cols, error) {
 	g := AddedGroupColumnsInfo{GroupName: r.GetGroupName(), ColumnNames: r.GetColumnNames(), DefaultValues: r.GetDefaultValues()}
-	if r, err := s.gdb.AddGroupColumns(g); err != nil {
+	if result, err := s.gdb.AddGroupColumns(g); err != nil {
 		return nil, err
 	} else {
-		return &pb.Cols{EffectedCols: int32(r.EffectedCols)}, nil
+		return &pb.Cols{EffectedCols: int32(result.EffectedCols)}, nil
 	}
 }
 
@@ -115,10 +120,10 @@ func (s *server) AddItems(_ context.Context, r *pb.AddedItemsInfo) (*pb.Rows, er
 		GroupName: r.GetGroupName(),
 		GdbItems:  GdbItems{ItemValues: values},
 	}
-	if r, err := s.gdb.AddItems(g); err != nil {
+	if result, err := s.gdb.AddItems(g); err != nil {
 		return nil, err
 	} else {
-		return &pb.Rows{EffectedRows: int32(r.EffectedRows)}, nil
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
@@ -127,10 +132,10 @@ func (s *server) DeleteItems(_ context.Context, r *pb.DeletedItemsInfo) (*pb.Row
 		GroupName: r.GetGroupName(),
 		Condition: r.GetCondition(),
 	}
-	if r, err := s.gdb.DeleteItems(g); err != nil {
+	if result, err := s.gdb.DeleteItems(g); err != nil {
 		return nil, err
 	} else {
-		return &pb.Rows{EffectedRows: int32(r.EffectedRows)}, nil
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
@@ -141,11 +146,11 @@ func (s *server) GetItems(_ context.Context, r *pb.ItemsInfo) (*pb.GdbItems, err
 		StartRow:            int(r.GetStartRow()),
 		RowCount:            int(r.GetRowCount()),
 	}
-	if r, err := s.gdb.GetItems(g); err != nil {
+	if result, err := s.gdb.GetItems(g); err != nil {
 		return nil, err
 	} else {
 		v := []*pb.GdbItem{}
-		for _, m := range r.ItemValues {
+		for _, m := range result.ItemValues {
 			v = append(v, &pb.GdbItem{Items: m})
 		}
 		return &pb.GdbItems{ItemValues: v}, nil
@@ -159,14 +164,14 @@ func (s *server) GetItemsWithCount(_ context.Context, r *pb.ItemsInfo) (*pb.GdbI
 		StartRow:            int(r.GetStartRow()),
 		RowCount:            int(r.GetRowCount()),
 	}
-	if r, err := s.gdb.GetItemsWithCount(g); err != nil {
+	if result, err := s.gdb.GetItemsWithCount(g); err != nil {
 		return nil, err
 	} else {
 		v := []*pb.GdbItem{}
-		for _, m := range r.ItemValues {
+		for _, m := range result.ItemValues {
 			v = append(v, &pb.GdbItem{Items: m})
 		}
-		return &pb.GdbItemsWithCount{ItemValues: v, ItemCount: int32(r.ItemCount)}, nil
+		return &pb.GdbItemsWithCount{ItemValues: v, ItemCount: int32(result.ItemCount)}, nil
 	}
 }
 
@@ -176,10 +181,10 @@ func (s *server) UpdateItems(_ context.Context, r *pb.ItemsInfoWithoutRow) (*pb.
 		Condition: r.GetCondition(),
 		Clause:    r.GetClause(),
 	}
-	if r, err := s.gdb.UpdateItems(g); err != nil {
+	if result, err := s.gdb.UpdateItems(g); err != nil {
 		return nil, err
 	} else {
-		return &pb.Rows{EffectedRows: int32(r.EffectedRows)}, nil
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
@@ -199,32 +204,69 @@ func (s *server) BatchWrite(_ context.Context, r *pb.BatchWriteString) (*pb.Rows
 		ItemValues:    v,
 		WithTimeStamp: r.GetWithTimeStamp(),
 	}
-	if r, err := s.gdb.BatchWrite(g); err != nil {
+	if result, err := s.gdb.BatchWrite(g); err != nil {
 		return nil, err
 	} else {
-		return &pb.Rows{EffectedRows: int32(r.EffectedRows)}, nil
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
 // write data with client stream
-func (s *server) BatchWriteWithStream(_ context.Context) {
-
+func (s *server) BatchWriteWithStream(stream pb.Data_BatchWriteWithStreamServer) error {
+	bs := []BatchWriteString{}
+	for {
+		b, err := stream.Recv()
+		if err == io.EOF {
+			eg := errgroup.Group{}
+			for _, ss := range bs {
+				writingString := ss
+				eg.Go(func() error {
+					if _, err := s.gdb.BatchWrite(writingString); err != nil {
+						return fmt.Errorf("writing error :" + err.Error())
+					} else {
+						return nil
+					}
+				})
+			}
+			if err := eg.Wait(); err != nil {
+				return err
+			} else {
+				return stream.SendAndClose(&pb.Rows{EffectedRows: int32(len(bs))})
+			}
+		} else if err != nil {
+			return err
+		} else {
+			v := []ItemValue{}
+			for _, itemValue := range b.GetItemValues() {
+				v = append(v, ItemValue{
+					ItemName:  itemValue.GetItemName(),
+					Value:     itemValue.GetValue(),
+					TimeStamp: itemValue.GetTimeStamp(),
+				})
+			}
+			bs = append(bs, BatchWriteString{
+				GroupName:     b.GetGroupName(),
+				ItemValues:    v,
+				WithTimeStamp: b.WithTimeStamp,
+			})
+		}
+	}
 }
 
 func (s *server) GetRealTimeData(_ context.Context, r *pb.QueryRealTimeDataString) (*pb.GdbRealTimeData, error) {
-	if r, err := s.gdb.GetRealTimeData(r.ItemNames...); err != nil {
+	if result, err := s.gdb.GetRealTimeData(r.ItemNames...); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(r.RealTimeData)
+		v, _ := Json.Marshal(result.RealTimeData)
 		return &pb.GdbRealTimeData{RealTimeData: fmt.Sprintf("%s", v)}, nil
 	}
 }
 
 func (s *server) GetHistoricalData(_ context.Context, r *pb.QueryHistoricalDataString) (*pb.GdbHistoricalData, error) {
-	if r, err := s.gdb.GetHistoricalData(r.GetItemNames(), r.GetStartTimes(), r.GetEndTimes(), r.GetIntervals()); err != nil {
+	if result, err := s.gdb.GetHistoricalData(r.GetItemNames(), r.GetStartTimes(), r.GetEndTimes(), r.GetIntervals()); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(r.HistoricalData)
+		v, _ := Json.Marshal(result.HistoricalData)
 		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", v)}, nil
 	}
 }
@@ -234,20 +276,169 @@ func (s *server) GetHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistor
 	for _, s := range r.GetTimeStamps() {
 		t = append(t, s.GetTimeStamp())
 	}
-	if r, err := s.gdb.GetHistoricalDataWithStamp(r.GetItemNames(), t...); err != nil {
+	if result, err := s.gdb.GetHistoricalDataWithStamp(r.GetItemNames(), t...); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(r.HistoricalData)
+		v, _ := Json.Marshal(result.HistoricalData)
 		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", v)}, nil
 	}
 }
 
 func (s *server) GetDbInfo(_ context.Context, _ *emptypb.Empty) (*pb.GdbInfoData, error) {
-	if r, err := s.gdb.getDbInfo(); err != nil {
+	if result, err := s.gdb.getDbInfo(); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(r.Info)
+		v, _ := Json.Marshal(result.Info)
 		return &pb.GdbInfoData{Info: fmt.Sprintf("%s", v)}, nil
+	}
+}
+
+// page handler
+
+func (s *server) UserLogin(_ context.Context, r *pb.AuthInfo) (*pb.UserToken, error) {
+	if result, err := s.gdb.userLogin(authInfo{
+		UserName: r.GetUserName(),
+		PassWord: r.GetPassWord(),
+	}); err != nil {
+		return nil, err
+	} else {
+		return &pb.UserToken{Token: result.Token}, nil
+	}
+}
+
+func (s *server) GetUserInfo(_ context.Context, r *pb.UserName) (*pb.UserInfo, error) {
+	if result, err := s.gdb.getUserInfo(r.GetName()); err != nil {
+		return nil, err
+	} else {
+		return &pb.UserInfo{
+			UserName: result.UserName.Name,
+			Role:     result.Role,
+		}, nil
+	}
+}
+
+func (s *server) GetLogs(_ context.Context, r *pb.QueryLogsInfo) (*pb.LogsInfo, error) {
+	if result, err := s.gdb.getLogs(r.LogType, r.Condition, r.StartTime, r.EndTime); err != nil {
+		return nil, err
+	} else {
+		logs := []*pb.LogInfo{}
+		for _, item := range result.Infos {
+			logs = append(logs, &pb.LogInfo{Info: item})
+		}
+		return &pb.LogsInfo{Infos: logs}, nil
+	}
+}
+
+// calc handler
+
+func (s *server) AddCalcItem(_ context.Context, r *pb.AddedCalcItemInfo) (*pb.CalculationResult, error) {
+	if result, err := s.gdb.testCalculation(r.GetExpression()); err != nil {
+		return nil, err
+	} else {
+		createTime := time.Now().Format(timeFormatString)
+		if _, err := updateItem(s.gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime, updatedTime, duration, status) values ('"+r.GetDescription()+"', '"+r.GetExpression()+"' , '"+createTime+"', '"+createTime+"', '"+r.GetDuration()+"', '"+r.GetFlag()+"')"); err != nil {
+			return nil, err
+		} else {
+			return &pb.CalculationResult{Result: result.Result.(string)}, nil
+		}
+	}
+}
+
+func (s *server) AddCalcItemWithStream(stream pb.Calc_AddCalcItemWithStreamServer) error {
+	as := []addedCalcItemInfo{}
+	ss := []string{}
+	cs := []*pb.CalculationResult{}
+	createTime := time.Now().Format(timeFormatString)
+	for {
+		c, err := stream.Recv()
+		if err == io.EOF {
+			for _, item := range as {
+				if result, err := s.gdb.testCalculation(item.Expression); err != nil {
+					return err
+				} else {
+					ss = append(ss, "insert into calc_cfg (description, expression, createTime, updatedTime, duration, status) values ('"+item.Description+"', '"+item.Expression+"' , '"+createTime+"', '"+createTime+"', '"+item.Duration+"', '"+item.Flag+"')")
+					cs = append(cs, &pb.CalculationResult{Result: result.Result.(string)})
+				}
+			}
+			_ = updateItems(s.gdb.ItemDbPath, ss...)
+			return stream.SendAndClose(&pb.CalculationResults{Results: cs})
+		} else if err != nil {
+			return err
+		} else {
+			as = append(as, addedCalcItemInfo{
+				Expression:  c.GetExpression(),
+				Flag:        c.GetFlag(),
+				Duration:    c.GetDuration(),
+				Description: c.GetDescription(),
+			})
+		}
+	}
+}
+
+func (s *server) GetCalcItems(_ context.Context, r *pb.QueryCalcItemsInfo) (*pb.CalcItemsInfo, error) {
+	if result, err := s.gdb.getCalculationItem(r.GetCondition()); err != nil {
+		return nil, err
+	} else {
+		infos := []*pb.CalcItemInfo{}
+		for _, info := range result.Infos {
+			infos = append(infos, &pb.CalcItemInfo{Info: info})
+		}
+		return &pb.CalcItemsInfo{Infos: infos}, nil
+	}
+}
+
+func (s *server) UpdateCalcItem(_ context.Context, r *pb.UpdatedCalcInfo) (*pb.CalculationResult, error) {
+	if result, err := s.gdb.testCalculation(r.GetExpression()); err != nil {
+		return nil, err
+	} else {
+		if _, err := s.gdb.updateCalculationItem(updatedCalcInfo{
+			Id:          r.GetId(),
+			Description: r.GetDescription(),
+			Expression:  r.GetExpression(),
+			Duration:    r.GetDuration(),
+		}); err != nil {
+			return nil, err
+		} else {
+			return &pb.CalculationResult{
+				Result: result.Result.(string),
+			}, nil
+		}
+	}
+}
+
+func (s *server) StartCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, error) {
+	id := []string{}
+	for _, item := range r.GetId() {
+		id = append(id, "id = '"+item+"'")
+	}
+	if _, err := updateItem(s.gdb.ItemDbPath, "update calc_cfg set status='true' where "+strings.Join(id, " or ")); err != nil {
+		return nil, err
+	} else {
+		return &pb.Rows{EffectedRows: 1}, nil
+	}
+}
+
+func (s *server) StopCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, error) {
+	id := []string{}
+	for _, item := range r.GetId() {
+		id = append(id, "id = '"+item+"'")
+	}
+	if _, err := updateItem(s.gdb.ItemDbPath, "update calc_cfg set status='false' where "+strings.Join(id, " or ")); err != nil {
+		return nil, err
+	} else {
+		return &pb.Rows{EffectedRows: 1}, nil
+	}
+}
+
+func (s *server) DeleteCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, error) {
+	id := []string{}
+	for _, item := range r.GetId() {
+		id = append(id, "id = '"+item+"'")
+	}
+	if _, err := updateItem(s.gdb.ItemDbPath, "delete from calc_cfg where "+strings.Join(id, " or ")); err != nil {
+		return nil, err
+	} else {
+		return &pb.Rows{EffectedRows: 1}, nil
 	}
 }
 
