@@ -588,6 +588,7 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DataClient interface {
 	BatchWrite(ctx context.Context, in *BatchWriteString, opts ...grpc.CallOption) (*Rows, error)
+	BatchWriteWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteWithStreamClient, error)
 	GetRealTimeData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbRealTimeData, error)
 	GetHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithTimeStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
@@ -609,6 +610,40 @@ func (c *dataClient) BatchWrite(ctx context.Context, in *BatchWriteString, opts 
 		return nil, err
 	}
 	return out, nil
+}
+
+func (c *dataClient) BatchWriteWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[0], "/model.Data/BatchWriteWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteWithStreamClient interface {
+	Send(*BatchWriteString) error
+	CloseAndRecv() (*Rows, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteWithStreamClient) Send(m *BatchWriteString) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteWithStreamClient) CloseAndRecv() (*Rows, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Rows)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *dataClient) GetRealTimeData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbRealTimeData, error) {
@@ -652,6 +687,7 @@ func (c *dataClient) GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...g
 // for forward compatibility
 type DataServer interface {
 	BatchWrite(context.Context, *BatchWriteString) (*Rows, error)
+	BatchWriteWithStream(Data_BatchWriteWithStreamServer) error
 	GetRealTimeData(context.Context, *QueryRealTimeDataString) (*GdbRealTimeData, error)
 	GetHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithTimeStampString) (*GdbHistoricalData, error)
@@ -665,6 +701,9 @@ type UnimplementedDataServer struct {
 
 func (UnimplementedDataServer) BatchWrite(context.Context, *BatchWriteString) (*Rows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchWrite not implemented")
+}
+func (UnimplementedDataServer) BatchWriteWithStream(Data_BatchWriteWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteWithStream not implemented")
 }
 func (UnimplementedDataServer) GetRealTimeData(context.Context, *QueryRealTimeDataString) (*GdbRealTimeData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRealTimeData not implemented")
@@ -707,6 +746,32 @@ func _Data_BatchWrite_Handler(srv interface{}, ctx context.Context, dec func(int
 		return srv.(DataServer).BatchWrite(ctx, req.(*BatchWriteString))
 	}
 	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteWithStream(&dataBatchWriteWithStreamServer{stream})
+}
+
+type Data_BatchWriteWithStreamServer interface {
+	SendAndClose(*Rows) error
+	Recv() (*BatchWriteString, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteWithStreamServer) SendAndClose(m *Rows) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteWithStreamServer) Recv() (*BatchWriteString, error) {
+	m := new(BatchWriteString)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func _Data_GetRealTimeData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -809,6 +874,507 @@ var Data_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Data_GetDbInfo_Handler,
 		},
 	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "BatchWriteWithStream",
+			Handler:       _Data_BatchWriteWithStream_Handler,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "gdb.proto",
+}
+
+// PageClient is the client API for Page service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PageClient interface {
+	UserLogin(ctx context.Context, in *AuthInfo, opts ...grpc.CallOption) (*UserToken, error)
+	GetUserInfo(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*UserInfo, error)
+	GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grpc.CallOption) (*LogsInfo, error)
+}
+
+type pageClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPageClient(cc grpc.ClientConnInterface) PageClient {
+	return &pageClient{cc}
+}
+
+func (c *pageClient) UserLogin(ctx context.Context, in *AuthInfo, opts ...grpc.CallOption) (*UserToken, error) {
+	out := new(UserToken)
+	err := c.cc.Invoke(ctx, "/model.Page/UserLogin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) GetUserInfo(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*UserInfo, error) {
+	out := new(UserInfo)
+	err := c.cc.Invoke(ctx, "/model.Page/GetUserInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grpc.CallOption) (*LogsInfo, error) {
+	out := new(LogsInfo)
+	err := c.cc.Invoke(ctx, "/model.Page/GetLogs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PageServer is the server API for Page service.
+// All implementations must embed UnimplementedPageServer
+// for forward compatibility
+type PageServer interface {
+	UserLogin(context.Context, *AuthInfo) (*UserToken, error)
+	GetUserInfo(context.Context, *UserName) (*UserInfo, error)
+	GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error)
+	mustEmbedUnimplementedPageServer()
+}
+
+// UnimplementedPageServer must be embedded to have forward compatible implementations.
+type UnimplementedPageServer struct {
+}
+
+func (UnimplementedPageServer) UserLogin(context.Context, *AuthInfo) (*UserToken, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserLogin not implemented")
+}
+func (UnimplementedPageServer) GetUserInfo(context.Context, *UserName) (*UserInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserInfo not implemented")
+}
+func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
+}
+func (UnimplementedPageServer) mustEmbedUnimplementedPageServer() {}
+
+// UnsafePageServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PageServer will
+// result in compilation errors.
+type UnsafePageServer interface {
+	mustEmbedUnimplementedPageServer()
+}
+
+func RegisterPageServer(s grpc.ServiceRegistrar, srv PageServer) {
+	s.RegisterService(&Page_ServiceDesc, srv)
+}
+
+func _Page_UserLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).UserLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/UserLogin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).UserLogin(ctx, req.(*AuthInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetUserInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetUserInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetUserInfo(ctx, req.(*UserName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLogsInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetLogs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetLogs(ctx, req.(*QueryLogsInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Page_ServiceDesc is the grpc.ServiceDesc for Page service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Page_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "model.Page",
+	HandlerType: (*PageServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UserLogin",
+			Handler:    _Page_UserLogin_Handler,
+		},
+		{
+			MethodName: "GetUserInfo",
+			Handler:    _Page_GetUserInfo_Handler,
+		},
+		{
+			MethodName: "GetLogs",
+			Handler:    _Page_GetLogs_Handler,
+		},
+	},
 	Streams:  []grpc.StreamDesc{},
+	Metadata: "gdb.proto",
+}
+
+// CalcClient is the client API for Calc service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type CalcClient interface {
+	AddCalcItem(ctx context.Context, in *AddedCalcItemInfo, opts ...grpc.CallOption) (*CalculationResult, error)
+	AddCalcItemWithStream(ctx context.Context, opts ...grpc.CallOption) (Calc_AddCalcItemWithStreamClient, error)
+	GetCalcItems(ctx context.Context, in *QueryCalcItemsInfo, opts ...grpc.CallOption) (*CalcItemsInfo, error)
+	UpdateCalcItem(ctx context.Context, in *UpdatedCalcInfo, opts ...grpc.CallOption) (*CalculationResult, error)
+	StartCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error)
+	StopCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error)
+	DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error)
+}
+
+type calcClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewCalcClient(cc grpc.ClientConnInterface) CalcClient {
+	return &calcClient{cc}
+}
+
+func (c *calcClient) AddCalcItem(ctx context.Context, in *AddedCalcItemInfo, opts ...grpc.CallOption) (*CalculationResult, error) {
+	out := new(CalculationResult)
+	err := c.cc.Invoke(ctx, "/model.Calc/AddCalcItem", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *calcClient) AddCalcItemWithStream(ctx context.Context, opts ...grpc.CallOption) (Calc_AddCalcItemWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Calc_ServiceDesc.Streams[0], "/model.Calc/AddCalcItemWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &calcAddCalcItemWithStreamClient{stream}
+	return x, nil
+}
+
+type Calc_AddCalcItemWithStreamClient interface {
+	Send(*AddedCalcItemInfo) error
+	CloseAndRecv() (*CalculationResults, error)
+	grpc.ClientStream
+}
+
+type calcAddCalcItemWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *calcAddCalcItemWithStreamClient) Send(m *AddedCalcItemInfo) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *calcAddCalcItemWithStreamClient) CloseAndRecv() (*CalculationResults, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(CalculationResults)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *calcClient) GetCalcItems(ctx context.Context, in *QueryCalcItemsInfo, opts ...grpc.CallOption) (*CalcItemsInfo, error) {
+	out := new(CalcItemsInfo)
+	err := c.cc.Invoke(ctx, "/model.Calc/GetCalcItems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *calcClient) UpdateCalcItem(ctx context.Context, in *UpdatedCalcInfo, opts ...grpc.CallOption) (*CalculationResult, error) {
+	out := new(CalculationResult)
+	err := c.cc.Invoke(ctx, "/model.Calc/UpdateCalcItem", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *calcClient) StartCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Calc/StartCalcItem", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *calcClient) StopCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Calc/StopCalcItem", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *calcClient) DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Calc/DeleteCalcItem", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// CalcServer is the server API for Calc service.
+// All implementations must embed UnimplementedCalcServer
+// for forward compatibility
+type CalcServer interface {
+	AddCalcItem(context.Context, *AddedCalcItemInfo) (*CalculationResult, error)
+	AddCalcItemWithStream(Calc_AddCalcItemWithStreamServer) error
+	GetCalcItems(context.Context, *QueryCalcItemsInfo) (*CalcItemsInfo, error)
+	UpdateCalcItem(context.Context, *UpdatedCalcInfo) (*CalculationResult, error)
+	StartCalcItem(context.Context, *CalcId) (*Rows, error)
+	StopCalcItem(context.Context, *CalcId) (*Rows, error)
+	DeleteCalcItem(context.Context, *CalcId) (*Rows, error)
+	mustEmbedUnimplementedCalcServer()
+}
+
+// UnimplementedCalcServer must be embedded to have forward compatible implementations.
+type UnimplementedCalcServer struct {
+}
+
+func (UnimplementedCalcServer) AddCalcItem(context.Context, *AddedCalcItemInfo) (*CalculationResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddCalcItem not implemented")
+}
+func (UnimplementedCalcServer) AddCalcItemWithStream(Calc_AddCalcItemWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method AddCalcItemWithStream not implemented")
+}
+func (UnimplementedCalcServer) GetCalcItems(context.Context, *QueryCalcItemsInfo) (*CalcItemsInfo, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCalcItems not implemented")
+}
+func (UnimplementedCalcServer) UpdateCalcItem(context.Context, *UpdatedCalcInfo) (*CalculationResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateCalcItem not implemented")
+}
+func (UnimplementedCalcServer) StartCalcItem(context.Context, *CalcId) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartCalcItem not implemented")
+}
+func (UnimplementedCalcServer) StopCalcItem(context.Context, *CalcId) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopCalcItem not implemented")
+}
+func (UnimplementedCalcServer) DeleteCalcItem(context.Context, *CalcId) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteCalcItem not implemented")
+}
+func (UnimplementedCalcServer) mustEmbedUnimplementedCalcServer() {}
+
+// UnsafeCalcServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to CalcServer will
+// result in compilation errors.
+type UnsafeCalcServer interface {
+	mustEmbedUnimplementedCalcServer()
+}
+
+func RegisterCalcServer(s grpc.ServiceRegistrar, srv CalcServer) {
+	s.RegisterService(&Calc_ServiceDesc, srv)
+}
+
+func _Calc_AddCalcItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddedCalcItemInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServer).AddCalcItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Calc/AddCalcItem",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServer).AddCalcItem(ctx, req.(*AddedCalcItemInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Calc_AddCalcItemWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CalcServer).AddCalcItemWithStream(&calcAddCalcItemWithStreamServer{stream})
+}
+
+type Calc_AddCalcItemWithStreamServer interface {
+	SendAndClose(*CalculationResults) error
+	Recv() (*AddedCalcItemInfo, error)
+	grpc.ServerStream
+}
+
+type calcAddCalcItemWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *calcAddCalcItemWithStreamServer) SendAndClose(m *CalculationResults) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *calcAddCalcItemWithStreamServer) Recv() (*AddedCalcItemInfo, error) {
+	m := new(AddedCalcItemInfo)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Calc_GetCalcItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryCalcItemsInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServer).GetCalcItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Calc/GetCalcItems",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServer).GetCalcItems(ctx, req.(*QueryCalcItemsInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Calc_UpdateCalcItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatedCalcInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServer).UpdateCalcItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Calc/UpdateCalcItem",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServer).UpdateCalcItem(ctx, req.(*UpdatedCalcInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Calc_StartCalcItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CalcId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServer).StartCalcItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Calc/StartCalcItem",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServer).StartCalcItem(ctx, req.(*CalcId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Calc_StopCalcItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CalcId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServer).StopCalcItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Calc/StopCalcItem",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServer).StopCalcItem(ctx, req.(*CalcId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Calc_DeleteCalcItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CalcId)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServer).DeleteCalcItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Calc/DeleteCalcItem",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServer).DeleteCalcItem(ctx, req.(*CalcId))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Calc_ServiceDesc is the grpc.ServiceDesc for Calc service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var Calc_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "model.Calc",
+	HandlerType: (*CalcServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddCalcItem",
+			Handler:    _Calc_AddCalcItem_Handler,
+		},
+		{
+			MethodName: "GetCalcItems",
+			Handler:    _Calc_GetCalcItems_Handler,
+		},
+		{
+			MethodName: "UpdateCalcItem",
+			Handler:    _Calc_UpdateCalcItem_Handler,
+		},
+		{
+			MethodName: "StartCalcItem",
+			Handler:    _Calc_StartCalcItem_Handler,
+		},
+		{
+			MethodName: "StopCalcItem",
+			Handler:    _Calc_StopCalcItem_Handler,
+		},
+		{
+			MethodName: "DeleteCalcItem",
+			Handler:    _Calc_DeleteCalcItem_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "AddCalcItemWithStream",
+			Handler:       _Calc_AddCalcItemWithStream_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "gdb.proto",
 }
