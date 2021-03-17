@@ -1,8 +1,9 @@
 {
   "ip": "",
   "port": 8082,
-  "dbPath": "./leveldb",
-  "itemDbPath": "./itemDb",
+  "dbPath": "F:\\bin\\leveldb",
+  "itemDbPath": "F:\\bin\\itemDb",
   "applicationName": "db.exe",
-  "authorization": true
+  "authorization": true,
+  "mode": "gRPC"
 }
