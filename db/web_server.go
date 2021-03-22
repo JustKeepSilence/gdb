@@ -58,7 +58,7 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 	pprof.Register(router)
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return ""
-	})) // customer console writing
+	})) // customer console writing,disable console writing
 	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
 		if err, ok := recovered.(string); ok {
 			if c.Request.Method == "GET" {
@@ -110,7 +110,8 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 	}
 	pageRequest := router.Group("/page") // page request handler
 	{
-		pageRequest.POST("/userLogin", g.handleUserLogin)             // user login
+		pageRequest.POST("/userLogin", g.handleUserLogin) // user login
+		pageRequest.GET("/userLogout/:userName", g.handleUserLogout)
 		pageRequest.POST("/getUserInfo", g.handleGetUerInfo)          // get user info
 		pageRequest.POST("/uploadFile", g.handleUploadFile)           // upload file
 		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcel) // add item by excel
