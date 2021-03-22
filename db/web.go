@@ -435,13 +435,23 @@ func (gdb *Gdb) handleUserLogin(c *gin.Context) {
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.handleError(c, "incorrect json form")
 	} else {
-		token, err := gdb.userLogin(g) // add groups
+		token, err := gdb.userLogin(g, c.Request.RemoteAddr, c.Request.Header.Get("User-Agent")) // add groups
 		if err != nil {
 			gdb.handleError(c, err.Error())
 		} else {
 			r, _ := Json.Marshal(ResponseData{200, "", token})
 			c.String(200, "%s", r)
 		}
+	}
+}
+
+func (gdb *Gdb) handleUserLogout(c *gin.Context) {
+	userName := c.Param("userName")
+	if responseData, err := gdb.userLogout(userName, c.Request.RemoteAddr, c.Request.Header.Get("User-Agent")); err != nil {
+		gdb.handleError(c, err.Error())
+	} else {
+		r, _ := Json.Marshal(ResponseData{200, "", responseData})
+		c.String(200, "%s", r)
 	}
 }
 
@@ -752,4 +762,34 @@ func (gdb *Gdb) writeLog(level logLevel, requestMethod, message, requestString, 
 		return err
 	}
 	return nil
+}
+
+func (gdb *Gdb) cleanLogs() error {
+	if dbConfigs, err := ReadDbConfig("./config.json"); err != nil {
+		return err
+	} else {
+		expiredTime := dbConfigs.ExpiredTime
+		if expiredTime == 0 {
+			expiredTime = 3600 // default 1 hours, 3600s
+		}
+		if d, err := time.ParseDuration(strconv.Itoa(expiredTime) + "s"); err != nil {
+			return err
+		} else {
+			t := time.NewTicker(d)
+			for {
+				select {
+				case <-t.C:
+					// clean logs
+					expiredDate := time.Now().Add(d * -1).Format(timeFormatString)
+					sqlString := "delete from log_cfg where insertTime < '" + expiredDate + "'"
+					if _, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
+						return err
+					} else {
+						return nil
+					}
+				}
+			}
+		}
+
+	}
 }
