@@ -20,6 +20,11 @@ const (
 // structure
 
 type Config struct {
+	GdbConfigs `json:"gdbConfigs"`
+	LogConfigs `json:"logConfigs"`
+}
+
+type GdbConfigs struct {
 	Port            int64  `json:"port"`
 	DbPath          string `json:"dbPath"`
 	ItemDbPath      string `json:"itemDbPath"`
@@ -27,6 +32,10 @@ type Config struct {
 	ApplicationName string `json:"applicationName"`
 	Authorization   bool   `json:"authorization"`
 	Mode            string `json:"mode"`
+}
+
+type LogConfigs struct {
+	ExpiredTime int `json:"expiredTime"`
 }
 
 // common
