@@ -15,6 +15,9 @@ import (
 	pb "github.com/JustKeepSilence/gdb/model"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
 	"log"
@@ -295,15 +298,8 @@ func (s *server) GetDbInfo(_ context.Context, _ *emptypb.Empty) (*pb.GdbInfoData
 
 // page handler
 
-func (s *server) UserLogin(_ context.Context, r *pb.AuthInfo) (*pb.UserToken, error) {
-	if result, err := s.gdb.userLogin(authInfo{
-		UserName: r.GetUserName(),
-		PassWord: r.GetPassWord(),
-	}); err != nil {
-		return nil, err
-	} else {
-		return &pb.UserToken{Token: result.Token}, nil
-	}
+func (s *server) UserLogin(_ context.Context, _ *pb.AuthInfo) (*pb.UserToken, error) {
+	return nil, nil
 }
 
 func (s *server) GetUserInfo(_ context.Context, r *pb.UserName) (*pb.UserInfo, error) {
@@ -442,17 +438,100 @@ func (s *server) DeleteCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, erro
 	}
 }
 
+// use interceptor token authorization and userLogin
+
+func (s *server) auth(c context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	methods := strings.Split(info.FullMethod, "/")
+	if md, ok := metadata.FromIncomingContext(c); !ok {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+	} else {
+		var userName string
+		if d, ok := md["userName"]; ok {
+			userName = d[0]
+		} else {
+			return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+		}
+		remoteAddress := md.Get(":authority")[0] // address
+		userAgent := md.Get("user-agent")[0]     // user agent
+		if methods[len(methods)-1] == "UserLogin" {
+			r := req.(*pb.AuthInfo)
+			if result, err := s.gdb.userLogin(authInfo{
+				UserName: r.GetUserName(),
+				PassWord: r.GetPassWord(),
+			}, remoteAddress, userAgent); err != nil {
+				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+			} else {
+				return &pb.UserToken{Token: result.Token}, nil
+			}
+		} else {
+			var token string
+			if d, ok := md["token"]; ok {
+				token = d[0]
+			} else {
+				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+			}
+			if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
+				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+			} else {
+				if token != fmt.Sprintf("%s", v) {
+					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+				} else {
+					return handler(c, req)
+				}
+			}
+		}
+	}
+}
+
+func (s *server) authWithServerStream(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	if !info.IsClientStream {
+		return status.Errorf(codes.Unknown, "unknown service type")
+	} else {
+		if md, ok := metadata.FromIncomingContext(ss.Context()); !ok {
+			return status.Errorf(codes.Unauthenticated, "invalid token")
+		} else {
+			var userName, token string
+			remoteAddress := md.Get(":authority")[0] // address
+			userAgent := md.Get("user-agent")[0]     // user agent
+			if d, ok := md["userName"]; ok {
+				userName = d[0]
+			} else {
+				return status.Errorf(codes.Unauthenticated, "invalid token")
+			}
+			if d, ok := md["token"]; ok {
+				token = d[0]
+			} else {
+				return status.Errorf(codes.Unauthenticated, "invalid token")
+			}
+			if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
+				return status.Errorf(codes.Unauthenticated, "invalid token")
+			} else {
+				if token != fmt.Sprintf("%s", v) {
+					return status.Errorf(codes.Unauthenticated, "invalid token")
+				} else {
+					return handler(srv, ss)
+				}
+			}
+		}
+	}
+}
+
 func InitialDbRPCServer(port, dbPath, itemDbPath string) {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Print(err)
 	}
-	s := grpc.NewServer()
 	if g, err := NewGdb(dbPath, itemDbPath); err != nil {
 		log.Println("fail in initialing gdb: " + err.Error())
 		time.Sleep(time.Second * 60)
 	} else {
-		pb.RegisterGroupServer(s, &server{gdb: g})
+		se := &server{gdb: g}
+		s := grpc.NewServer(grpc.UnaryInterceptor(se.auth), grpc.StreamInterceptor(se.authWithServerStream))
+		pb.RegisterGroupServer(s, se)
+		pb.RegisterItemServer(s, se)
+		pb.RegisterDataServer(s, se)
+		pb.RegisterPageServer(s, se)
+		pb.RegisterCalcServer(s, se)
 		fmt.Println("launch gRPC successfully!")
 		if err := s.Serve(lis); err != nil {
 			log.Print(err)
