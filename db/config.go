@@ -25,8 +25,11 @@ func ReadDbConfig(path string) (Config, error) {
 	b := make([]byte, fileInfo.Size())
 	_, _ = file.Read(b)
 	c := Config{}
-	_ = json.Unmarshal(b, &c)
-	return c, nil
+	if err := json.Unmarshal(b, &c); err != nil {
+		return Config{}, nil
+	} else {
+		return c, nil
+	}
 }
 
 func GetLocalIp() string {

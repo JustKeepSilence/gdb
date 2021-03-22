@@ -1,9 +1,15 @@
 {
-  "ip": "",
-  "port": 8082,
-  "dbPath": "./leveldb",
-  "itemDbPath": "./itemDb",
-  "applicationName": "db.exe",
-  "authorization": true,
-  "mode": "gRPC"
+  "gdbConfigs": {
+    "ip": "",
+    "port": 8082,
+    "dbPath": "./leveldb",
+    "itemDbPath": "./itemDb",
+    "applicationName": "db.exe",
+    "authorization": false,
+    "mode": "gRPC"
+  },
+  "logConfigs": {
+    "requestLog": true,
+    "expiredTime": 24
+  }
 }
