@@ -9,26 +9,25 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
-	"os"
+	"runtime"
+	"strings"
 	"time"
 )
 
 func ReadDbConfig(path string) (Config, error) {
-	file, err := os.Open(path)
-	if err != nil {
+	if b, err := ioutil.ReadFile(path); err != nil {
 		return Config{}, err
-	}
-	defer file.Close()
-	fileInfo, _ := os.Stat(path)
-	b := make([]byte, fileInfo.Size())
-	_, _ = file.Read(b)
-	c := Config{}
-	if err := json.Unmarshal(b, &c); err != nil {
-		return Config{}, nil
 	} else {
-		return c, nil
+		c := Config{}
+		cf := handleJson(fmt.Sprintf("%s", b))
+		if err := json.Unmarshal(cf, &c); err != nil {
+			return Config{}, nil
+		} else {
+			return c, nil
+		}
 	}
 }
 
@@ -42,4 +41,29 @@ func GetLocalIp() string {
 	defer conn.Close()
 	local := conn.LocalAddr().(*net.UDPAddr)
 	return local.IP.String()
+}
+
+// handle json to allow  // single line comments in json file
+func handleJson(js string) []byte {
+	var lines, configs []string
+	var newLine string
+	switch runtime.GOOS {
+	case "windows":
+		newLine = "\r\n"
+	case "linux":
+		newLine = "\n"
+	default:
+		newLine = "r" // mac
+	}
+	lines = strings.Split(js, newLine)
+code:
+	for _, line := range lines {
+		if strings.HasPrefix(strings.Trim(line, " "), "//") {
+			continue code
+		} else {
+			configs = append(configs, line)
+		}
+
+	}
+	return []byte(strings.Join(configs, newLine))
 }

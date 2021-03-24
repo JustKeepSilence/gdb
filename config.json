@@ -1,15 +1,30 @@
+// Notes: you can use // single line comments in json file
 {
   "gdbConfigs": {
+    // ip address of gdb service, if empty, we will get ip of local machine
     "ip": "",
+    // port of gdb service
     "port": 8082,
-    "dbPath": "./leveldb",
-    "itemDbPath": "./itemDb",
+    // path of gdb service to store data
+    "dbPath": "F:\\bin\\leveldb",
+    // path of gdb service to store item data
+    "itemDbPath": "F:\\bin\\itemDb",
+    // name of gdb service to get runTime info of gdb, should be the same
+    // as the name of the compiled executable file
     "applicationName": "db.exe",
+    // whether to open authorization mode, if true, when use restful or rpc
+    // user need to token authorization authentication
     "authorization": false,
-    "mode": "gRPC"
+    // specify the operating mode of the gdb service,at moment support restful and
+    // rpc mode, if empty, will use restful mode
+    "mode": "rpc"
   },
   "logConfigs": {
-    "requestLog": true,
+    // whether write log for gdb
+    "logWriting": true,
+    // loglevel of gdb, 0 is Info, 1 is Error
+    "Level" : 1,
+    // expiredTime of gdb, unit is seconds
     "expiredTime": 24
   }
 }
