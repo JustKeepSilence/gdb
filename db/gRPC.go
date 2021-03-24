@@ -32,7 +32,8 @@ type server struct {
 	pb.UnimplementedDataServer
 	pb.UnimplementedPageServer
 	pb.UnimplementedCalcServer
-	gdb *Gdb
+	gdb        *Gdb
+	logConfigs LogConfigs
 }
 
 // group handler
@@ -476,7 +477,15 @@ func (s *server) auth(c context.Context, req interface{}, info *grpc.UnaryServer
 				if token != fmt.Sprintf("%s", v) {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
-					return handler(c, req)
+					// log handler
+					if s.logConfigs.LogWriting {
+						//if v, err := handler(c, req);err!=nil{
+						//	s.gdb.writeLog(Error, info.FullMethod, )
+						//}
+						return handler(c, req)
+					} else {
+						return handler(c, req)
+					}
 				}
 			}
 		}
@@ -516,7 +525,7 @@ func (s *server) authWithServerStream(srv interface{}, ss grpc.ServerStream, inf
 	}
 }
 
-func InitialDbRPCServer(port, dbPath, itemDbPath string) {
+func InitialDbRPCServer(port, dbPath, itemDbPath string, logConfigs LogConfigs) {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Print(err)
@@ -525,7 +534,7 @@ func InitialDbRPCServer(port, dbPath, itemDbPath string) {
 		log.Println("fail in initialing gdb: " + err.Error())
 		time.Sleep(time.Second * 60)
 	} else {
-		se := &server{gdb: g}
+		se := &server{gdb: g, logConfigs: logConfigs}
 		s := grpc.NewServer(grpc.UnaryInterceptor(se.auth), grpc.StreamInterceptor(se.authWithServerStream))
 		pb.RegisterGroupServer(s, se)
 		pb.RegisterItemServer(s, se)
