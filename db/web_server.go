@@ -13,7 +13,6 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -47,7 +46,7 @@ var (
 )
 
 // web app router
-func appRouter(g *Gdb, authorization bool) http.Handler {
+func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Handler {
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Println(err)
@@ -60,12 +59,12 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 		return ""
 	})) // customer console writing,disable console writing
 	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		if err, ok := recovered.(string); ok {
+		if _, ok := recovered.(string); ok {
 			if c.Request.Method == "GET" {
-				_ = g.writeLog(Error, "get", err, c.Request.URL.String(), c.Request.URL.String())
+				//_ = g.writeLog(Error, "get", err, c.Request.URL.String(), c.Request.URL.String())
 			} else if c.Request.Method == "POST" {
-				b, _ := ioutil.ReadAll(c.Request.Body)
-				_ = g.writeLog(Error, "post", fmt.Sprintf("%s", b), c.Request.URL.String(), c.Request.URL.String())
+				// b, _ := ioutil.ReadAll(c.Request.Body)
+				//_ = g.writeLog(Error, "post", fmt.Sprintf("%s", b), c.Request.URL.String(), c.Request.URL.String())
 			}
 		}
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -77,6 +76,9 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 	router.Use(cors.Default()) // allow all cors
 	if authorization {
 		router.Use(g.authorization()) // authorization
+	}
+	if logWriting {
+		router.Use(g.setLogHeader(level))
 	}
 	group := router.Group("/group") // group handler
 	{
@@ -159,7 +161,7 @@ func appRouter(g *Gdb, authorization bool) http.Handler {
 	return router
 }
 
-func InitialDbServer(ip string, port int64, dbPath, itemDbPath string, startReadConfigTime time.Time, authorization bool) error {
+func InitialDbServer(ip string, port int64, dbPath, itemDbPath string, _ time.Time, authorization, logWriting bool, level logLevel) error {
 	checkResult, err := portInUse(port)
 	if err != nil {
 		return fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(timeFormatString), port, err)
@@ -176,24 +178,24 @@ func InitialDbServer(ip string, port int64, dbPath, itemDbPath string, startRead
 	}
 	appServer := &http.Server{
 		Addr:         address,
-		Handler:      appRouter(gdb, authorization),
+		Handler:      appRouter(gdb, authorization, logWriting, level),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
-	finalTime := time.Now()
-	_ = gdb.writeLog(Info, "", fmt.Sprintf("The system starts successfully, time consuming :%d ms", finalTime.Sub(startReadConfigTime).Milliseconds()), "", "")
+	//finalTime := time.Now()
+	//_ = gdb.writeLog(Info, "", fmt.Sprintf("The system starts successfully, time consuming :%d ms", finalTime.Sub(startReadConfigTime).Milliseconds()), "", "")
 	fmt.Printf("%s: launch web service successfully!: %s \n", time.Now().Format(timeFormatString), address)
 	g.Go(func() error {
 		err := appServer.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			_ = gdb.writeLog(Error, " ", err.Error(), " ", " ")
+			//_ = gdb.writeLog(Error, " ", err.Error(), " ", " ")
 		}
 		return err
 	})
 	g.Go(gdb.getProcessInfo) // monitor
 	g.Go(gdb.calc)           // calc goroutine
 	if err := g.Wait(); err != nil {
-		_ = gdb.writeLog(Error, " ", err.Error(), " ", " ")
+		//_ = gdb.writeLog(Error, " ", err.Error(), " ", " ")
 	}
 	return nil
 }
