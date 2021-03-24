@@ -47,6 +47,6 @@ func main() {
 			return
 		}
 	} else {
-		db.InitialDbRPCServer(":"+fmt.Sprintf("%d", dbPort), dbPath, itemDbPath, dbConfigs.LogConfigs)
+		db.InitialDbRPCServer(":"+fmt.Sprintf("%d", dbPort), dbPath, itemDbPath, dbConfigs)
 	}
 }

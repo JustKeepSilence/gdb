@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	pb "github.com/JustKeepSilence/gdb/model"
+	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -22,6 +23,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -32,8 +34,8 @@ type server struct {
 	pb.UnimplementedDataServer
 	pb.UnimplementedPageServer
 	pb.UnimplementedCalcServer
-	gdb        *Gdb
-	logConfigs LogConfigs
+	gdb     *Gdb
+	configs Config
 }
 
 // group handler
@@ -441,7 +443,7 @@ func (s *server) DeleteCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, erro
 
 // use interceptor token authorization and userLogin
 
-func (s *server) auth(c context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	methods := strings.Split(info.FullMethod, "/")
 	if md, ok := metadata.FromIncomingContext(c); !ok {
 		return nil, status.Errorf(codes.Unauthenticated, "invalid token")
@@ -478,21 +480,14 @@ func (s *server) auth(c context.Context, req interface{}, info *grpc.UnaryServer
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
 					// log handler
-					if s.logConfigs.LogWriting {
-						//if v, err := handler(c, req);err!=nil{
-						//	s.gdb.writeLog(Error, info.FullMethod, )
-						//}
-						return handler(c, req)
-					} else {
-						return handler(c, req)
-					}
+					return handler(c, req)
 				}
 			}
 		}
 	}
 }
 
-func (s *server) authWithServerStream(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func (s *server) authWithServerStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	if !info.IsClientStream {
 		return status.Errorf(codes.Unknown, "unknown service type")
 	} else {
@@ -525,7 +520,44 @@ func (s *server) authWithServerStream(srv interface{}, ss grpc.ServerStream, inf
 	}
 }
 
-func InitialDbRPCServer(port, dbPath, itemDbPath string, logConfigs LogConfigs) {
+func (s *server) logInterceptor(c context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	if s.configs.LogWriting {
+		if md, ok := metadata.FromIncomingContext(c); !ok {
+			return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+		} else {
+			remoteAddress := md.Get(":authority")[0] // address
+			v := reflect.ValueOf(req)
+			t := reflect.TypeOf(req)
+			methodNames := []string{}
+			r := map[string]interface{}{} // grpc request data
+			for i := 0; i < t.NumMethod(); i++ {
+				if strings.HasPrefix(t.Method(i).Name, "Get") {
+					methodNames = append(methodNames, t.Method(i).Name) // get all grpc field functions
+				}
+			}
+			for _, name := range methodNames {
+				m := v.MethodByName(name) // get method
+				p := make([]reflect.Value, m.Type().NumIn())
+				result := m.Call(p)[0].Interface() // call function and get result
+				r[strings.Replace(name, "Get", "", -1)] = result
+			}
+			rpcString, _ := Json.Marshal(r)
+			if v, err := handler(c, req); err != nil {
+				_ = s.gdb.writeLog(Error, info.FullMethod, fmt.Sprintf("%s", rpcString), "rpc", err.Error(), remoteAddress)
+				return v, err
+			} else {
+				if s.configs.Level == Info {
+					_ = s.gdb.writeLog(Error, info.FullMethod, fmt.Sprintf("%s", rpcString), "rpc", "", remoteAddress)
+				}
+				return v, nil
+			}
+		}
+	} else {
+		return handler(c, req)
+	}
+}
+
+func InitialDbRPCServer(port, dbPath, itemDbPath string, configs Config) {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Print(err)
@@ -534,8 +566,9 @@ func InitialDbRPCServer(port, dbPath, itemDbPath string, logConfigs LogConfigs) 
 		log.Println("fail in initialing gdb: " + err.Error())
 		time.Sleep(time.Second * 60)
 	} else {
-		se := &server{gdb: g, logConfigs: logConfigs}
-		s := grpc.NewServer(grpc.UnaryInterceptor(se.auth), grpc.StreamInterceptor(se.authWithServerStream))
+		se := &server{gdb: g, configs: configs}
+		s := grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(se.authInterceptor, se.logInterceptor)),
+			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(se.authWithServerStreamInterceptor)))
 		pb.RegisterGroupServer(s, se)
 		pb.RegisterItemServer(s, se)
 		pb.RegisterDataServer(s, se)
