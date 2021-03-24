@@ -10,6 +10,10 @@ Gdb is a cgo project, to run or build it, you need gcc ,and install [GO](https:/
 go get github.com/JustKeepSilence/gdb
 ```
 
+Notes: Since gdb uses [gin](https://github.com/gin-gonic/gin#grouping-routes) v1.6.3 internally, you should manually add the gin.CustomRecovery function
+for details, see: https://github.com/gin-gonic/gin/issues/2615
+
+
 Then import gdb in your own code
 ```go
 import "github.com/JustKeepSilence/gdb/db"
