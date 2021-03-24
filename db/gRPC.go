@@ -444,79 +444,87 @@ func (s *server) DeleteCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, erro
 // use interceptor token authorization and userLogin
 
 func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-	methods := strings.Split(info.FullMethod, "/")
-	if md, ok := metadata.FromIncomingContext(c); !ok {
-		return nil, status.Errorf(codes.Unauthenticated, "invalid token")
-	} else {
-		var userName string
-		if d, ok := md["userName"]; ok {
-			userName = d[0]
-		} else {
+	if s.configs.Authorization {
+		methods := strings.Split(info.FullMethod, "/")
+		if md, ok := metadata.FromIncomingContext(c); !ok {
 			return nil, status.Errorf(codes.Unauthenticated, "invalid token")
-		}
-		remoteAddress := md.Get(":authority")[0] // address
-		userAgent := md.Get("user-agent")[0]     // user agent
-		if methods[len(methods)-1] == "UserLogin" {
-			r := req.(*pb.AuthInfo)
-			if result, err := s.gdb.userLogin(authInfo{
-				UserName: r.GetUserName(),
-				PassWord: r.GetPassWord(),
-			}, remoteAddress, userAgent); err != nil {
-				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
-			} else {
-				return &pb.UserToken{Token: result.Token}, nil
-			}
 		} else {
-			var token string
-			if d, ok := md["token"]; ok {
-				token = d[0]
+			var userName string
+			if d, ok := md["userName"]; ok {
+				userName = d[0]
 			} else {
 				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 			}
-			if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
-				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
-			} else {
-				if token != fmt.Sprintf("%s", v) {
+			remoteAddress := md.Get(":authority")[0] // address
+			userAgent := md.Get("user-agent")[0]     // user agent
+			if methods[len(methods)-1] == "UserLogin" {
+				r := req.(*pb.AuthInfo)
+				if result, err := s.gdb.userLogin(authInfo{
+					UserName: r.GetUserName(),
+					PassWord: r.GetPassWord(),
+				}, remoteAddress, userAgent); err != nil {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
-					// log handler
-					return handler(c, req)
+					return &pb.UserToken{Token: result.Token}, nil
+				}
+			} else {
+				var token string
+				if d, ok := md["token"]; ok {
+					token = d[0]
+				} else {
+					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+				}
+				if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
+					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+				} else {
+					if token != fmt.Sprintf("%s", v) {
+						return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+					} else {
+						// log handler
+						return handler(c, req)
+					}
 				}
 			}
 		}
+	} else {
+		return handler(c, req)
 	}
 }
 
 func (s *server) authWithServerStreamInterceptor(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	if !info.IsClientStream {
-		return status.Errorf(codes.Unknown, "unknown service type")
-	} else {
-		if md, ok := metadata.FromIncomingContext(ss.Context()); !ok {
-			return status.Errorf(codes.Unauthenticated, "invalid token")
+	if s.configs.Authorization {
+		if !info.IsClientStream {
+			return status.Errorf(codes.Unknown, "unknown service type")
 		} else {
-			var userName, token string
-			remoteAddress := md.Get(":authority")[0] // address
-			userAgent := md.Get("user-agent")[0]     // user agent
-			if d, ok := md["userName"]; ok {
-				userName = d[0]
-			} else {
-				return status.Errorf(codes.Unauthenticated, "invalid token")
-			}
-			if d, ok := md["token"]; ok {
-				token = d[0]
-			} else {
-				return status.Errorf(codes.Unauthenticated, "invalid token")
-			}
-			if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
+			if md, ok := metadata.FromIncomingContext(ss.Context()); !ok {
 				return status.Errorf(codes.Unauthenticated, "invalid token")
 			} else {
-				if token != fmt.Sprintf("%s", v) {
+				var userName, token string
+				remoteAddress := md.Get(":authority")[0] // address
+				userAgent := md.Get("user-agent")[0]     // user agent
+				if d, ok := md["userName"]; ok {
+					userName = d[0]
+				} else {
+					return status.Errorf(codes.Unauthenticated, "invalid token")
+				}
+				if d, ok := md["token"]; ok {
+					token = d[0]
+				} else {
+					return status.Errorf(codes.Unauthenticated, "invalid token")
+				}
+				if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
 					return status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
-					return handler(srv, ss)
+					if token != fmt.Sprintf("%s", v) {
+						return status.Errorf(codes.Unauthenticated, "invalid token")
+					} else {
+						return handler(srv, ss)
+					}
 				}
 			}
 		}
+	} else {
+		return handler(srv, ss)
 	}
 }
 
