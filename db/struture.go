@@ -35,7 +35,9 @@ type GdbConfigs struct {
 }
 
 type LogConfigs struct {
-	ExpiredTime int `json:"expiredTime"`
+	LogWriting  bool     `json:"logWriting"`
+	Level       logLevel `json:"level"`
+	ExpiredTime int      `json:"expiredTime"`
 }
 
 // common
