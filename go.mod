@@ -14,7 +14,6 @@ require (
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/golang/protobuf v1.4.2
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/json-iterator/go v1.1.10
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/shirou/gopsutil/v3 v3.20.12
