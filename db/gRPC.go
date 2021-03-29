@@ -13,7 +13,6 @@ import (
 	"context"
 	"fmt"
 	pb "github.com/JustKeepSilence/gdb/model"
-	"github.com/grpc-ecosystem/go-grpc-middleware"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -21,8 +20,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
-	"log"
-	"net"
 	"reflect"
 	"strings"
 	"time"
@@ -565,26 +562,20 @@ func (s *server) logInterceptor(c context.Context, req interface{}, info *grpc.U
 	}
 }
 
-func InitialDbRPCServer(port, dbPath, itemDbPath string, configs Config) {
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		log.Print(err)
-	}
-	if g, err := NewGdb(dbPath, itemDbPath); err != nil {
-		log.Println("fail in initialing gdb: " + err.Error())
-		time.Sleep(time.Second * 60)
-	} else {
-		se := &server{gdb: g, configs: configs}
-		s := grpc.NewServer(grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(se.authInterceptor, se.logInterceptor)),
-			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(se.authWithServerStreamInterceptor)))
-		pb.RegisterGroupServer(s, se)
-		pb.RegisterItemServer(s, se)
-		pb.RegisterDataServer(s, se)
-		pb.RegisterPageServer(s, se)
-		pb.RegisterCalcServer(s, se)
-		fmt.Println("launch gRPC successfully!")
-		if err := s.Serve(lis); err != nil {
-			log.Print(err)
+func (s *server) panicInterceptor(c context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("panic: %v\n", r)
 		}
-	}
+	}()
+	return handler(c, req)
+}
+
+func (s *server) panicWithServerStreamInterceptor(srv interface{}, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("panic: %v\n", r)
+		}
+	}()
+	return handler(srv, ss)
 }

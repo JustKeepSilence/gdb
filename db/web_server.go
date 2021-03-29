@@ -9,10 +9,13 @@ package db
 
 import (
 	"fmt"
+	pb "github.com/JustKeepSilence/gdb/model"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"log"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -161,14 +164,37 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 	return router
 }
 
-func InitialDbServer(ip string, port int64, dbPath, itemDbPath string, _ time.Time, authorization, logWriting bool, level logLevel) error {
+// initial gdb service with given configs
+func InitialDbServer() error {
+	// read configs of gdb
+	configs, err := readDbConfig("./config.json")
+	if err != nil {
+		log.Println(fmt.Errorf("System initialization failed: " + err.Error()))
+		time.Sleep(60 * time.Second)
+		return nil
+	}
+	if configs.Mode == "" {
+		configs.Mode = "restful"
+	}
+	if configs.Mode != "restful" && configs.Mode != "rpc" {
+		log.Println("gdb only support restful or gRPC mode currently!")
+		time.Sleep(60 * time.Second)
+		return nil
+	}
+	dbPath, itemDbPath, port, ip := configs.DbPath, configs.ItemDbPath, configs.Port, configs.IP
 	checkResult, err := portInUse(port)
 	if err != nil {
-		return fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(timeFormatString), port, err)
+		log.Println(fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(timeFormatString), port, err))
+		return nil
 	}
 	if checkResult != -1 {
 		// used
-		return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult)
+		log.Println(fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult))
+		return nil
+	}
+	if len(ip) == 0 {
+		// not config ip
+		ip = getLocalIp()
 	}
 	gin.SetMode(gin.ReleaseMode)                  // production
 	address := ip + ":" + fmt.Sprintf("%d", port) // base url of web server
@@ -176,26 +202,45 @@ func InitialDbServer(ip string, port int64, dbPath, itemDbPath string, _ time.Ti
 	if err != nil {
 		return err
 	}
-	appServer := &http.Server{
-		Addr:         address,
-		Handler:      appRouter(gdb, authorization, logWriting, level),
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-	//finalTime := time.Now()
-	//_ = gdb.writeLog(Info, "", fmt.Sprintf("The system starts successfully, time consuming :%d ms", finalTime.Sub(startReadConfigTime).Milliseconds()), "", "")
-	fmt.Printf("%s: launch web service successfully!: %s \n", time.Now().Format(timeFormatString), address)
-	g.Go(func() error {
-		err := appServer.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
-			//_ = gdb.writeLog(Error, " ", err.Error(), " ", " ")
+	if configs.Mode == "restful" {
+		fmt.Printf("%s: launch web service successfully!: %s \n", time.Now().Format(timeFormatString), address)
+		g.Go(func() error {
+			if err := http.ListenAndServe(address, appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)); err != nil && err != http.ErrServerClosed {
+				return err
+			} else {
+				return nil
+			}
+		})
+	} else {
+		// rpc mode
+		se := &server{gdb: gdb, configs: configs}
+		s := grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
+			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor))
+		pb.RegisterGroupServer(s, se)
+		pb.RegisterItemServer(s, se)
+		pb.RegisterDataServer(s, se)
+		pb.RegisterPageServer(s, se)
+		pb.RegisterCalcServer(s, se)
+		fmt.Printf("%s: launch rpc service successfully!: %s \n", time.Now().Format(timeFormatString), address)
+		//g.Go(func() error {
+		if err := http.ListenAndServeTLS(address, "./server.crt", "./server.key", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.ProtoMajor == 2 {
+				s.ServeHTTP(w, r)
+			} else {
+				appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)
+			}
+		})); err != nil && err != http.ErrServerClosed {
+			return err
+		} else {
+			return nil
 		}
-		return err
-	})
+		//})
+	}
 	g.Go(gdb.getProcessInfo) // monitor
 	g.Go(gdb.calc)           // calc goroutine
 	if err := g.Wait(); err != nil {
-		//_ = gdb.writeLog(Error, " ", err.Error(), " ", " ")
+		log.Println(fmt.Errorf("%s: runTimeError: %s", time.Now().Format(timeFormatString), err.Error()))
+		time.Sleep(60 * time.Second)
 	}
 	return nil
 }
