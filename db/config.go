@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func ReadDbConfig(path string) (Config, error) {
+func readDbConfig(path string) (Config, error) {
 	if b, err := ioutil.ReadFile(path); err != nil {
 		return Config{}, err
 	} else {
@@ -31,7 +31,7 @@ func ReadDbConfig(path string) (Config, error) {
 	}
 }
 
-func GetLocalIp() string {
+func getLocalIp() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Print(fmt.Errorf("System initialization failed: " + err.Error()))
