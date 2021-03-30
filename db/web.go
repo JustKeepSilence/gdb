@@ -655,7 +655,7 @@ func (gdb *Gdb) deleteCalculationItemHandler(c *gin.Context) {
 func (gdb *Gdb) getProcessInfo() error {
 	tm, _ := mem.VirtualMemory() // total RAM of machine
 	ps, _ := process.Processes()
-	dbConfigs, err := readDbConfig("./config.json")
+	dbConfigs, err := ReadDbConfig("./config.json")
 	appName := dbConfigs.ApplicationName
 	if err != nil {
 		return err
@@ -758,7 +758,7 @@ func (gdb *Gdb) writeLog(level logLevel, requestUrl, requestString, requestMetho
 }
 
 func (gdb *Gdb) cleanLogs() error {
-	if dbConfigs, err := readDbConfig("./config.json"); err != nil {
+	if dbConfigs, err := ReadDbConfig("./config.json"); err != nil {
 		return err
 	} else {
 		expiredTime := dbConfigs.ExpiredTime
