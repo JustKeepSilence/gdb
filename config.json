@@ -6,18 +6,33 @@
     // port of gdb service
     "port": 8082,
     // path of gdb service to store data
-    "dbPath": "F:\\bin\\leveldb",
+    "dbPath": "./leveldb",
     // path of gdb service to store item data
-    "itemDbPath": "F:\\bin\\itemDb",
+    "itemDbPath": "./itemDb",
     // name of gdb service to get runTime info of gdb, should be the same
     // as the name of the compiled executable file
     "applicationName": "db.exe",
     // whether to open authorization mode, if true, when use restful or rpc
     // user need to token authorization authentication
     "authorization": false,
-    // specify the operating mode of the gdb service,at moment support restful and
-    // rpc mode, if empty, will use restful mode
-    "mode": "rpc"
+    // Specify the operating mode of gdb, currently supports http and https modes, default mode is http
+    // if it is http mode, there is no tls verification, if it is https mode, tls verification is required
+    // if mode is "", mode is http
+    "mode": "http",
+    // configs of https
+    "httpsConfigs": {
+      // Whether to use CA root certificate authentication,default is false,
+      // if CA root certificate authentication is adopted, you need to place the CA root certificate file in the ssl
+      // folder and specify its name in the configuration file. and, self-signed CA root certificate is not supported
+      // on windows
+      "ca": false,
+      // whether self-signed ca
+      "selfSignedCa": false,
+      // fileName of ca root certificate
+      "caCertificateName": "",
+      // fileName of ca server certificate
+      "serverCertificateName": "gdbServer"
+    }
   },
   "logConfigs": {
     // whether write log for gdb
