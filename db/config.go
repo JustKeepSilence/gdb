@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-func readDbConfig(path string) (Config, error) {
+func ReadDbConfig(path string) (Config, error) {
 	if b, err := ioutil.ReadFile(path); err != nil {
 		return Config{}, err
 	} else {
