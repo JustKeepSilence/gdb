@@ -67,12 +67,12 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		return ""
 	})) // customer console writing,disable console writing
 	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		if _, ok := recovered.(string); ok {
+		if err, ok := recovered.(string); ok {
 			if c.Request.Method == "GET" {
-				//_ = g.writeLog(Error, "get", err, c.Request.URL.String(), c.Request.URL.String())
+				_ = g.writeLog(Error, c.Request.URL.String(), c.Request.URL.String(), "Get", err, c.Request.RemoteAddr)
 			} else if c.Request.Method == "POST" {
-				// b, _ := ioutil.ReadAll(c.Request.Body)
-				//_ = g.writeLog(Error, "post", fmt.Sprintf("%s", b), c.Request.URL.String(), c.Request.URL.String())
+				b, _ := ioutil.ReadAll(c.Request.Body)
+				_ = g.writeLog(Error, c.Request.URL.String(), fmt.Sprintf("%s", b), "POST", err, c.Request.RemoteAddr)
 			}
 		}
 		c.AbortWithStatus(http.StatusInternalServerError)
