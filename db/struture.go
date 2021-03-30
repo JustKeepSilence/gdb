@@ -32,12 +32,20 @@ type GdbConfigs struct {
 	ApplicationName string `json:"applicationName"`
 	Authorization   bool   `json:"authorization"`
 	Mode            string `json:"mode"`
+	HttpsConfigs    `json:"httpsConfigs"`
 }
 
 type LogConfigs struct {
 	LogWriting  bool     `json:"logWriting"`
 	Level       logLevel `json:"level"`
 	ExpiredTime int      `json:"expiredTime"`
+}
+
+type HttpsConfigs struct {
+	Ca                    bool   `json:"ca"`
+	SelfSignedCa          bool   `json:"selfSignedCa"`
+	CaCertificateName     string `json:"caCertificateName"`
+	ServerCertificateName string `json:"serverCertificateName"`
 }
 
 // common
