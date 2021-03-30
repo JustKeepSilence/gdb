@@ -8,14 +8,19 @@ goVersion: 1.15.3
 package db
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	pb "github.com/JustKeepSilence/gdb/model"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"log"
+	"google.golang.org/grpc/credentials"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -164,33 +169,21 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 	return router
 }
 
-// initial gdb service with given configs
-func InitialDbServer() error {
-	// read configs of gdb
-	configs, err := readDbConfig("./config.json")
-	if err != nil {
-		log.Println(fmt.Errorf("System initialization failed: " + err.Error()))
-		time.Sleep(60 * time.Second)
-		return nil
+// initial gdb service according to configs.json file
+func StartDbServer(configs Config) error {
+	dbPath, itemDbPath, port, ip, mode, ca, caCertificateName, serverCertificateName, selfSignedCa :=
+		configs.DbPath, configs.ItemDbPath, configs.Port, configs.IP, configs.Mode,
+		configs.Ca, configs.CaCertificateName, configs.ServerCertificateName, configs.SelfSignedCa
+	if mode == "" {
+		mode = "http"
 	}
-	if configs.Mode == "" {
-		configs.Mode = "restful"
-	}
-	if configs.Mode != "restful" && configs.Mode != "rpc" {
-		log.Println("gdb only support restful or gRPC mode currently!")
-		time.Sleep(60 * time.Second)
-		return nil
-	}
-	dbPath, itemDbPath, port, ip := configs.DbPath, configs.ItemDbPath, configs.Port, configs.IP
 	checkResult, err := portInUse(port)
 	if err != nil {
-		log.Println(fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(timeFormatString), port, err))
-		return nil
+		return fmt.Errorf("%s: fail in checking port %d: %s", time.Now().Format(timeFormatString), port, err)
 	}
 	if checkResult != -1 {
 		// used
-		log.Println(fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult))
-		return nil
+		return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult)
 	}
 	if len(ip) == 0 {
 		// not config ip
@@ -202,45 +195,86 @@ func InitialDbServer() error {
 	if err != nil {
 		return err
 	}
-	if configs.Mode == "restful" {
-		fmt.Printf("%s: launch web service successfully!: %s \n", time.Now().Format(timeFormatString), address)
+	se := &server{gdb: gdb, configs: configs}
+	var s *grpc.Server
+	if mode == "https" && ca {
+		// use ca root
+		if certificate, err := tls.LoadX509KeyPair("./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key"); err != nil {
+			return err
+		} else {
+			if caFile, err := ioutil.ReadFile("./ssl/" + caCertificateName + ".crt"); err != nil {
+				return err
+			} else {
+				if selfSignedCa {
+					// only useful in linux and macOS
+					if sysPool, err := x509.SystemCertPool(); err != nil {
+						return err
+					} else {
+						if ok := sysPool.AppendCertsFromPEM(caFile); !ok {
+							return fmt.Errorf("failed to add ca to system root pool")
+						} // add root ca file to system root ca pool
+					}
+				}
+				certPool := x509.NewCertPool()
+				if ok := certPool.AppendCertsFromPEM(caFile); !ok {
+					return fmt.Errorf("failed to add ca to root pool")
+				}
+				cred := credentials.NewTLS(&tls.Config{
+					Certificates: []tls.Certificate{certificate},
+					ClientAuth:   tls.RequireAndVerifyClientCert,
+					ClientCAs:    certPool,
+				})
+				s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
+					grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor),
+					grpc.Creds(cred))
+			}
+		}
+	} else {
+		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
+			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor))
+	}
+	pb.RegisterGroupServer(s, se)
+	pb.RegisterItemServer(s, se)
+	pb.RegisterDataServer(s, se)
+	pb.RegisterPageServer(s, se)
+	pb.RegisterCalcServer(s, se)
+	fmt.Printf("%s: launch gdb service successfully!: %s \n", time.Now().Format(timeFormatString), address)
+	if mode == "http" {
+		h2Handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+				s.ServeHTTP(w, r)
+			} else {
+				appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)
+			}
+		}), &http2.Server{})
+		hs := &http.Server{Addr: address, Handler: h2Handler}
 		g.Go(func() error {
-			if err := http.ListenAndServe(address, appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)); err != nil && err != http.ErrServerClosed {
+			if err := hs.ListenAndServe(); err != nil {
 				return err
 			} else {
 				return nil
 			}
 		})
 	} else {
-		// rpc mode
-		se := &server{gdb: gdb, configs: configs}
-		s := grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
-			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor))
-		pb.RegisterGroupServer(s, se)
-		pb.RegisterItemServer(s, se)
-		pb.RegisterDataServer(s, se)
-		pb.RegisterPageServer(s, se)
-		pb.RegisterCalcServer(s, se)
-		fmt.Printf("%s: launch rpc service successfully!: %s \n", time.Now().Format(timeFormatString), address)
-		//g.Go(func() error {
-		if err := http.ListenAndServeTLS(address, "./server.crt", "./server.key", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.ProtoMajor == 2 {
-				s.ServeHTTP(w, r)
+		// https mode
+		g.Go(func() error {
+			if err := http.ListenAndServeTLS(address, "./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+					s.ServeHTTP(w, r)
+				} else {
+					appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)
+				}
+			})); err != nil && err != http.ErrServerClosed {
+				return err
 			} else {
-				appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)
+				return nil
 			}
-		})); err != nil && err != http.ErrServerClosed {
-			return err
-		} else {
-			return nil
-		}
-		//})
+		})
 	}
 	g.Go(gdb.getProcessInfo) // monitor
 	g.Go(gdb.calc)           // calc goroutine
 	if err := g.Wait(); err != nil {
-		log.Println(fmt.Errorf("%s: runTimeError: %s", time.Now().Format(timeFormatString), err.Error()))
-		time.Sleep(60 * time.Second)
+		return fmt.Errorf("%s: runTimeError: %s", time.Now().Format(timeFormatString), err.Error())
 	}
 	return nil
 }
