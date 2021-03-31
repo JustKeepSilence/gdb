@@ -238,7 +238,7 @@ func StartDbServer(configs Config) error {
 	pb.RegisterDataServer(s, se)
 	pb.RegisterPageServer(s, se)
 	pb.RegisterCalcServer(s, se)
-	fmt.Printf("%s: launch gdb service successfully!: %s \n", time.Now().Format(timeFormatString), address)
+	fmt.Printf("%s: launch gdb service successfully!: %s, mode: %s,authorization: %s \n ", time.Now().Format(timeFormatString), address, mode, strconv.FormatBool(configs.Authorization))
 	if mode == "http" {
 		h2Handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
