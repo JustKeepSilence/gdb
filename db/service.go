@@ -12,7 +12,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	pb "github.com/JustKeepSilence/gdb/model"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/http2"
@@ -63,6 +62,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 	}()
 	router := gin.New()
 	pprof.Register(router)
+	//router.Use(g.allowOptionRequest())
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return ""
 	})) // customer console writing,disable console writing
@@ -77,16 +77,12 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		}
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}))
-	router.Use(cors.New(cors.Config{
-		AllowAllOrigins: true,
-		AllowHeaders:    []string{"Authorization", ""},
-	}))
-	router.Use(cors.Default()) // allow all cors
+	router.Use(g.corsMiddleware())
 	if authorization {
-		router.Use(g.authorization()) // authorization
+		router.Use(g.authorizationMiddleware()) // authorization
 	}
 	if logWriting {
-		router.Use(g.setLogHeader(level))
+		router.Use(g.setLogHeaderMiddleware(level))
 	}
 	group := router.Group("/group") // group handler
 	{
@@ -165,7 +161,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		router.HandleContext(c)
 	})
 	router.Static("/static", "./dist/static") // load static files
-	router.LoadHTMLGlob("./*.html")           // render html template
+	router.LoadHTMLGlob("./dist/*.html")      // render html template
 	return router
 }
 
@@ -244,7 +240,7 @@ func StartDbServer(configs Config) error {
 			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 				s.ServeHTTP(w, r)
 			} else {
-				appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)
+				appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level).ServeHTTP(w, r)
 			}
 		}), &http2.Server{})
 		hs := &http.Server{Addr: address, Handler: h2Handler}
@@ -262,7 +258,7 @@ func StartDbServer(configs Config) error {
 				if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 					s.ServeHTTP(w, r)
 				} else {
-					appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level)
+					appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level).ServeHTTP(w, r)
 				}
 			})); err != nil && err != http.ErrServerClosed {
 				return err

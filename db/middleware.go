@@ -16,7 +16,7 @@ import (
 )
 
 // authorization middleware
-func (gdb *Gdb) authorization() gin.HandlerFunc {
+func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// for userLogin not need authorization
 		if c.Request.URL.String() != "/page/userLogin" {
@@ -28,9 +28,13 @@ func (gdb *Gdb) authorization() gin.HandlerFunc {
 				} else {
 					if token != fmt.Sprintf("%s", v) {
 						c.AbortWithStatus(401)
+					} else {
+						c.Next()
 					}
 				}
 			}
+		} else {
+			c.Next()
 		}
 	}
 }
@@ -72,8 +76,23 @@ func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData 
 }
 
 // set logType to request headers
-func (gdb *Gdb) setLogHeader(level logLevel) gin.HandlerFunc {
+func (gdb *Gdb) setLogHeaderMiddleware(level logLevel) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Request.Header.Add("logLevel", string(rune(level)))
+		c.Next()
+	}
+}
+
+func (gdb *Gdb) corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
 	}
 }
