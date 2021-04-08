@@ -588,7 +588,7 @@ func (gdb *Gdb) getDbInfo() (GdbInfoData, error) {
 	return GdbInfoData{m}, nil
 }
 
-func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int32, endTimeStamps []int32, interval int32) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int, endTimeStamps []int, interval int) (cmap.ConcurrentMap, error) {
 	rawData := cmap.New()
 	sn, err := gdb.infoDb.GetSnapshot()
 	if sn == nil || err != nil {
@@ -609,7 +609,7 @@ func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int32, endT
 		startKey.Write([]byte(fmt.Sprintf("%d", s)))
 		endKey := strings.Builder{}
 		endKey.Write([]byte(itemName))
-		if e > int32(latestTimeStamp) {
+		if e > int(latestTimeStamp) {
 			// startTime to currentTimeStamp
 			endKey.Write([]byte(strconv.Itoa(int(latestTimeStamp))))
 		} else {
@@ -621,7 +621,7 @@ func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int32, endT
 		var count int32
 		var timeStamps []string
 		for it.Next() {
-			if count%interval == 0 {
+			if int(count)%interval == 0 {
 				values = append(values, fmt.Sprintf("%s", it.Value()))
 				timeStamps = append(timeStamps, strings.Replace(fmt.Sprintf("%s", it.Key()), itemName, "", -1))
 			}

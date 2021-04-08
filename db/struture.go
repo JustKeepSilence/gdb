@@ -177,6 +177,12 @@ type QueryHistoricalDataString struct {
 	Intervals  []int32  `json:"intervals"`  // interval
 }
 
+type QuerySpeedHistoryDataString struct {
+	StartTimes []int `json:"startTimes"` // startTime Unix TimeStamp
+	EndTimes   []int `json:"endTimes"`   // endTime Unix TimeStamp
+	Interval   int   `json:"interval"`   // interval
+}
+
 type QueryHistoricalDataWithTimeStampString struct {
 	ItemNames  []string  `json:"itemNames"`  // ItemNames
 	TimeStamps [][]int32 `json:"timeStamps"` // time stamp
