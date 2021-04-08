@@ -452,14 +452,13 @@ func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.
 			} else {
 				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 			}
-			remoteAddress := md.Get(":authority")[0] // address
-			userAgent := md.Get("user-agent")[0]     // user agent
+			userAgent := md.Get("user-agent")[0] // user agent
 			if methods[len(methods)-1] == "UserLogin" {
 				r := req.(*pb.AuthInfo)
 				if result, err := s.gdb.userLogin(authInfo{
 					UserName: r.GetUserName(),
 					PassWord: r.GetPassWord(),
-				}, remoteAddress, userAgent); err != nil {
+				}, userAgent); err != nil {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
 					return &pb.UserToken{Token: result.Token}, nil
@@ -471,7 +470,7 @@ func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.
 				} else {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				}
-				if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
+				if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
 					if token != fmt.Sprintf("%s", v) {
