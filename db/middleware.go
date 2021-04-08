@@ -23,7 +23,8 @@ func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 			if userName, token, ok := c.Request.BasicAuth(); !ok {
 				c.AbortWithStatus(401)
 			} else {
-				if v, err := gdb.infoDb.Get([]byte(userName+"_token"), nil); err != nil || v == nil {
+				userAgent := c.Request.Header.Get("User-Agent")
+				if v, err := gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
 					c.AbortWithStatus(401)
 				} else {
 					if token != fmt.Sprintf("%s", v) {
@@ -72,7 +73,16 @@ func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData 
 			}
 		}
 	}
-	c.String(code, formatter, responseData)
+	if code == 500 {
+		r, _ := Json.Marshal(ResponseData{
+			Code:    500,
+			Message: fmt.Sprintf("%s", responseData),
+			Data:    "",
+		})
+		c.String(500, "%s", r)
+	} else {
+		c.String(code, formatter, responseData)
+	}
 }
 
 // set logType to request headers

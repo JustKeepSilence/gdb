@@ -387,11 +387,11 @@ func (gdb *Gdb) getDbInfoHandler(c *gin.Context) {
 func (gdb *Gdb) getDbSpeedHistoryHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := QueryHistoricalDataString{}
+	g := QuerySpeedHistoryDataString{}
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.string(c, 500, "%s", []byte("incorrect json form"))
 	} else {
-		responseData, err := gdb.getDbSpeedHistory(Speed, g.StartTimes, g.EndTimes, g.Intervals[0])
+		responseData, err := gdb.getDbSpeedHistory(Speed, g.StartTimes, g.EndTimes, g.Interval)
 		if err != nil {
 			gdb.string(c, 500, "%s", []byte(err.Error()))
 		} else {
@@ -426,7 +426,7 @@ func (gdb *Gdb) handleUserLogin(c *gin.Context) {
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.string(c, 500, "%s", []byte("incorrect json form"))
 	} else {
-		token, err := gdb.userLogin(g, c.Request.RemoteAddr, c.Request.Header.Get("User-Agent")) // add groups
+		token, err := gdb.userLogin(g, c.Request.Header.Get("User-Agent")) // add groups
 		if err != nil {
 			gdb.string(c, 500, "%s", []byte(err.Error()))
 		} else {
@@ -438,7 +438,8 @@ func (gdb *Gdb) handleUserLogin(c *gin.Context) {
 
 func (gdb *Gdb) handleUserLogout(c *gin.Context) {
 	userName := c.Param("userName")
-	if responseData, err := gdb.userLogout(userName, c.Request.RemoteAddr, c.Request.Header.Get("User-Agent")); err != nil {
+	_, token, _ := c.Request.BasicAuth()
+	if responseData, err := gdb.userLogout(userName, token, c.Request.Header.Get("User-Agent")); err != nil {
 		gdb.string(c, 500, "%s", []byte(err.Error()))
 	} else {
 		r, _ := Json.Marshal(ResponseData{200, "", responseData})

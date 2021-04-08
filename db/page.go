@@ -17,7 +17,7 @@ import (
 )
 
 // user login
-func (gdb *Gdb) userLogin(info authInfo, remoteAddress, userAgent string) (userToken, error) {
+func (gdb *Gdb) userLogin(info authInfo, userAgent string) (userToken, error) {
 	userName := info.UserName
 	v, err := gdb.infoDb.Get([]byte(userName), nil)
 	if err != nil || v == nil {
@@ -33,16 +33,16 @@ func (gdb *Gdb) userLogin(info authInfo, remoteAddress, userAgent string) (userT
 			} else {
 				// correct userInfo, generate token
 				b := []byte("seu" + time.Now().Format(timeFormatString) + "JustKeepSilence")
-				token := fmt.Sprintf("%x", md5.Sum(b))                                                            // result is 32-bit lowercase
-				_ = gdb.infoDb.Put([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), []byte(token), nil) // write token to gdb
+				token := fmt.Sprintf("%x", md5.Sum(b))                                                    // result is 32-bit lowercase
+				_ = gdb.infoDb.Put([]byte(userName+"_token"+"_"+token+"_"+userAgent), []byte(token), nil) // write token to gdb
 				return userToken{token}, nil
 			}
 		}
 	}
 }
 
-func (gdb *Gdb) userLogout(userName, remoteAddress, userAgent string) (Rows, error) {
-	if err := gdb.infoDb.Delete([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil {
+func (gdb *Gdb) userLogout(userName, userAgent, token string) (Rows, error) {
+	if err := gdb.infoDb.Delete([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil {
 		return Rows{}, err
 	} else {
 		return Rows{1}, nil
