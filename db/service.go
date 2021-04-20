@@ -54,29 +54,12 @@ var (
 
 // web app router
 func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Handler {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(err)
-			time.Sleep(60 * time.Second)
-		}
-	}()
 	router := gin.New()
 	pprof.Register(router)
 	//router.Use(g.allowOptionRequest())
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return ""
 	})) // customer console writing,disable console writing
-	router.Use(gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		if err, ok := recovered.(string); ok {
-			if c.Request.Method == "GET" {
-				_ = g.writeLog(Error, c.Request.URL.String(), c.Request.URL.String(), "Get", err, c.Request.RemoteAddr)
-			} else if c.Request.Method == "POST" {
-				b, _ := ioutil.ReadAll(c.Request.Body)
-				_ = g.writeLog(Error, c.Request.URL.String(), fmt.Sprintf("%s", b), "POST", err, c.Request.RemoteAddr)
-			}
-		}
-		c.AbortWithStatus(http.StatusInternalServerError)
-	}))
 	router.Use(g.corsMiddleware())
 	if authorization {
 		router.Use(g.authorizationMiddleware()) // authorization
@@ -94,6 +77,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		group.POST("/updateGroupColumnNames", g.updateGroupColumnNamesHandler)
 		group.POST("/deleteGroupColumns", g.deleteGroupColumnsHandler)
 		group.POST("/addGroupColumns", g.addGroupColumnsHandler)
+		group.POST("/cleanGroupItems", g.cleanGroupItemsHandler)
 	}
 	item := router.Group("/item") // item handler
 	{
@@ -102,10 +86,12 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		item.POST("/getItems", g.getItemsHandler)
 		item.POST("/getItemsWithCount", g.handleGetItemsWithCount) // get item with  count
 		item.POST("/updateItems", g.updateItemsHandler)
+		item.POST("/checkItems", g.checkItemsHandler)
 	}
 	data := router.Group("/data") // data handler
 	{
 		data.POST("/batchWrite", g.batchWriteHandler)
+		data.POST("/batchWriteHistoricalData", g.batchWriteHistoricalDataHandler)
 		data.POST("/getRealTimeData", g.getRealTimeDataHandler)
 		data.POST("/getHistoricalData", g.getHistoricalDataHandler)
 		data.POST("/getHistoricalDataWithStamp", g.getHistoricalDataWithStampHandler)
@@ -118,11 +104,13 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 	{
 		pageRequest.POST("/userLogin", g.handleUserLogin) // user login
 		pageRequest.GET("/userLogout/:userName", g.handleUserLogout)
-		pageRequest.POST("/getUserInfo", g.handleGetUerInfo)          // get user info
-		pageRequest.POST("/uploadFile", g.handleUploadFile)           // upload file
-		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcel) // add item by excel
-		pageRequest.GET("/getJsCode/:fileName", g.getJsCodeHandler)   // get js code
-		pageRequest.GET("/getLogs", g.getLogsHandler)                 // get logs
+		pageRequest.POST("/getUserInfo", g.handleGetUerInfo)                 // get user info
+		pageRequest.POST("/uploadFile", g.handleUploadFile)                  // upload file
+		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcelHandler) // add item by excel
+		pageRequest.POST("/importHistoryByExcel", g.importHistoryByExcelHandler)
+		pageRequest.GET("/getJsCode/:fileName", g.getJsCodeHandler) // get js code
+		pageRequest.GET("/getLogs", g.getLogsHandler)               // get logs
+		pageRequest.GET("/downloadFile/:fileName", g.downloadFileHandler)
 	}
 	calcRequest := router.Group("/calculation")
 	{
