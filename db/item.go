@@ -8,6 +8,7 @@ goVersion: 1.15.3
 package db
 
 import (
+	"fmt"
 	"github.com/syndtr/goleveldb/leveldb"
 	"regexp"
 	"strconv"
@@ -154,4 +155,18 @@ func (gdb *Gdb) UpdateItems(itemInfo ItemsInfoWithoutRow) (Rows, error) {
 	} else {
 		return Rows{}, updateItemError{"updateItemError: can't update itemName!"}
 	}
+}
+
+func (gdb *Gdb) CheckItems(groupName string, itemNames ...string) error {
+	for _, itemName := range itemNames {
+		sqlString := "select 1 from '" + groupName + "' where itemName='" + itemName + "' limit 1"
+		if r, err := query(gdb.ItemDbPath, sqlString); err != nil {
+			return err
+		} else {
+			if len(r) == 0 {
+				return fmt.Errorf("itemName: " + itemName + " not existed")
+			}
+		}
+	}
+	return nil
 }
