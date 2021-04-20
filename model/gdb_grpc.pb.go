@@ -27,6 +27,7 @@ type GroupClient interface {
 	UpdateGroupColumnNames(ctx context.Context, in *UpdatedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error)
 	DeleteGroupColumns(ctx context.Context, in *DeletedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error)
 	AddGroupColumns(ctx context.Context, in *AddedGroupColumnsInfo, opts ...grpc.CallOption) (*Cols, error)
+	CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error)
 }
 
 type groupClient struct {
@@ -109,6 +110,15 @@ func (c *groupClient) AddGroupColumns(ctx context.Context, in *AddedGroupColumns
 	return out, nil
 }
 
+func (c *groupClient) CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Group/CleanGroupItems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GroupServer is the server API for Group service.
 // All implementations must embed UnimplementedGroupServer
 // for forward compatibility
@@ -121,6 +131,7 @@ type GroupServer interface {
 	UpdateGroupColumnNames(context.Context, *UpdatedGroupColumnNamesInfo) (*Cols, error)
 	DeleteGroupColumns(context.Context, *DeletedGroupColumnNamesInfo) (*Cols, error)
 	AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*Cols, error)
+	CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error)
 	mustEmbedUnimplementedGroupServer()
 }
 
@@ -151,6 +162,9 @@ func (UnimplementedGroupServer) DeleteGroupColumns(context.Context, *DeletedGrou
 }
 func (UnimplementedGroupServer) AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*Cols, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddGroupColumns not implemented")
+}
+func (UnimplementedGroupServer) CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CleanGroupItems not implemented")
 }
 func (UnimplementedGroupServer) mustEmbedUnimplementedGroupServer() {}
 
@@ -309,6 +323,24 @@ func _Group_AddGroupColumns_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Group_CleanGroupItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupNamesInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GroupServer).CleanGroupItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Group/CleanGroupItems",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GroupServer).CleanGroupItems(ctx, req.(*GroupNamesInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Group_ServiceDesc is the grpc.ServiceDesc for Group service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -348,6 +380,10 @@ var Group_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AddGroupColumns",
 			Handler:    _Group_AddGroupColumns_Handler,
 		},
+		{
+			MethodName: "CleanGroupItems",
+			Handler:    _Group_CleanGroupItems_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "gdb.proto",
@@ -362,6 +398,7 @@ type ItemClient interface {
 	GetItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItems, error)
 	GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItemsWithCount, error)
 	UpdateItems(ctx context.Context, in *ItemsInfoWithoutRow, opts ...grpc.CallOption) (*Rows, error)
+	CheckItems(ctx context.Context, in *CheckItemsInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type itemClient struct {
@@ -417,6 +454,15 @@ func (c *itemClient) UpdateItems(ctx context.Context, in *ItemsInfoWithoutRow, o
 	return out, nil
 }
 
+func (c *itemClient) CheckItems(ctx context.Context, in *CheckItemsInfo, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/model.Item/CheckItems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ItemServer is the server API for Item service.
 // All implementations must embed UnimplementedItemServer
 // for forward compatibility
@@ -426,6 +472,7 @@ type ItemServer interface {
 	GetItems(context.Context, *ItemsInfo) (*GdbItems, error)
 	GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error)
 	UpdateItems(context.Context, *ItemsInfoWithoutRow) (*Rows, error)
+	CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error)
 	mustEmbedUnimplementedItemServer()
 }
 
@@ -447,6 +494,9 @@ func (UnimplementedItemServer) GetItemsWithCount(context.Context, *ItemsInfo) (*
 }
 func (UnimplementedItemServer) UpdateItems(context.Context, *ItemsInfoWithoutRow) (*Rows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateItems not implemented")
+}
+func (UnimplementedItemServer) CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckItems not implemented")
 }
 func (UnimplementedItemServer) mustEmbedUnimplementedItemServer() {}
 
@@ -551,6 +601,24 @@ func _Item_UpdateItems_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Item_CheckItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckItemsInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ItemServer).CheckItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Item/CheckItems",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ItemServer).CheckItems(ctx, req.(*CheckItemsInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Item_ServiceDesc is the grpc.ServiceDesc for Item service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -578,6 +646,10 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "UpdateItems",
 			Handler:    _Item_UpdateItems_Handler,
 		},
+		{
+			MethodName: "CheckItems",
+			Handler:    _Item_CheckItems_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "gdb.proto",
@@ -589,6 +661,8 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 type DataClient interface {
 	BatchWrite(ctx context.Context, in *BatchWriteString, opts ...grpc.CallOption) (*Rows, error)
 	BatchWriteWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteWithStreamClient, error)
+	BatchWriteHistoricalData(ctx context.Context, in *BatchWriteHistoricalString, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	BatchWriteHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteHistoricalDataWithStreamClient, error)
 	GetRealTimeData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbRealTimeData, error)
 	GetHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithTimeStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
@@ -646,6 +720,49 @@ func (x *dataBatchWriteWithStreamClient) CloseAndRecv() (*Rows, error) {
 	return m, nil
 }
 
+func (c *dataClient) BatchWriteHistoricalData(ctx context.Context, in *BatchWriteHistoricalString, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) BatchWriteHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteHistoricalDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[1], "/model.Data/BatchWriteHistoricalDataWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteHistoricalDataWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteHistoricalDataWithStreamClient interface {
+	Send(*BatchWriteHistoricalString) error
+	CloseAndRecv() (*emptypb.Empty, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteHistoricalDataWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteHistoricalDataWithStreamClient) Send(m *BatchWriteHistoricalString) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteHistoricalDataWithStreamClient) CloseAndRecv() (*emptypb.Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(emptypb.Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *dataClient) GetRealTimeData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbRealTimeData, error) {
 	out := new(GdbRealTimeData)
 	err := c.cc.Invoke(ctx, "/model.Data/GetRealTimeData", in, out, opts...)
@@ -688,6 +805,8 @@ func (c *dataClient) GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...g
 type DataServer interface {
 	BatchWrite(context.Context, *BatchWriteString) (*Rows, error)
 	BatchWriteWithStream(Data_BatchWriteWithStreamServer) error
+	BatchWriteHistoricalData(context.Context, *BatchWriteHistoricalString) (*emptypb.Empty, error)
+	BatchWriteHistoricalDataWithStream(Data_BatchWriteHistoricalDataWithStreamServer) error
 	GetRealTimeData(context.Context, *QueryRealTimeDataString) (*GdbRealTimeData, error)
 	GetHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithTimeStampString) (*GdbHistoricalData, error)
@@ -704,6 +823,12 @@ func (UnimplementedDataServer) BatchWrite(context.Context, *BatchWriteString) (*
 }
 func (UnimplementedDataServer) BatchWriteWithStream(Data_BatchWriteWithStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method BatchWriteWithStream not implemented")
+}
+func (UnimplementedDataServer) BatchWriteHistoricalData(context.Context, *BatchWriteHistoricalString) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteHistoricalData not implemented")
+}
+func (UnimplementedDataServer) BatchWriteHistoricalDataWithStream(Data_BatchWriteHistoricalDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteHistoricalDataWithStream not implemented")
 }
 func (UnimplementedDataServer) GetRealTimeData(context.Context, *QueryRealTimeDataString) (*GdbRealTimeData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRealTimeData not implemented")
@@ -768,6 +893,50 @@ func (x *dataBatchWriteWithStreamServer) SendAndClose(m *Rows) error {
 
 func (x *dataBatchWriteWithStreamServer) Recv() (*BatchWriteString, error) {
 	m := new(BatchWriteString)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Data_BatchWriteHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchWriteHistoricalString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).BatchWriteHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/BatchWriteHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).BatchWriteHistoricalData(ctx, req.(*BatchWriteHistoricalString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteHistoricalDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteHistoricalDataWithStream(&dataBatchWriteHistoricalDataWithStreamServer{stream})
+}
+
+type Data_BatchWriteHistoricalDataWithStreamServer interface {
+	SendAndClose(*emptypb.Empty) error
+	Recv() (*BatchWriteHistoricalString, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteHistoricalDataWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteHistoricalDataWithStreamServer) SendAndClose(m *emptypb.Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteHistoricalDataWithStreamServer) Recv() (*BatchWriteHistoricalString, error) {
+	m := new(BatchWriteHistoricalString)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -858,6 +1027,10 @@ var Data_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Data_BatchWrite_Handler,
 		},
 		{
+			MethodName: "BatchWriteHistoricalData",
+			Handler:    _Data_BatchWriteHistoricalData_Handler,
+		},
+		{
 			MethodName: "GetRealTimeData",
 			Handler:    _Data_GetRealTimeData_Handler,
 		},
@@ -878,6 +1051,11 @@ var Data_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "BatchWriteWithStream",
 			Handler:       _Data_BatchWriteWithStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BatchWriteHistoricalDataWithStream",
+			Handler:       _Data_BatchWriteHistoricalDataWithStream_Handler,
 			ClientStreams: true,
 		},
 	},

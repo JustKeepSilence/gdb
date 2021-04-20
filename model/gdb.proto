@@ -4,7 +4,7 @@ option go_package="model";
 
 import "google/protobuf/empty.proto";
 
-// >protoc -I=F:\gdb\gdb\model --go-grpc_out=F:\gdb\gdb\model --go_out=F:\gdb\gdb\model F:\gdb\gdb\model\gdb.proto
+// >protoc -I=E:\gdb\model --go-grpc_out=E:\gdb\model --go_out=E:\gdb\model E:\gdb\model\gdb.proto
 
 message Rows{
   int32 effectedRows = 1;
@@ -74,6 +74,7 @@ service Group {
   rpc UpdateGroupColumnNames(UpdatedGroupColumnNamesInfo) returns (Cols){}
   rpc DeleteGroupColumns(DeletedGroupColumnNamesInfo) returns (Cols){}
   rpc AddGroupColumns(AddedGroupColumnsInfo) returns (Cols){}
+  rpc CleanGroupItems(GroupNamesInfo) returns (Rows){}
 }
 
 // item handler
@@ -114,12 +115,18 @@ message GdbItemsWithCount {
   repeated GdbItem itemValues = 2;
 }
 
+message CheckItemsInfo {
+  string groupName = 1;
+  repeated  string itemNames = 2;
+}
+
 service Item {
   rpc AddItems(AddedItemsInfo) returns (Rows){}
   rpc DeleteItems(DeletedItemsInfo) returns (Rows){}
   rpc GetItems(ItemsInfo) returns (GdbItems){}
   rpc GetItemsWithCount(ItemsInfo) returns (GdbItemsWithCount){}
   rpc UpdateItems(ItemsInfoWithoutRow) returns (Rows){}
+  rpc CheckItems(CheckItemsInfo) returns (google.protobuf.Empty){}
 }
 
 // data handler
@@ -131,8 +138,6 @@ message ItemValue{
 }
 
 message BatchWriteString{
-  string groupName = 1;
-  bool withTimeStamp = 2;
   repeated ItemValue itemValues = 3;
 }
 
@@ -185,9 +190,22 @@ message GdbInfoData{
   string info = 1;
 }
 
+message HistoricalItemValue{
+  string itemName = 1;
+  repeated string values = 2;
+  repeated string timeStamps = 3;
+}
+
+message BatchWriteHistoricalString {
+  repeated HistoricalItemValue historicalItemValues = 1;
+}
+
+
 service Data {
   rpc BatchWrite(BatchWriteString) returns (Rows){}
   rpc BatchWriteWithStream(stream BatchWriteString) returns (Rows){}
+  rpc BatchWriteHistoricalData(BatchWriteHistoricalString) returns (google.protobuf.Empty){}
+  rpc BatchWriteHistoricalDataWithStream(stream BatchWriteHistoricalString) returns (google.protobuf.Empty){}
   rpc GetRealTimeData(QueryRealTimeDataString) returns (GdbRealTimeData){}
   rpc GetHistoricalData(QueryHistoricalDataString) returns (GdbHistoricalData){}
   rpc GetHistoricalDataWithStamp(QueryHistoricalDataWithTimeStampString) returns (GdbHistoricalData){}
