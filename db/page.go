@@ -87,7 +87,7 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 			for rows.Next() {
 				if count == 0 {
 					// check headers
-					h, err := rows.Columns()
+					h, err := rows.Columns() // columns of excel
 					if err != nil {
 						return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
 					} else {
@@ -96,9 +96,8 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 						if err != nil {
 							return Rows{-1}, err
 						}
-						tableHeaders := cols.ItemColumnNames
-						headers = h[:len(tableHeaders)] // get first len(tableHeaders) cols
-						if !equal(headers, tableHeaders) {
+						headers = cols.ItemColumnNames // columns of database
+						if !equal(h, headers) {
 							return Rows{-1}, ExcelError{"ExcelError: Inconsistent header"}
 						}
 					}
@@ -126,6 +125,44 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 			return Rows{-1}, err
 		} else {
 			return r, nil
+		}
+	}
+}
+
+func (gdb *Gdb) ImportHistoryByExcel(fileName string, itemNames []string, sheetNames ...string) error {
+	if f, err := excelize.OpenFile(fileName); err != nil {
+		return ExcelError{"ExcelError: " + err.Error()}
+	} else {
+		infos := []HistoricalItemValue{}
+		for index := 0; index < len(itemNames); index++ {
+			sheetName, itemName := sheetNames[index], itemNames[index]
+			if rows, err := f.Rows(sheetName); err != nil {
+				return err
+			} else {
+				info := HistoricalItemValue{ItemName: itemName}
+				var values, timeStamps []string
+				for rows.Next() {
+					// first row is timeStamp, second is time
+					if c, err := rows.Columns(); err != nil {
+						return err
+					} else {
+						values = append(values, c[1])
+						if t, err := time.Parse(timeFormatString, c[0]); err != nil {
+							return err
+						} else {
+							timeStamps = append(timeStamps, fmt.Sprintf("%d", t.Unix()))
+						}
+					}
+				}
+				info.Values = values
+				info.TimeStamps = timeStamps
+				infos = append(infos, info)
+			}
+		}
+		if err := gdb.BatchWriteHistoricalData(BatchWriteHistoricalString{HistoricalItemValues: infos}); err != nil {
+			return err
+		} else {
+			return nil
 		}
 	}
 }
