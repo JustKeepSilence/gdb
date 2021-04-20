@@ -300,6 +300,18 @@ func (gdb *Gdb) AddGroupColumns(info AddedGroupColumnsInfo) (Cols, error) {
 	return Cols{len(addedColumnNames)}, nil
 }
 
+func (gdb *Gdb) CleanGroupItems(groupNames ...string) (Rows, error) {
+	sqliteString := []string{}
+	for _, groupName := range groupNames {
+		sqliteString = append(sqliteString, "delete from '"+groupName+"'")
+	}
+	if err := updateItems(gdb.ItemDbPath, sqliteString...); err != nil {
+		return Rows{}, err
+	} else {
+		return Rows{EffectedRows: len(groupNames)}, nil
+	}
+}
+
 // rollback when failing creating table: firstly delete column in group_cfg and then drop table
 func (gdb *Gdb) rollBack(groupNames ...[]string) {
 	var deletedGroupNames []string
