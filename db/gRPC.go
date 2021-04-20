@@ -112,6 +112,14 @@ func (s *server) AddGroupColumns(_ context.Context, r *pb.AddedGroupColumnsInfo)
 	}
 }
 
+func (s *server) CleanGroupItems(_ context.Context, r *pb.GroupNamesInfo) (*pb.Rows, error) {
+	if result, err := s.gdb.CleanGroupItems(r.GroupNames...); err != nil {
+		return nil, err
+	} else {
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
+	}
+}
+
 // item handler
 
 func (s *server) AddItems(_ context.Context, r *pb.AddedItemsInfo) (*pb.Rows, error) {
@@ -191,21 +199,26 @@ func (s *server) UpdateItems(_ context.Context, r *pb.ItemsInfoWithoutRow) (*pb.
 	}
 }
 
+func (s *server) CheckItems(_ context.Context, r *pb.CheckItemsInfo) (*emptypb.Empty, error) {
+	if err := s.gdb.CheckItems(r.GetGroupName(), r.GetItemNames()...); err != nil {
+		return nil, err
+	} else {
+		return nil, nil
+	}
+}
+
 // data handler
 
 func (s *server) BatchWrite(_ context.Context, r *pb.BatchWriteString) (*pb.Rows, error) {
 	v := []ItemValue{}
 	for _, itemValue := range r.GetItemValues() {
 		v = append(v, ItemValue{
-			ItemName:  itemValue.GetItemName(),
-			Value:     itemValue.GetValue(),
-			TimeStamp: itemValue.GetTimeStamp(),
+			ItemName: itemValue.GetItemName(),
+			Value:    itemValue.GetValue(),
 		})
 	}
 	g := BatchWriteString{
-		GroupName:     r.GetGroupName(),
-		ItemValues:    v,
-		WithTimeStamp: r.GetWithTimeStamp(),
+		ItemValues: v,
 	}
 	if result, err := s.gdb.BatchWrite(g); err != nil {
 		return nil, err
@@ -242,16 +255,68 @@ func (s *server) BatchWriteWithStream(stream pb.Data_BatchWriteWithStreamServer)
 			v := []ItemValue{}
 			for _, itemValue := range b.GetItemValues() {
 				v = append(v, ItemValue{
-					ItemName:  itemValue.GetItemName(),
-					Value:     itemValue.GetValue(),
-					TimeStamp: itemValue.GetTimeStamp(),
+					ItemName: itemValue.GetItemName(),
+					Value:    itemValue.GetValue(),
 				})
 			}
 			bs = append(bs, BatchWriteString{
-				GroupName:     b.GetGroupName(),
-				ItemValues:    v,
-				WithTimeStamp: b.WithTimeStamp,
+				ItemValues: v,
 			})
+		}
+	}
+}
+
+func (s *server) BatchWriteHistoricalData(_ context.Context, r *pb.BatchWriteHistoricalString) (*emptypb.Empty, error) {
+	values := []HistoricalItemValue{}
+	v := r.GetHistoricalItemValues()
+	for i := 0; i < len(v); i++ {
+		values = append(values, HistoricalItemValue{
+			ItemName:   v[i].ItemName,
+			Values:     v[i].Values,
+			TimeStamps: v[i].TimeStamps,
+		})
+	}
+	b := BatchWriteHistoricalString{values}
+	if err := s.gdb.BatchWriteHistoricalData(b); err != nil {
+		return nil, err
+	} else {
+		return nil, nil
+	}
+}
+
+func (s *server) BatchWriteHistoricalDataWithStream(stream pb.Data_BatchWriteHistoricalDataWithStreamServer) error {
+	bs := []BatchWriteHistoricalString{}
+	for {
+		b, err := stream.Recv()
+		if err == io.EOF {
+			eg := errgroup.Group{}
+			for _, ss := range bs {
+				writingString := ss
+				eg.Go(func() error {
+					if err := s.gdb.BatchWriteHistoricalData(writingString); err != nil {
+						return fmt.Errorf("writing error :" + err.Error())
+					} else {
+						return nil
+					}
+				})
+			}
+			if err := eg.Wait(); err != nil {
+				return err
+			} else {
+				return stream.SendAndClose(nil)
+			}
+		} else if err != nil {
+			return err
+		} else {
+			v := []HistoricalItemValue{}
+			for _, itemValue := range b.GetHistoricalItemValues() {
+				v = append(v, HistoricalItemValue{
+					ItemName:   itemValue.ItemName,
+					Values:     itemValue.Values,
+					TimeStamps: itemValue.TimeStamps,
+				})
+			}
+			bs = append(bs, BatchWriteHistoricalString{HistoricalItemValues: v})
 		}
 	}
 }
