@@ -192,45 +192,23 @@ you can custom your own configs in config.json.
 // Notes: you can use // single line comments in json file
 {
   "gdbConfigs": {
-    // ip address of gdb service, if empty, we will get ip of local machine
     "ip": "",
-    // port of gdb service
     "port": 8082,
-    // path of gdb service to store data
     "dbPath": "./leveldb",
-    // path of gdb service to store item data
     "itemDbPath": "./itemDb",
-    // name of gdb service to get runTime info of gdb, should be the same
-    // as the name of the compiled executable file
     "applicationName": "db.exe",
-    // whether to open authorization mode, if true, when use restful or rpc
-    // user need to token authorization authentication
     "authorization": true,
-    // Specify the operating mode of gdb, currently supports http and https modes, default mode is http
-    // if it is http mode, there is no tls verification, if it is https mode, tls verification is required
-    // if mode is "", mode is http
     "mode": "http",
-    // configs of https
     "httpsConfigs": {
-      // Whether to use CA root certificate authentication,default is false,
-      // if CA root certificate authentication is adopted, you need to place the CA root certificate file in the ssl
-      // folder and specify its name in the configuration file. and, self-signed CA root certificate is not supported
-      // on windows
       "ca": false,
-      // whether self-signed ca
       "selfSignedCa": false,
-      // fileName of ca root certificate
       "caCertificateName": "",
-      // fileName of ca server certificate
       "serverCertificateName": "gdbServer"
     }
   },
   "logConfigs": {
-    // whether write log for gdb
     "logWriting": true,
-    // loglevel of gdb, 0 is Info, 1 is Error
     "Level" : 1,
-    // expiredTime of gdb, unit is seconds
     "expiredTime": 86400
   }
 }
