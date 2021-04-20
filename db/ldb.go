@@ -22,32 +22,18 @@ import (
 	"time"
 )
 
+// write realTimeData
 func (gdb *Gdb) BatchWrite(b BatchWriteString) (Rows, error) {
-	itemNames, itemValues, timeStamps := []string{}, []string{}, []string{}
-	if b.WithTimeStamp {
-		// with TimeStamp
-		for _, itemValue := range b.ItemValues {
-			k := itemValue.ItemName
-			t := itemValue.TimeStamp
-			if len(k) == 0 || len(t) == 0 {
-				return Rows{}, fmt.Errorf("error itemName or timeStamp")
-			}
-			v := itemValue.Value
-			itemNames = append(itemNames, k)
-			itemValues = append(itemValues, v)
-			timeStamps = append(timeStamps, t)
+	itemNames, itemValues := []string{}, []string{}
+	// without timeStamp
+	for _, itemValue := range b.ItemValues {
+		k := itemValue.ItemName
+		if len(k) == 0 {
+			return Rows{}, fmt.Errorf("error itemName")
 		}
-	} else {
-		// without timeStamp
-		for _, itemValue := range b.ItemValues {
-			k := itemValue.ItemName
-			if len(k) == 0 {
-				return Rows{}, fmt.Errorf("error itemName")
-			}
-			v := itemValue.Value
-			itemNames = append(itemNames, k)
-			itemValues = append(itemValues, v)
-		}
+		v := itemValue.Value
+		itemNames = append(itemNames, k)
+		itemValues = append(itemValues, v)
 	}
 	index, ok := gdb.checkItems(itemNames...)
 	// check if all items given exist
@@ -78,38 +64,58 @@ func (gdb *Gdb) BatchWrite(b BatchWriteString) (Rows, error) {
 	})
 	// write historical data
 	g.Go(func() error {
-		if b.WithTimeStamp {
-			batch := leveldb.Batch{}
-			for i := 0; i < len(itemNames); i++ {
-				sb := strings.Builder{}
-				sb.Write([]byte(itemNames[i]))  // itemName
-				sb.Write([]byte(timeStamps[i])) // time stamp
-				batch.Put([]byte(sb.String()), []byte(itemValues[i]))
-			}
-			if err := gdb.hisDb.Write(&batch, nil); err != nil {
-				return err
-			} else {
-				return nil
-			}
+		batch := leveldb.Batch{}
+		for i := 0; i < len(itemNames); i++ {
+			sb := strings.Builder{}
+			sb.Write([]byte(itemNames[i]))
+			sb.Write([]byte(currentTimeStampString))
+			batch.Put([]byte(sb.String()), []byte(itemValues[i]))
+		}
+		if err := gdb.hisDb.Write(&batch, nil); err != nil {
+			return err
 		} else {
-			batch := leveldb.Batch{}
-			for i := 0; i < len(itemNames); i++ {
-				sb := strings.Builder{}
-				sb.Write([]byte(itemNames[i]))
-				sb.Write([]byte(currentTimeStampString))
-				batch.Put([]byte(sb.String()), []byte(itemValues[i]))
-			}
-			if err := gdb.hisDb.Write(&batch, nil); err != nil {
-				return err
-			} else {
-				return nil
-			}
+			return nil
 		}
 	})
 	if err := g.Wait(); err != nil {
 		return Rows{}, err
 	} else {
 		return Rows{len(itemNames)}, nil
+	}
+}
+
+// write historicalData
+func (gdb *Gdb) BatchWriteHistoricalData(b BatchWriteHistoricalString) error {
+	g := errgroup.Group{}
+	infos := b.HistoricalItemValues
+	r, _ := Json.Marshal(b)
+	fmt.Println(fmt.Sprintf("%s", r))
+	for _, item := range infos {
+		info := item
+		g.Go(func() error {
+			itemName, values, timeStamps := info.ItemName, info.Values, info.TimeStamps
+			if len(values) != len(timeStamps) {
+				return fmt.Errorf("inconsistent length of values and timestamps")
+			} else {
+				batch := leveldb.Batch{}
+				for i := 0; i < len(values); i++ {
+					sb := strings.Builder{}
+					sb.Write([]byte(itemName))
+					sb.Write([]byte(timeStamps[i]))
+					batch.Put([]byte(sb.String()), []byte(values[i]))
+				}
+				if err := gdb.hisDb.Write(&batch, nil); err != nil {
+					return err
+				} else {
+					return nil
+				}
+			}
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return err
+	} else {
+		return nil
 	}
 }
 
@@ -148,8 +154,6 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int32, e
 		return GdbHistoricalData{}, snError{"snError"}
 	}
 	defer sn.Release() // release
-	latestTimeStampString, _ := gdb.infoDb.Get([]byte(TimeKey), nil)
-	latestTimeStamp, _ := strconv.ParseInt(fmt.Sprintf("%s", latestTimeStampString), 10, 0)
 	for _, itemName := range itemNames {
 		wg.Add(1)
 		go func(name string) {
@@ -167,13 +171,7 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int32, e
 				startKey.Write([]byte(strconv.Itoa(int(s))))
 				endKey := strings.Builder{}
 				endKey.Write([]byte(name))
-				if e > int32(latestTimeStamp) {
-					// startTime to currentTimeStamp
-					endKey.Write([]byte(strconv.Itoa(int(latestTimeStamp))))
-				} else {
-					// startTime to endTime
-					endKey.Write([]byte(strconv.Itoa(int(e))))
-				}
+				endKey.Write([]byte(strconv.Itoa(int(e))))
 				it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 				var values []string
 				count := 0
