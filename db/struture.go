@@ -104,21 +104,21 @@ type UpdatedGroupColumnNamesInfo struct {
 }
 
 type DeletedGroupColumnNamesInfo struct {
-	GroupName   string   `json:"groupNames" binding:"required"`
+	GroupName   string   `json:"groupName" binding:"required"`
 	ColumnNames []string `json:"columnNames" binding:"required"`
 }
 
 type AddedGroupColumnsInfo struct {
-	GroupName     string   `json:"groupName"`
-	ColumnNames   []string `json:"columnNames"`
-	DefaultValues []string `json:"defaultValues"`
+	GroupName     string   `json:"groupName" binding:"required"`
+	ColumnNames   []string `json:"columnNames" binding:"required"`
+	DefaultValues []string `json:"defaultValues" binding:"required"`
 }
 
 // items
 
 type AddedItemsInfo struct {
-	GroupName string `json:"groupName"`
-	GdbItems
+	GroupName string `json:"groupName" binding:"required"`
+	GdbItems  `json:"gdbItems" binding:"required"`
 }
 
 type DeletedItemsInfo struct {
@@ -148,18 +148,30 @@ type GdbItemsWithCount struct {
 	GdbItems
 }
 
+type CheckItemsInfo struct {
+	GroupName string   `json:"groupName"`
+	ItemNames []string `json:"itemNames"`
+}
+
 // data
 
 type ItemValue struct {
-	ItemName  string `json:"itemName"`
-	Value     string `json:"value"`
-	TimeStamp string `json:"timeStamp"`
+	ItemName string `json:"itemName" binding:"required"`
+	Value    string `json:"value" binding:"required"`
+}
+
+type HistoricalItemValue struct {
+	ItemName   string   `json:"itemName" binding:"required"`
+	Values     []string `json:"values" binding:"required"`
+	TimeStamps []string `json:"timeStamps" binding:"required"`
 }
 
 type BatchWriteString struct {
-	GroupName     string      `json:"groupName"`
-	ItemValues    []ItemValue `json:"itemValues"`
-	WithTimeStamp bool        `json:"withTimeStamp"`
+	ItemValues []ItemValue `json:"itemValues" binding:"required"`
+}
+
+type BatchWriteHistoricalString struct {
+	HistoricalItemValues []HistoricalItemValue `json:"historicalItemValues" binding:"required"`
 }
 
 type QueryRealTimeDataString struct {
@@ -171,10 +183,10 @@ type GdbRealTimeData struct {
 }
 
 type QueryHistoricalDataString struct {
-	ItemNames  []string `json:"itemNames"`  // ItemNames
-	StartTimes []int32  `json:"startTimes"` // startTime Unix TimeStamp
-	EndTimes   []int32  `json:"endTimes"`   // endTime Unix TimeStamp
-	Intervals  []int32  `json:"intervals"`  // interval
+	ItemNames  []string `json:"itemNames" binding:"required"`  // ItemNames
+	StartTimes []int32  `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
+	EndTimes   []int32  `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
+	Intervals  []int32  `json:"intervals" binding:"required"`  // interval
 }
 
 type QuerySpeedHistoryDataString struct {
@@ -282,6 +294,12 @@ type calcId struct {
 type fileInfo struct {
 	FileName  string `json:"fileName"`
 	GroupName string `json:"groupName"`
+}
+
+type historyFileInfo struct {
+	FileName   string   `json:"fileName"`
+	ItemNames  []string `json:"itemNames"`
+	SheetNames []string `json:"sheetNames"`
 }
 
 type logLevel int
