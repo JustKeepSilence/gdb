@@ -65,7 +65,13 @@ func (gdb *Gdb) initialDb() error {
 	if gdb.infoDb == nil {
 		return connectionDBError{"fail in opening " + gdb.DbPath + "\\InfoData: null db pointer"}
 	}
-	_ = gdb.infoDb.Put([]byte(initialUserName), []byte(initialUserInfo), nil) // initial user info
+	if r, err := gdb.infoDb.Get([]byte(initialUserName), nil); err != nil {
+		return err
+	} else {
+		if r == nil {
+			_ = gdb.infoDb.Put([]byte(initialUserName), []byte(initialUserInfo), nil) // initial user info
+		}
+	}
 	gdb.rtDbFilter = cmap.New()
 	// add all items in SQLite to bloom filter
 	groups, _ := query(gdb.ItemDbPath, "select groupName from group_cfg")
@@ -88,11 +94,24 @@ func (gdb *Gdb) initialSQLite() error {
 	sqlAddCalcCfgTable := `create table if not exists calc_cfg (id integer not null primary key, description text, expression text, status text default 'false', duration text default 10, errorMessage text default '', createTime text, updatedTime text default '')`                                 //  add calc cfg table
 	sqlAddLogCfgTable := `create table if not exists log_cfg (id integer not null primary key, logType text default 'error', requestString text default '', requestMethod text default 'post', requestUrl text default '', logMessage text, insertTime  NUMERIC DEFAULT (datetime('now','localtime')))` // create log table
 	// columns are id, logType,  requestString, requestMethod, requestUrl, logMessage, insertTime
+	sqlAddUserCfgTable := `create table if not exists user_cfg (id integer not null primary key, userName text UNIQUE, role text)`
 	_, _ = updateItem(gdb.ItemDbPath, sqlAddCalc)
-	if err := updateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable}...); err != nil {
+	if err := updateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable, sqlAddUserCfgTable}...); err != nil {
 		return err
 	}
-	return nil
+	if r, err := query(gdb.ItemDbPath, "select 1 from user_cfg where userName='admin' limit 1"); err != nil {
+		return err
+	} else {
+		if len(r) == 0 {
+			if _, err := updateItem(gdb.ItemDbPath, `insert into user_cfg (userName, role) values ('admin', 'super_user')`); err != nil {
+				return err
+			} else {
+				return nil
+			}
+		} else {
+			return nil
+		}
+	}
 }
 
 func NewGdb(dbPath, itemDbPath string) (*Gdb, error) {
