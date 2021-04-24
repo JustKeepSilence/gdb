@@ -48,7 +48,7 @@ type HttpsConfigs struct {
 	ServerCertificateName string `json:"serverCertificateName"`
 }
 
-// common
+// ResponseData common
 type ResponseData struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
@@ -184,20 +184,21 @@ type GdbRealTimeData struct {
 
 type QueryHistoricalDataString struct {
 	ItemNames  []string `json:"itemNames" binding:"required"`  // ItemNames
-	StartTimes []int32  `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
-	EndTimes   []int32  `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
-	Intervals  []int32  `json:"intervals" binding:"required"`  // interval
+	StartTimes []int    `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
+	EndTimes   []int    `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
+	Intervals  []int    `json:"intervals" binding:"required"`  // interval
 }
 
 type QuerySpeedHistoryDataString struct {
-	StartTimes []int `json:"startTimes"` // startTime Unix TimeStamp
-	EndTimes   []int `json:"endTimes"`   // endTime Unix TimeStamp
-	Interval   int   `json:"interval"`   // interval
+	ItemName   string `json:"itemName" binding:"required"`
+	StartTimes []int  `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
+	EndTimes   []int  `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
+	Interval   int    `json:"interval" binding:"required"`   // interval
 }
 
 type QueryHistoricalDataWithTimeStampString struct {
-	ItemNames  []string  `json:"itemNames"`  // ItemNames
-	TimeStamps [][]int32 `json:"timeStamps"` // time stamp
+	ItemNames  []string `json:"itemNames"`  // ItemNames
+	TimeStamps [][]int  `json:"timeStamps"` // time stamp
 }
 
 type DeadZone struct {
@@ -224,6 +225,11 @@ type GdbInfoData struct {
 }
 
 // page
+
+type httpsFile struct {
+	File     []int  `json:"file" binding:"required"`
+	FileName string `json:"fileName" binding:"required"`
+}
 
 type authInfo struct {
 	UserName string `json:"userName"`

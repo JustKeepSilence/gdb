@@ -97,7 +97,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		data.POST("/getHistoricalDataWithStamp", g.getHistoricalDataWithStampHandler)
 		data.POST("/getHistoricalDataWithCondition", g.getHistoricalDataWithConditionHandler)
 		data.POST("/getDbInfo", g.getDbInfoHandler)
-		data.POST("/getDbSpeedHistory", g.getDbSpeedHistoryHandler)
+		data.POST("/getDbInfoHistory", g.getDbInfoHistoryHandler)
 		data.POST("/getRawData", g.getRawDataHandler)
 	}
 	pageRequest := router.Group("/page") // page request handler
@@ -106,6 +106,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		pageRequest.GET("/userLogout/:userName", g.handleUserLogout)
 		pageRequest.POST("/getUserInfo", g.handleGetUerInfo)                 // get user info
 		pageRequest.POST("/uploadFile", g.handleUploadFile)                  // upload file
+		pageRequest.POST("/httpsUploadFile", g.handleHttpsUploadFile)        // https upload file
 		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcelHandler) // add item by excel
 		pageRequest.POST("/importHistoryByExcel", g.importHistoryByExcelHandler)
 		pageRequest.GET("/getJsCode/:fileName", g.getJsCodeHandler) // get js code
@@ -153,7 +154,10 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 	return router
 }
 
-// initial gdb service according to configs.json file
+// StartDbServer initial gdb service according to configs.json file
+// Both http and https modes support gRPC. If it is https mode,
+//it supports gRPC mode with CA certificate and without CA certificate enabled.
+//Self-visa certificates are only useful on linux and mac
 func StartDbServer(configs Config) error {
 	dbPath, itemDbPath, port, ip, mode, ca, caCertificateName, serverCertificateName, selfSignedCa :=
 		configs.DbPath, configs.ItemDbPath, configs.Port, configs.IP, configs.Mode,
@@ -182,7 +186,7 @@ func StartDbServer(configs Config) error {
 	se := &server{gdb: gdb, configs: configs}
 	var s *grpc.Server
 	if mode == "https" && ca {
-		// use ca root
+		// https mode and use ca root
 		if certificate, err := tls.LoadX509KeyPair("./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key"); err != nil {
 			return err
 		} else {
@@ -214,9 +218,11 @@ func StartDbServer(configs Config) error {
 			}
 		}
 	} else {
+		// https gRPC mode without ca root
 		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
 			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor))
 	}
+	// register gRPC
 	pb.RegisterGroupServer(s, se)
 	pb.RegisterItemServer(s, se)
 	pb.RegisterDataServer(s, se)
@@ -224,6 +230,7 @@ func StartDbServer(configs Config) error {
 	pb.RegisterCalcServer(s, se)
 	fmt.Printf("%s: launch gdb service successfully!: %s, mode: %s,authorization: %s \n ", time.Now().Format(timeFormatString), address, mode, strconv.FormatBool(configs.Authorization))
 	if mode == "http" {
+		// http mode
 		h2Handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 				s.ServeHTTP(w, r)

@@ -441,14 +441,14 @@ func (gdb *Gdb) getDbInfoHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) getDbSpeedHistoryHandler(c *gin.Context) {
+func (gdb *Gdb) getDbInfoHistoryHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
 	g := QuerySpeedHistoryDataString{}
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()))
 	} else {
-		responseData, err := gdb.getDbSpeedHistory(Speed, g.StartTimes, g.EndTimes, g.Interval)
+		responseData, err := gdb.getDbInfoHistory(g.ItemName, g.StartTimes, g.EndTimes, g.Interval)
 		if err != nil {
 			gdb.string(c, 500, "%s", []byte(err.Error()))
 		} else {
@@ -535,6 +535,26 @@ func (gdb *Gdb) handleUploadFile(c *gin.Context) {
 	}
 }
 
+func (gdb *Gdb) handleHttpsUploadFile(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	g := httpsFile{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()))
+	} else {
+		files, b := g.File, []uint8{}
+		for _, file := range files {
+			b = append(b, uint8(file))
+		}
+		if err := ioutil.WriteFile("./uploadFiles/"+g.FileName, b, 0644); err != nil {
+			gdb.string(c, 500, "%s", []byte(err.Error()))
+		} else {
+			r, _ := Json.Marshal(ResponseData{200, "", ""})
+			gdb.string(c, 200, "%s", r)
+		}
+	}
+}
+
 func (gdb *Gdb) handleAddItemsByExcelHandler(c *gin.Context) {
 	g := fileInfo{}
 	request := c.Request
@@ -604,12 +624,15 @@ func (gdb *Gdb) getLogsHandler(c *gin.Context) {
 func (gdb *Gdb) downloadFileHandler(c *gin.Context) {
 	fileName := c.Param("fileName")
 	contents := []int{}
-	fileContent, _ := ioutil.ReadFile("./uploadFiles/" + fileName)
-	for _, c := range fileContent {
-		contents = append(contents, int(c))
+	if fileContent, err := ioutil.ReadFile("./uploadFiles/" + fileName); err != nil {
+		gdb.string(c, 500, "%s", []byte(err.Error()))
+	} else {
+		for _, c := range fileContent {
+			contents = append(contents, int(c))
+		}
+		r, _ := Json.Marshal(ResponseData{200, "", contents})
+		c.String(200, "%s", r)
 	}
-	r, _ := Json.Marshal(ResponseData{200, "", contents})
-	c.String(200, "%s", r)
 }
 
 func (gdb *Gdb) addCalcItemHandler(c *gin.Context) {
@@ -754,7 +777,12 @@ func (gdb *Gdb) getProcessInfo() error {
 				name, _ := p.Name()
 				if name == appName {
 					m, _ := p.MemoryPercent()
-					_ = gdb.infoDb.Put([]byte(Ram), []byte(fmt.Sprintf("%.2f", float64(m)*float64(tm.Total)*10e-9)), nil) // write mem usage
+					v := fmt.Sprintf("%.2f", float64(m)*float64(tm.Total)*10e-9)
+					_ = gdb.infoDb.Put([]byte(Ram), []byte(v), nil) // write mem usage
+					n := time.Now()
+					currentTimeStamp := int(time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Second(), 0, time.UTC).Unix()) // unix timestamp
+					ts := strconv.Itoa(currentTimeStamp)
+					_ = gdb.infoDb.Put([]byte(Ram+fmt.Sprintf("%s", ts)), []byte(v), nil) // write history
 				}
 			}
 			ts, _ := gdb.infoDb.Get([]byte(TimeKey), nil)
