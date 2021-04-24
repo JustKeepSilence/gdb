@@ -241,12 +241,25 @@ type userToken struct {
 }
 
 type UserName struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required"`
 }
 
 type UserInfo struct {
-	UserName
-	Role []string `json:"role"`
+	UserName `json:"userName" binding:"required"`
+	Role     []string `json:"role" binding:"required"`
+}
+
+type updatedUserInfo struct {
+	Id          int    `json:"id" binding:"required"`
+	OldUserName string `json:"OldUserName" binding:"required"`
+	NewUserName string `json:"NewUserName" binding:"required"`
+	Role        string `json:"role" binding:"required"`
+}
+
+type addedUserInfo struct {
+	Name     string `json:"name" binding:"required"`
+	Role     string `json:"role" binding:"required"`
+	PassWord string `json:"passWord" binding:"required"`
 }
 
 type gdbUserInfo struct {
