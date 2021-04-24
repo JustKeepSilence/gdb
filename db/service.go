@@ -104,7 +104,11 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 	{
 		pageRequest.POST("/userLogin", g.handleUserLogin) // user login
 		pageRequest.GET("/userLogout/:userName", g.handleUserLogout)
-		pageRequest.POST("/getUserInfo", g.handleGetUerInfo)                 // get user info
+		pageRequest.POST("/getUserInfo", g.getUerInfoHandler) // get user info
+		pageRequest.POST("/getUsers", g.getUsersHandler)
+		pageRequest.POST("/addUsers", g.addUsersHandler)
+		pageRequest.POST("/deleteUsers", g.deleteUsersHandler)
+		pageRequest.POST("/updateUsers", g.updateUsersHandler)
 		pageRequest.POST("/uploadFile", g.handleUploadFile)                  // upload file
 		pageRequest.POST("/httpsUploadFile", g.handleHttpsUploadFile)        // https upload file
 		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcelHandler) // add item by excel

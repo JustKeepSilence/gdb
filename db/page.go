@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -67,7 +69,59 @@ func (gdb *Gdb) getUserInfo(userName string) (UserInfo, error) {
 	}
 }
 
-// add items by excel
+func (gdb *Gdb) addUsers(info addedUserInfo) (Rows, error) {
+	userName, role := info.Name, info.Role
+	if _, err := updateItem(gdb.ItemDbPath, "insert into user_cfg (userName, role) values('"+userName+"', '"+role+"')"); err != nil {
+		return Rows{}, err
+	} else {
+		// add userInfo to gdbInfo
+		gi := gdbUserInfo{
+			PassWord: info.PassWord,
+			Roles:    []string{info.Role},
+		}
+		gdbInfo, _ := Json.Marshal(gi)
+		_ = gdb.infoDb.Put([]byte(userName), gdbInfo, nil) // add user info to gdb
+		return Rows{1}, nil
+	}
+}
+
+func (gdb *Gdb) deleteUsers(name UserName) (Rows, error) {
+	if _, err := updateItem(gdb.ItemDbPath, "delete from user_cfg where userName='"+name.Name+"'"); err != nil {
+		return Rows{}, err
+	} else {
+		_ = gdb.infoDb.Delete([]byte(name.Name), nil)
+		return Rows{1}, nil
+	}
+}
+
+func (gdb *Gdb) updateUsers(info updatedUserInfo) (Rows, error) {
+	id, oldUserName, newUserName := info.Id, info.OldUserName, info.NewUserName
+	role, _ := Json.Marshal([]string{info.Role})
+	if oldUserName == newUserName {
+		if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set role='"+info.Role+"' where id="+strconv.Itoa(id)); err != nil {
+			return Rows{}, err
+		} else {
+			gi, _ := gdb.infoDb.Get([]byte(oldUserName), nil)
+			reg := regexp.MustCompile(`\[.*]`)
+			ngi := reg.ReplaceAll(gi, role) // new user info
+			_ = gdb.infoDb.Put([]byte(oldUserName), ngi, nil)
+			return Rows{1}, nil
+		}
+	} else {
+		if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set role='"+info.Role+"', userName='"+newUserName+"' where id="+strconv.Itoa(id)); err != nil {
+			return Rows{}, err
+		} else {
+			gi, _ := gdb.infoDb.Get([]byte(oldUserName), nil)
+			reg := regexp.MustCompile(`\[.*]`)
+			ngi := reg.ReplaceAll(gi, role) // new user info
+			_ = gdb.infoDb.Put([]byte(newUserName), ngi, nil)
+			_ = gdb.infoDb.Delete([]byte(oldUserName), nil)
+			return Rows{1}, nil
+		}
+	}
+}
+
+// AddItemsByExcel add items by excel
 func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 	f, err := excelize.OpenFile(filePath)
 	if err != nil {
