@@ -397,7 +397,7 @@ type ItemClient interface {
 	DeleteItems(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*Rows, error)
 	GetItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItems, error)
 	GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItemsWithCount, error)
-	UpdateItems(ctx context.Context, in *ItemsInfoWithoutRow, opts ...grpc.CallOption) (*Rows, error)
+	UpdateItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*Rows, error)
 	CheckItems(ctx context.Context, in *CheckItemsInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -445,7 +445,7 @@ func (c *itemClient) GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts 
 	return out, nil
 }
 
-func (c *itemClient) UpdateItems(ctx context.Context, in *ItemsInfoWithoutRow, opts ...grpc.CallOption) (*Rows, error) {
+func (c *itemClient) UpdateItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*Rows, error) {
 	out := new(Rows)
 	err := c.cc.Invoke(ctx, "/model.Item/UpdateItems", in, out, opts...)
 	if err != nil {
@@ -471,7 +471,7 @@ type ItemServer interface {
 	DeleteItems(context.Context, *DeletedItemsInfo) (*Rows, error)
 	GetItems(context.Context, *ItemsInfo) (*GdbItems, error)
 	GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error)
-	UpdateItems(context.Context, *ItemsInfoWithoutRow) (*Rows, error)
+	UpdateItems(context.Context, *ItemsInfo) (*Rows, error)
 	CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error)
 	mustEmbedUnimplementedItemServer()
 }
@@ -492,7 +492,7 @@ func (UnimplementedItemServer) GetItems(context.Context, *ItemsInfo) (*GdbItems,
 func (UnimplementedItemServer) GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetItemsWithCount not implemented")
 }
-func (UnimplementedItemServer) UpdateItems(context.Context, *ItemsInfoWithoutRow) (*Rows, error) {
+func (UnimplementedItemServer) UpdateItems(context.Context, *ItemsInfo) (*Rows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateItems not implemented")
 }
 func (UnimplementedItemServer) CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error) {
@@ -584,7 +584,7 @@ func _Item_GetItemsWithCount_Handler(srv interface{}, ctx context.Context, dec f
 }
 
 func _Item_UpdateItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ItemsInfoWithoutRow)
+	in := new(ItemsInfo)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -596,7 +596,7 @@ func _Item_UpdateItems_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/model.Item/UpdateItems",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemServer).UpdateItems(ctx, req.(*ItemsInfoWithoutRow))
+		return srv.(ItemServer).UpdateItems(ctx, req.(*ItemsInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -667,6 +667,7 @@ type DataClient interface {
 	GetHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithTimeStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 	GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error)
+	GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 }
 
 type dataClient struct {
@@ -799,6 +800,15 @@ func (c *dataClient) GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...g
 	return out, nil
 }
 
+func (c *dataClient) GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetDbInfoHistory", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DataServer is the server API for Data service.
 // All implementations must embed UnimplementedDataServer
 // for forward compatibility
@@ -811,6 +821,7 @@ type DataServer interface {
 	GetHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithTimeStampString) (*GdbHistoricalData, error)
 	GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error)
+	GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error)
 	mustEmbedUnimplementedDataServer()
 }
 
@@ -841,6 +852,9 @@ func (UnimplementedDataServer) GetHistoricalDataWithStamp(context.Context, *Quer
 }
 func (UnimplementedDataServer) GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfo not implemented")
+}
+func (UnimplementedDataServer) GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfoHistory not implemented")
 }
 func (UnimplementedDataServer) mustEmbedUnimplementedDataServer() {}
 
@@ -1015,6 +1029,24 @@ func _Data_GetDbInfo_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Data_GetDbInfoHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySpeedHistoryDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetDbInfoHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetDbInfoHistory",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetDbInfoHistory(ctx, req.(*QuerySpeedHistoryDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Data_ServiceDesc is the grpc.ServiceDesc for Data service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1046,6 +1078,10 @@ var Data_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetDbInfo",
 			Handler:    _Data_GetDbInfo_Handler,
 		},
+		{
+			MethodName: "GetDbInfoHistory",
+			Handler:    _Data_GetDbInfoHistory_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -1067,8 +1103,18 @@ var Data_ServiceDesc = grpc.ServiceDesc{
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PageClient interface {
 	UserLogin(ctx context.Context, in *AuthInfo, opts ...grpc.CallOption) (*UserToken, error)
+	UserLogOut(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetUserInfo(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*UserInfo, error)
+	GetUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserInfos, error)
+	AddUsers(ctx context.Context, in *AddUserInfo, opts ...grpc.CallOption) (*Rows, error)
+	DeleteUsers(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error)
+	UpdateUsers(ctx context.Context, in *UpdatedUserInfo, opts ...grpc.CallOption) (*Rows, error)
+	UploadFile(ctx context.Context, in *UploadedFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	UploadFileWithStream(ctx context.Context, opts ...grpc.CallOption) (Page_UploadFileWithStreamClient, error)
+	AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error)
+	ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grpc.CallOption) (*LogsInfo, error)
+	DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error)
 }
 
 type pageClient struct {
@@ -1088,9 +1134,115 @@ func (c *pageClient) UserLogin(ctx context.Context, in *AuthInfo, opts ...grpc.C
 	return out, nil
 }
 
+func (c *pageClient) UserLogOut(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/model.Page/UserLogOut", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *pageClient) GetUserInfo(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*UserInfo, error) {
 	out := new(UserInfo)
 	err := c.cc.Invoke(ctx, "/model.Page/GetUserInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) GetUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserInfos, error) {
+	out := new(UserInfos)
+	err := c.cc.Invoke(ctx, "/model.Page/GetUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) AddUsers(ctx context.Context, in *AddUserInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/AddUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) DeleteUsers(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/DeleteUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) UpdateUsers(ctx context.Context, in *UpdatedUserInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/UpdateUsers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) UploadFile(ctx context.Context, in *UploadedFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/model.Page/UploadFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) UploadFileWithStream(ctx context.Context, opts ...grpc.CallOption) (Page_UploadFileWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Page_ServiceDesc.Streams[0], "/model.Page/UploadFileWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &pageUploadFileWithStreamClient{stream}
+	return x, nil
+}
+
+type Page_UploadFileWithStreamClient interface {
+	Send(*UploadedFileInfo) error
+	CloseAndRecv() (*emptypb.Empty, error)
+	grpc.ClientStream
+}
+
+type pageUploadFileWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *pageUploadFileWithStreamClient) Send(m *UploadedFileInfo) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *pageUploadFileWithStreamClient) CloseAndRecv() (*emptypb.Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(emptypb.Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/AddItemsByExcel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/model.Page/ImportHistoryByExcel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1106,13 +1258,32 @@ func (c *pageClient) GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grp
 	return out, nil
 }
 
+func (c *pageClient) DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error) {
+	out := new(FileContents)
+	err := c.cc.Invoke(ctx, "/model.Page/DownloadFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PageServer is the server API for Page service.
 // All implementations must embed UnimplementedPageServer
 // for forward compatibility
 type PageServer interface {
 	UserLogin(context.Context, *AuthInfo) (*UserToken, error)
+	UserLogOut(context.Context, *UserName) (*emptypb.Empty, error)
 	GetUserInfo(context.Context, *UserName) (*UserInfo, error)
+	GetUsers(context.Context, *emptypb.Empty) (*UserInfos, error)
+	AddUsers(context.Context, *AddUserInfo) (*Rows, error)
+	DeleteUsers(context.Context, *UserName) (*Rows, error)
+	UpdateUsers(context.Context, *UpdatedUserInfo) (*Rows, error)
+	UploadFile(context.Context, *UploadedFileInfo) (*emptypb.Empty, error)
+	UploadFileWithStream(Page_UploadFileWithStreamServer) error
+	AddItemsByExcel(context.Context, *FileInfo) (*Rows, error)
+	ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error)
 	GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error)
+	DownloadFile(context.Context, *FileInfo) (*FileContents, error)
 	mustEmbedUnimplementedPageServer()
 }
 
@@ -1123,11 +1294,41 @@ type UnimplementedPageServer struct {
 func (UnimplementedPageServer) UserLogin(context.Context, *AuthInfo) (*UserToken, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UserLogin not implemented")
 }
+func (UnimplementedPageServer) UserLogOut(context.Context, *UserName) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserLogOut not implemented")
+}
 func (UnimplementedPageServer) GetUserInfo(context.Context, *UserName) (*UserInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserInfo not implemented")
 }
+func (UnimplementedPageServer) GetUsers(context.Context, *emptypb.Empty) (*UserInfos, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
+}
+func (UnimplementedPageServer) AddUsers(context.Context, *AddUserInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddUsers not implemented")
+}
+func (UnimplementedPageServer) DeleteUsers(context.Context, *UserName) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUsers not implemented")
+}
+func (UnimplementedPageServer) UpdateUsers(context.Context, *UpdatedUserInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUsers not implemented")
+}
+func (UnimplementedPageServer) UploadFile(context.Context, *UploadedFileInfo) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UploadFile not implemented")
+}
+func (UnimplementedPageServer) UploadFileWithStream(Page_UploadFileWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadFileWithStream not implemented")
+}
+func (UnimplementedPageServer) AddItemsByExcel(context.Context, *FileInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddItemsByExcel not implemented")
+}
+func (UnimplementedPageServer) ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ImportHistoryByExcel not implemented")
+}
 func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
+}
+func (UnimplementedPageServer) DownloadFile(context.Context, *FileInfo) (*FileContents, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownloadFile not implemented")
 }
 func (UnimplementedPageServer) mustEmbedUnimplementedPageServer() {}
 
@@ -1160,6 +1361,24 @@ func _Page_UserLogin_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Page_UserLogOut_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).UserLogOut(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/UserLogOut",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).UserLogOut(ctx, req.(*UserName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Page_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UserName)
 	if err := dec(in); err != nil {
@@ -1174,6 +1393,158 @@ func _Page_GetUserInfo_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PageServer).GetUserInfo(ctx, req.(*UserName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetUsers(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_AddUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddUserInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).AddUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/AddUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).AddUsers(ctx, req.(*AddUserInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_DeleteUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).DeleteUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/DeleteUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).DeleteUsers(ctx, req.(*UserName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_UpdateUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdatedUserInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).UpdateUsers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/UpdateUsers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).UpdateUsers(ctx, req.(*UpdatedUserInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_UploadFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UploadedFileInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).UploadFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/UploadFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).UploadFile(ctx, req.(*UploadedFileInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_UploadFileWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(PageServer).UploadFileWithStream(&pageUploadFileWithStreamServer{stream})
+}
+
+type Page_UploadFileWithStreamServer interface {
+	SendAndClose(*emptypb.Empty) error
+	Recv() (*UploadedFileInfo, error)
+	grpc.ServerStream
+}
+
+type pageUploadFileWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *pageUploadFileWithStreamServer) SendAndClose(m *emptypb.Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *pageUploadFileWithStreamServer) Recv() (*UploadedFileInfo, error) {
+	m := new(UploadedFileInfo)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Page_AddItemsByExcel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).AddItemsByExcel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/AddItemsByExcel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).AddItemsByExcel(ctx, req.(*FileInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_ImportHistoryByExcel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HistoryFileInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).ImportHistoryByExcel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/ImportHistoryByExcel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).ImportHistoryByExcel(ctx, req.(*HistoryFileInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1196,6 +1567,24 @@ func _Page_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Page_DownloadFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).DownloadFile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/DownloadFile",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).DownloadFile(ctx, req.(*FileInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Page_ServiceDesc is the grpc.ServiceDesc for Page service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1208,15 +1597,57 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Page_UserLogin_Handler,
 		},
 		{
+			MethodName: "UserLogOut",
+			Handler:    _Page_UserLogOut_Handler,
+		},
+		{
 			MethodName: "GetUserInfo",
 			Handler:    _Page_GetUserInfo_Handler,
+		},
+		{
+			MethodName: "GetUsers",
+			Handler:    _Page_GetUsers_Handler,
+		},
+		{
+			MethodName: "AddUsers",
+			Handler:    _Page_AddUsers_Handler,
+		},
+		{
+			MethodName: "DeleteUsers",
+			Handler:    _Page_DeleteUsers_Handler,
+		},
+		{
+			MethodName: "UpdateUsers",
+			Handler:    _Page_UpdateUsers_Handler,
+		},
+		{
+			MethodName: "UploadFile",
+			Handler:    _Page_UploadFile_Handler,
+		},
+		{
+			MethodName: "AddItemsByExcel",
+			Handler:    _Page_AddItemsByExcel_Handler,
+		},
+		{
+			MethodName: "ImportHistoryByExcel",
+			Handler:    _Page_ImportHistoryByExcel_Handler,
 		},
 		{
 			MethodName: "GetLogs",
 			Handler:    _Page_GetLogs_Handler,
 		},
+		{
+			MethodName: "DownloadFile",
+			Handler:    _Page_DownloadFile_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "UploadFileWithStream",
+			Handler:       _Page_UploadFileWithStream_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "gdb.proto",
 }
 

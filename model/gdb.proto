@@ -81,7 +81,7 @@ service Group {
 
 message AddedItemsInfo {
   string groupName = 1;
-  repeated GdbItem values = 2;
+  string itemValues = 2;
 }
 
 message DeletedItemsInfo {
@@ -89,17 +89,13 @@ message DeletedItemsInfo {
   string condition = 2;
 }
 
-message ItemsInfo {
-  ItemsInfoWithoutRow infos = 1;
-  string columnNames = 2;
-  int32 startRow = 3;
-  int32 rowCount = 4;
-}
-
-message ItemsInfoWithoutRow{
+message ItemsInfo{
   string groupName = 1;
   string condition = 5;
   string clause = 6;
+  string columnNames = 2;
+  int32 startRow = 3;
+  int32 rowCount = 4;
 }
 
 message GdbItem{
@@ -125,7 +121,7 @@ service Item {
   rpc DeleteItems(DeletedItemsInfo) returns (Rows){}
   rpc GetItems(ItemsInfo) returns (GdbItems){}
   rpc GetItemsWithCount(ItemsInfo) returns (GdbItemsWithCount){}
-  rpc UpdateItems(ItemsInfoWithoutRow) returns (Rows){}
+  rpc UpdateItems(ItemsInfo) returns (Rows){}
   rpc CheckItems(CheckItemsInfo) returns (google.protobuf.Empty){}
 }
 
@@ -200,6 +196,13 @@ message BatchWriteHistoricalString {
   repeated HistoricalItemValue historicalItemValues = 1;
 }
 
+message QuerySpeedHistoryDataString{
+  string itemName = 1;
+  repeated int32 startTimes = 2;
+  repeated int32 endTimes = 3;
+  int32 interval = 4;
+}
+
 
 service Data {
   rpc BatchWrite(BatchWriteString) returns (Rows){}
@@ -210,6 +213,7 @@ service Data {
   rpc GetHistoricalData(QueryHistoricalDataString) returns (GdbHistoricalData){}
   rpc GetHistoricalDataWithStamp(QueryHistoricalDataWithTimeStampString) returns (GdbHistoricalData){}
   rpc GetDbInfo(google.protobuf.Empty) returns (GdbInfoData){}
+  rpc GetDbInfoHistory(QuerySpeedHistoryDataString) returns (GdbHistoricalData){}
 }
 
 // page
@@ -228,7 +232,7 @@ message UserName{
 }
 
 message UserInfo{
-  string userName = 1;
+  UserName userName = 1;
   repeated string role = 2;
 }
 
@@ -247,10 +251,57 @@ message LogsInfo {
   repeated LogInfo infos = 2;
 }
 
+message FileInfo{
+  string fileName = 1;
+  string groupName = 2;
+}
+
+message UploadedFileInfo{
+  string fileName = 1;
+  repeated int32 file = 2;
+}
+
+message HistoryFileInfo {
+  string fileName = 1;
+  repeated string itemNames = 2;
+  repeated string sheetNames = 3;
+}
+
+message FileContents {
+  repeated int32 contents = 1;
+}
+
+message UserInfos {
+  string userInfos = 1;
+}
+
+message AddUserInfo{
+  string name = 1;
+  string role = 2;
+  string passWord = 3;
+}
+
+message UpdatedUserInfo{
+  int32 id = 1;
+  string oldUserName = 2;
+  string newUserName = 3;
+  string role = 4;
+}
+
 service Page {
   rpc UserLogin(AuthInfo) returns (UserToken){}
+  rpc UserLogOut(UserName) returns (google.protobuf.Empty){}
   rpc GetUserInfo(UserName) returns (UserInfo){}
+  rpc GetUsers(google.protobuf.Empty) returns (UserInfos) {}
+  rpc AddUsers(AddUserInfo) returns (Rows){}
+  rpc DeleteUsers(UserName) returns (Rows){}
+  rpc UpdateUsers(UpdatedUserInfo) returns (Rows){}
+  rpc UploadFile(UploadedFileInfo) returns (google.protobuf.Empty){}
+  rpc UploadFileWithStream(stream UploadedFileInfo) returns (google.protobuf.Empty){}  // for file > 4194304, or you can set MaxCallRecvMsgSize
+  rpc AddItemsByExcel(FileInfo) returns (Rows){}
+  rpc ImportHistoryByExcel(HistoryFileInfo) returns (google.protobuf.Empty){}
   rpc GetLogs(QueryLogsInfo) returns (LogsInfo){}
+  rpc DownloadFile(FileInfo) returns (FileContents){}
 }
 
 // calculation
