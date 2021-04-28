@@ -6,7 +6,7 @@ $ openssl req -new -sha256 -out gdbClient.csr -key gdbClient.key -config gdb.con
 
 # generate client crt file
 
-$ openssl x509 -req -sha256 -days 365 -in gdbClient.csr -signkey gdbClient.key -out gdbClient.crt -extensions req_ext -extfile gdb.conf
+$ openssl x509 -req -sha256  -days 365 -in gdbClient.csr -signkey gdbClient.key -out gdbClient.crt -extensions req_ext -extfile gdb.conf
 
 # generate server key file
 $ openssl genrsa -out gdbServer.key 4096
