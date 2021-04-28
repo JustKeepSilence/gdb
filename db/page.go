@@ -11,7 +11,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
-	"os"
+	"io/ioutil"
 	"regexp"
 	"strconv"
 	"strings"
@@ -174,7 +174,7 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 			}
 		}
 		items.GroupName = groupName
-		items.GdbItems.ItemValues = values
+		items.ItemValues = values
 		if r, err := gdb.AddItems(items); err != nil {
 			return Rows{-1}, err
 		} else {
@@ -222,17 +222,13 @@ func (gdb *Gdb) ImportHistoryByExcel(fileName string, itemNames []string, sheetN
 }
 
 func getJsCode(fileName string) (string, error) {
-	filePath := "./uploadFiles/" + fileName
-	file, err := os.OpenFile(filePath, os.O_RDONLY, 0755)
-	if err != nil {
+	if b, err := ioutil.ReadFile("./uploadFiles/" + fileName); err != nil {
 		return "", err
+	} else {
+		c := strings.Replace(fmt.Sprintf("%s", b), "\r\n", "<br />", -1)
+		c1 := strings.Replace(c, "\n", "<br />", -1)
+		return c1, nil
 	}
-	fileInfo, _ := os.Stat(filePath)
-	b := make([]byte, fileInfo.Size())
-	_, _ = file.Read(b)
-	c := strings.Replace(fmt.Sprintf("%s", b), "\r\n", "<br />", -1)
-	c1 := strings.Replace(c, "\n", "<br />", -1)
-	return c1, nil
 }
 
 func (gdb *Gdb) getLogs(logType, condition, startTime, endTime string) (LogsInfo, error) {

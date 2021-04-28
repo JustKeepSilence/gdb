@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-// write realTimeData
+// BatchWrite write realTimeData
 func (gdb *Gdb) BatchWrite(b BatchWriteString) (Rows, error) {
 	itemNames, itemValues := []string{}, []string{}
 	// without timeStamp
@@ -84,7 +84,7 @@ func (gdb *Gdb) BatchWrite(b BatchWriteString) (Rows, error) {
 	}
 }
 
-// write historicalData
+// BatchWriteHistoricalData write historicalData
 func (gdb *Gdb) BatchWriteHistoricalData(b BatchWriteHistoricalString) error {
 	g := errgroup.Group{}
 	infos := b.HistoricalItemValues
@@ -119,7 +119,7 @@ func (gdb *Gdb) BatchWriteHistoricalData(b BatchWriteHistoricalString) error {
 	}
 }
 
-//  get realTime data
+// GetRealTimeData get realTime data
 func (gdb *Gdb) GetRealTimeData(itemNames ...string) (GdbRealTimeData, error) {
 	sn, err := gdb.rtDb.GetSnapshot()
 	if sn == nil || err != nil {
@@ -145,8 +145,8 @@ func (gdb *Gdb) GetRealTimeData(itemNames ...string) (GdbRealTimeData, error) {
 	return GdbRealTimeData{m}, nil
 }
 
-// get historical data
-func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int32, endTimeStamps []int32, intervals []int32) (GdbHistoricalData, error) {
+// GetHistoricalData get historical data
+func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int, endTimeStamps []int, intervals []int) (GdbHistoricalData, error) {
 	rawData := cmap.New()
 	wg := sync.WaitGroup{}
 	sn, err := gdb.hisDb.GetSnapshot()
@@ -168,10 +168,10 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int32, e
 				}
 				startKey := strings.Builder{}
 				startKey.Write([]byte(name))
-				startKey.Write([]byte(strconv.Itoa(int(s))))
+				startKey.Write([]byte(strconv.Itoa(s)))
 				endKey := strings.Builder{}
 				endKey.Write([]byte(name))
-				endKey.Write([]byte(strconv.Itoa(int(e))))
+				endKey.Write([]byte(strconv.Itoa(e)))
 				it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 				var values []string
 				count := 0
@@ -199,11 +199,11 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int32, e
 	return GdbHistoricalData{rawData}, nil
 }
 
-// get raw(that is all ) historical data, it should only be used for debugging
+// GetRawHistoricalData get raw(that is all ) historical data, it should only be used for debugging
 func (gdb *Gdb) GetRawHistoricalData(itemNames ...string) (cmap.ConcurrentMap, error) {
 	rawData := cmap.New()
 	g := errgroup.Group{}
-	sn, err := gdb.hisDb.GetSnapshot()
+	sn, err := gdb.infoDb.GetSnapshot()
 	if sn == nil || err != nil {
 		return nil, snError{"snError"}
 	}
@@ -233,8 +233,8 @@ func (gdb *Gdb) GetRawHistoricalData(itemNames ...string) (cmap.ConcurrentMap, e
 	}
 }
 
-// get history data according to the given time stamps
-func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]int32) (GdbHistoricalData, error) {
+// GetHistoricalDataWithStamp get history data according to the given time stamps
+func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]int) (GdbHistoricalData, error) {
 	if len(itemNames) != len(timeStamps) {
 		return GdbHistoricalData{}, fmt.Errorf("inconsistent length of itemNames and timeStamps")
 	}
@@ -261,7 +261,7 @@ func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]i
 	return GdbHistoricalData{rawData}, nil
 }
 
-// filter condition must be correct js expression,itemName should be startedWith by item.
+// GetHistoricalDataWithCondition filter condition must be correct js expression,itemName should be startedWith by item.
 // eg: item["itemName1"]>10 && item["itemName2"] > 30 ....
 // It should be noted that the entire judgment is based on the itemName with less historical value in the condition.
 //If the longest itemName is used as the benchmark, we cannot make an accurate judgment on the AND logic in it.
@@ -421,8 +421,6 @@ func (gdb *Gdb) getHistoricalDataWithMinLength(itemNames []string, startTime []i
 		return nil, snError{"snError"}
 	}
 	defer sn.Release() // release
-	latestTimeStampString, _ := gdb.infoDb.Get([]byte(TimeKey), nil)
-	latestTimeStamp, _ := strconv.ParseInt(fmt.Sprintf("%s", latestTimeStampString), 10, 0)
 	for index, itemName := range itemNames {
 		wg.Add(1)
 		go func(name string, j int) {
@@ -440,13 +438,7 @@ func (gdb *Gdb) getHistoricalDataWithMinLength(itemNames []string, startTime []i
 				startKey.Write([]byte(strconv.Itoa(s)))
 				endKey := strings.Builder{}
 				endKey.Write([]byte(name))
-				if e > int(latestTimeStamp) {
-					// startTime to currentTimeStamp
-					endKey.Write([]byte(strconv.Itoa(int(latestTimeStamp))))
-				} else {
-					// startTime to endTime
-					endKey.Write([]byte(strconv.Itoa(e)))
-				}
+				endKey.Write([]byte(strconv.Itoa(e)))
 				it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 				var values []string
 				count := 0
@@ -586,15 +578,15 @@ func (gdb *Gdb) getDbInfo() (GdbInfoData, error) {
 	return GdbInfoData{m}, nil
 }
 
-func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int, endTimeStamps []int, interval int) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getDbInfoHistory(itemName string, startTimeStamps []int, endTimeStamps []int, interval int) (cmap.ConcurrentMap, error) {
 	rawData := cmap.New()
 	sn, err := gdb.infoDb.GetSnapshot()
 	if sn == nil || err != nil {
 		return nil, snError{"snError"}
 	}
 	defer sn.Release() // release
-	latestTimeStampString, _ := sn.Get([]byte(TimeKey), nil)
-	latestTimeStamp, _ := strconv.ParseInt(fmt.Sprintf("%s", latestTimeStampString), 10, 0)
+	//latestTimeStampString, _ := sn.Get([]byte(TimeKey), nil)
+	//latestTimeStamp, _ := strconv.ParseInt(fmt.Sprintf("%s", latestTimeStampString), 10, 0)
 	for i := 0; i < len(startTimeStamps); i++ {
 		s := startTimeStamps[i] // startTime
 		e := endTimeStamps[i]   // endTime
@@ -607,13 +599,7 @@ func (gdb *Gdb) getDbSpeedHistory(itemName string, startTimeStamps []int, endTim
 		startKey.Write([]byte(fmt.Sprintf("%d", s)))
 		endKey := strings.Builder{}
 		endKey.Write([]byte(itemName))
-		if e > int(latestTimeStamp) {
-			// startTime to currentTimeStamp
-			endKey.Write([]byte(strconv.Itoa(int(latestTimeStamp))))
-		} else {
-			// startTime to endTime
-			endKey.Write([]byte(fmt.Sprintf("%d", e)))
-		}
+		endKey.Write([]byte(fmt.Sprintf("%d", e)))
 		it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 		var values []string
 		var count int32
