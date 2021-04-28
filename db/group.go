@@ -54,7 +54,7 @@ const (
     			  `
 )
 
-// add group to GDB
+// AddGroups add group to GDB
 func (gdb *Gdb) AddGroups(groupInfos ...AddedGroupInfo) (Rows, error) {
 	groupNames := [][]string{}
 	columnNames := [][]string{}
@@ -99,11 +99,7 @@ func (gdb *Gdb) AddGroups(groupInfos ...AddedGroupInfo) (Rows, error) {
 	return Rows{len(groupNames)}, nil
 }
 
-/*delete group from GDB
-notes: Since leveldb uses the default bloom filter deleting the key may affect performance.
-Therefore, when deleting groups and items in the current version, only the content in SQLite
-will be deleted, and the keys in the real-time and historical databases of leveldb will not be deleted.
-*/
+// DeleteGroups /*delete group from GDB
 func (gdb *Gdb) DeleteGroups(groupInfos GroupNamesInfo) (Rows, error) {
 	c := 0
 	groupNames := groupInfos.GroupNames
@@ -126,7 +122,7 @@ func (gdb *Gdb) DeleteGroups(groupInfos GroupNamesInfo) (Rows, error) {
 	return Rows{c}, nil
 }
 
-// get group name
+// GetGroups get group name
 func (gdb *Gdb) GetGroups() (GroupNamesInfo, error) {
 	r, err := query(gdb.ItemDbPath, "select groupName from group_cfg")
 	if err != nil {
@@ -139,7 +135,7 @@ func (gdb *Gdb) GetGroups() (GroupNamesInfo, error) {
 	return GroupNamesInfo{groupNames}, nil
 }
 
-// get the column and item count of the given groupName
+// GetGroupProperty get the column and item count of the given groupName
 func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo, error) {
 	c, err := query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names of given table
 	if err != nil {
@@ -156,7 +152,7 @@ func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo
 	return GroupPropertyInfo{ItemCount: itemCount[0]["count"], ItemColumnNames: columnNames[1:]}, nil
 }
 
-//  update groupNames, the operation is atomic
+// UpdateGroupNames update groupNames, the operation is atomic
 func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupNameInfo) (Rows, error) {
 	c := 0
 	sqlStrings := []string{}
@@ -185,7 +181,7 @@ func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupNameInfo) (Rows, erro
 	return Rows{c}, nil
 }
 
-// update column names of group, the operation is atomic
+// UpdateGroupColumnNames update column names of group, the operation is atomic
 func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnNamesInfo) (Cols, error) {
 	oldColumnNames, newColumnNames, groupName := info.OldColumnNames, info.NewColumnNames, info.GroupName
 	if len(oldColumnNames) != len(newColumnNames) {
@@ -210,7 +206,7 @@ func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnNamesInfo) (Cols, 
 	return Cols{len(newColumnNames)}, nil
 }
 
-// delete columns from group, the operation is atomic
+// DeleteGroupColumns delete columns from group, the operation is atomic
 func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, error) {
 	groupName, deletedColumnNames := info.GroupName, info.ColumnNames
 	if contains(deletedColumnNames...) {
@@ -235,14 +231,6 @@ func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, erro
 	for _, name := range remainedColumnNames {
 		newColumnNames = append(newColumnNames, name.(string))
 	}
-	// BEGIN TRANSACTION;
-	//CREATE TEMPORARY TABLE t1_backup(a,b);
-	//INSERT INTO t1_backup SELECT a,b FROM t1;
-	//DROP TABLE t1;
-	//CREATE TABLE t1(a,b);
-	//INSERT INTO t1 SELECT a,b FROM t1_backup;
-	//DROP TABLE t1_backup;
-	//COMMIT;
 	sb := strings.Builder{}
 	sb.Write([]byte("CREATE TEMPORARY TABLE t1_backup("))
 	if len(newColumnNames) == 0 {
@@ -284,7 +272,7 @@ func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, erro
 	return Cols{len(deletedColumnNames)}, nil
 }
 
-// add columns to group, all columns type are text
+// AddGroupColumns add columns to group, all columns type are text
 func (gdb *Gdb) AddGroupColumns(info AddedGroupColumnsInfo) (Cols, error) {
 	groupName, addedColumnNames, defaultValues := info.GroupName, info.ColumnNames, info.DefaultValues
 	if len(addedColumnNames) != len(defaultValues) {
