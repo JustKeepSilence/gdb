@@ -11,6 +11,7 @@ package db
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	pb "github.com/JustKeepSilence/gdb/model"
 	"golang.org/x/sync/errgroup"
@@ -20,6 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"io"
+	"io/ioutil"
 	"reflect"
 	"strings"
 	"time"
@@ -35,7 +37,7 @@ type server struct {
 	configs Config
 }
 
-// group handler
+// AddGroups group handler
 func (s *server) AddGroups(_ context.Context, r *pb.AddedGroupInfos) (*pb.Rows, error) {
 	infos := []AddedGroupInfo{}
 	for _, groupInfo := range r.GetGroupInfos() {
@@ -124,12 +126,10 @@ func (s *server) CleanGroupItems(_ context.Context, r *pb.GroupNamesInfo) (*pb.R
 
 func (s *server) AddItems(_ context.Context, r *pb.AddedItemsInfo) (*pb.Rows, error) {
 	values := []map[string]string{}
-	for _, value := range r.GetValues() {
-		values = append(values, value.GetItems())
-	}
+	_ = Json.Unmarshal([]byte(r.GetItemValues()), &values)
 	g := AddedItemsInfo{
-		GroupName: r.GetGroupName(),
-		GdbItems:  GdbItems{ItemValues: values},
+		GroupName:  r.GetGroupName(),
+		ItemValues: values,
 	}
 	if result, err := s.gdb.AddItems(g); err != nil {
 		return nil, err
@@ -152,10 +152,12 @@ func (s *server) DeleteItems(_ context.Context, r *pb.DeletedItemsInfo) (*pb.Row
 
 func (s *server) GetItems(_ context.Context, r *pb.ItemsInfo) (*pb.GdbItems, error) {
 	g := ItemsInfo{
-		ItemsInfoWithoutRow: ItemsInfoWithoutRow{GroupName: r.GetInfos().GroupName, Condition: r.GetInfos().Condition, Clause: r.GetInfos().Clause},
-		ColumnNames:         r.GetColumnNames(),
-		StartRow:            int(r.GetStartRow()),
-		RowCount:            int(r.GetRowCount()),
+		GroupName:   r.GetGroupName(),
+		Condition:   r.GetCondition(),
+		Clause:      r.GetClause(),
+		ColumnNames: r.GetColumnNames(),
+		StartRow:    int(r.GetStartRow()),
+		RowCount:    int(r.GetRowCount()),
 	}
 	if result, err := s.gdb.GetItems(g); err != nil {
 		return nil, err
@@ -170,10 +172,12 @@ func (s *server) GetItems(_ context.Context, r *pb.ItemsInfo) (*pb.GdbItems, err
 
 func (s *server) GetItemsWithCount(_ context.Context, r *pb.ItemsInfo) (*pb.GdbItemsWithCount, error) {
 	g := ItemsInfo{
-		ItemsInfoWithoutRow: ItemsInfoWithoutRow{GroupName: r.GetInfos().GroupName, Condition: r.GetInfos().Condition, Clause: r.GetInfos().Clause},
-		ColumnNames:         r.GetColumnNames(),
-		StartRow:            int(r.GetStartRow()),
-		RowCount:            int(r.GetRowCount()),
+		GroupName:   r.GetGroupName(),
+		Condition:   r.GetCondition(),
+		Clause:      r.GetClause(),
+		ColumnNames: r.GetColumnNames(),
+		StartRow:    int(r.GetStartRow()),
+		RowCount:    int(r.GetRowCount()),
 	}
 	if result, err := s.gdb.GetItemsWithCount(g); err != nil {
 		return nil, err
@@ -186,8 +190,8 @@ func (s *server) GetItemsWithCount(_ context.Context, r *pb.ItemsInfo) (*pb.GdbI
 	}
 }
 
-func (s *server) UpdateItems(_ context.Context, r *pb.ItemsInfoWithoutRow) (*pb.Rows, error) {
-	g := ItemsInfoWithoutRow{
+func (s *server) UpdateItems(_ context.Context, r *pb.ItemsInfo) (*pb.Rows, error) {
+	g := ItemsInfo{
 		GroupName: r.GetGroupName(),
 		Condition: r.GetCondition(),
 		Clause:    r.GetClause(),
@@ -201,9 +205,9 @@ func (s *server) UpdateItems(_ context.Context, r *pb.ItemsInfoWithoutRow) (*pb.
 
 func (s *server) CheckItems(_ context.Context, r *pb.CheckItemsInfo) (*emptypb.Empty, error) {
 	if err := s.gdb.CheckItems(r.GetGroupName(), r.GetItemNames()...); err != nil {
-		return nil, err
+		return &emptypb.Empty{}, err
 	} else {
-		return nil, nil
+		return &emptypb.Empty{}, nil
 	}
 }
 
@@ -227,7 +231,7 @@ func (s *server) BatchWrite(_ context.Context, r *pb.BatchWriteString) (*pb.Rows
 	}
 }
 
-// write data with client stream
+// BatchWriteWithStream write data with client stream
 func (s *server) BatchWriteWithStream(stream pb.Data_BatchWriteWithStreamServer) error {
 	bs := []BatchWriteString{}
 	for {
@@ -278,9 +282,9 @@ func (s *server) BatchWriteHistoricalData(_ context.Context, r *pb.BatchWriteHis
 	}
 	b := BatchWriteHistoricalString{values}
 	if err := s.gdb.BatchWriteHistoricalData(b); err != nil {
-		return nil, err
+		return &emptypb.Empty{}, err
 	} else {
-		return nil, nil
+		return &emptypb.Empty{}, nil
 	}
 }
 
@@ -331,7 +335,7 @@ func (s *server) GetRealTimeData(_ context.Context, r *pb.QueryRealTimeDataStrin
 }
 
 func (s *server) GetHistoricalData(_ context.Context, r *pb.QueryHistoricalDataString) (*pb.GdbHistoricalData, error) {
-	if result, err := s.gdb.GetHistoricalData(r.GetItemNames(), r.GetStartTimes(), r.GetEndTimes(), r.GetIntervals()); err != nil {
+	if result, err := s.gdb.GetHistoricalData(r.GetItemNames(), convertInt32ToInt(r.GetStartTimes()...), convertInt32ToInt(r.GetEndTimes()...), convertInt32ToInt(r.GetIntervals()...)); err != nil {
 		return nil, err
 	} else {
 		v, _ := Json.Marshal(result.HistoricalData)
@@ -340,9 +344,9 @@ func (s *server) GetHistoricalData(_ context.Context, r *pb.QueryHistoricalDataS
 }
 
 func (s *server) GetHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistoricalDataWithTimeStampString) (*pb.GdbHistoricalData, error) {
-	t := [][]int32{}
+	t := [][]int{}
 	for _, s := range r.GetTimeStamps() {
-		t = append(t, s.GetTimeStamp())
+		t = append(t, convertInt32ToInt(s.GetTimeStamp()...))
 	}
 	if result, err := s.gdb.GetHistoricalDataWithStamp(r.GetItemNames(), t...); err != nil {
 		return nil, err
@@ -361,10 +365,40 @@ func (s *server) GetDbInfo(_ context.Context, _ *emptypb.Empty) (*pb.GdbInfoData
 	}
 }
 
+func (s *server) GetDbInfoHistory(_ context.Context, r *pb.QuerySpeedHistoryDataString) (*pb.GdbHistoricalData, error) {
+	if r, err := s.gdb.getDbInfoHistory(r.GetItemName(), convertInt32ToInt(r.GetStartTimes()...), convertInt32ToInt(r.GetEndTimes()...), int(r.GetInterval())); err != nil {
+		return &pb.GdbHistoricalData{}, nil
+	} else {
+		result, _ := Json.Marshal(r)
+		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", result)}, nil
+	}
+}
+
 // page handler
 
-func (s *server) UserLogin(_ context.Context, _ *pb.AuthInfo) (*pb.UserToken, error) {
-	return nil, nil
+func (s *server) UserLogin(c context.Context, r *pb.AuthInfo) (*pb.UserToken, error) {
+	g := authInfo{
+		UserName: r.GetUserName(),
+		PassWord: r.GetPassWord(),
+	}
+	md, _ := metadata.FromIncomingContext(c)
+	if token, err := s.gdb.userLogin(g, md.Get("user-agent")[0]); err != nil {
+		return &pb.UserToken{}, nil
+	} else {
+		return &pb.UserToken{Token: token.Token}, nil
+	}
+}
+
+func (s *server) UserLogOut(c context.Context, _ *pb.UserName) (*emptypb.Empty, error) {
+	md, _ := metadata.FromIncomingContext(c)
+	au := md.Get("authorization")[0]
+	userAgent := md.Get("user-agent")[0]
+	userName, token, _ := parseBasicAuth(au)
+	if _, err := s.gdb.userLogout(userName, token, userAgent); err != nil {
+		return &emptypb.Empty{}, err
+	} else {
+		return &emptypb.Empty{}, nil
+	}
 }
 
 func (s *server) GetUserInfo(_ context.Context, r *pb.UserName) (*pb.UserInfo, error) {
@@ -372,9 +406,54 @@ func (s *server) GetUserInfo(_ context.Context, r *pb.UserName) (*pb.UserInfo, e
 		return nil, err
 	} else {
 		return &pb.UserInfo{
-			UserName: result.UserName.Name,
+			UserName: &pb.UserName{Name: result.Name},
 			Role:     result.Role,
 		}, nil
+	}
+}
+
+func (s *server) GetUsers(_ context.Context, _ *emptypb.Empty) (*pb.UserInfos, error) {
+	if result, err := query(s.gdb.ItemDbPath, "select * from user_cfg"); err != nil {
+		return &pb.UserInfos{}, err
+	} else {
+		r, _ := Json.Marshal(result)
+		return &pb.UserInfos{UserInfos: fmt.Sprintf("%s", r)}, nil
+	}
+}
+
+func (s *server) AddUsers(_ context.Context, r *pb.AddUserInfo) (*pb.Rows, error) {
+	g := addedUserInfo{
+		Name:     r.GetName(),
+		Role:     r.GetRole(),
+		PassWord: r.GetPassWord(),
+	}
+	if result, err := s.gdb.addUsers(g); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
+	}
+}
+
+func (s *server) DeleteUsers(_ context.Context, r *pb.UserName) (*pb.Rows, error) {
+	g := UserName{Name: r.GetName()}
+	if result, err := s.gdb.deleteUsers(g); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
+	}
+}
+
+func (s *server) UpdateUsers(_ context.Context, r *pb.UpdatedUserInfo) (*pb.Rows, error) {
+	g := updatedUserInfo{
+		Id:          int(r.GetId()),
+		OldUserName: r.GetOldUserName(),
+		NewUserName: r.GetNewUserName(),
+		Role:        r.GetRole(),
+	}
+	if result, err := s.gdb.updateUsers(g); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
 }
 
@@ -387,6 +466,70 @@ func (s *server) GetLogs(_ context.Context, r *pb.QueryLogsInfo) (*pb.LogsInfo, 
 			logs = append(logs, &pb.LogInfo{Info: item})
 		}
 		return &pb.LogsInfo{Infos: logs}, nil
+	}
+}
+
+func (s *server) UploadFile(_ context.Context, r *pb.UploadedFileInfo) (*emptypb.Empty, error) {
+	fileName, fileContents := r.GetFileName(), r.GetFile()
+	contents := []uint8{}
+	for _, c := range fileContents {
+		contents = append(contents, uint8(c))
+	}
+	if err := ioutil.WriteFile("./uploadFiles/"+fileName, contents, 0644); err != nil {
+		return &emptypb.Empty{}, err
+	} else {
+		return &emptypb.Empty{}, nil
+	}
+}
+
+func (s *server) UploadFileWithStream(stream pb.Page_UploadFileWithStreamServer) error {
+	contents := []uint8{}
+	var fileName string
+	for {
+		b, err := stream.Recv()
+		if err == io.EOF {
+			if err1 := ioutil.WriteFile("./uploadFiles/"+fileName, contents, 0644); err1 != nil {
+				return err1
+			} else {
+				return stream.SendAndClose(&emptypb.Empty{})
+			}
+		} else if err != nil {
+			return err
+		} else {
+			fileName = b.GetFileName()
+			for _, c := range b.GetFile() {
+				contents = append(contents, uint8(c))
+			}
+		}
+	}
+}
+
+func (s *server) AddItemsByExcel(_ context.Context, r *pb.FileInfo) (*pb.Rows, error) {
+	if result, err := s.gdb.AddItemsByExcel(r.GetGroupName(), "./uploadFiles/"+r.GetFileName()); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
+	}
+}
+
+func (s *server) ImportHistoryByExcel(_ context.Context, r *pb.HistoryFileInfo) (*emptypb.Empty, error) {
+	if err := s.gdb.ImportHistoryByExcel("./uploadFiles/"+r.GetFileName(), r.GetItemNames(), r.GetSheetNames()...); err != nil {
+		return &emptypb.Empty{}, err
+	} else {
+		return &emptypb.Empty{}, nil
+	}
+}
+
+func (s *server) DownloadFile(_ context.Context, r *pb.FileInfo) (*pb.FileContents, error) {
+	fileName := r.GetFileName()
+	contents := []int32{}
+	if fileContent, err := dFiles.ReadFile("templateFiles/" + fileName); err != nil {
+		return &pb.FileContents{}, err
+	} else {
+		for _, c := range fileContent {
+			contents = append(contents, int32(c))
+		}
+		return &pb.FileContents{Contents: contents}, nil
 	}
 }
 
@@ -511,12 +654,6 @@ func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.
 		if md, ok := metadata.FromIncomingContext(c); !ok {
 			return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 		} else {
-			var userName string
-			if d, ok := md["userName"]; ok {
-				userName = d[0]
-			} else {
-				return nil, status.Errorf(codes.Unauthenticated, "invalid token")
-			}
 			userAgent := md.Get("user-agent")[0] // user agent
 			if methods[len(methods)-1] == "UserLogin" {
 				r := req.(*pb.AuthInfo)
@@ -529,20 +666,24 @@ func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.
 					return &pb.UserToken{Token: result.Token}, nil
 				}
 			} else {
-				var token string
-				if d, ok := md["token"]; ok {
-					token = d[0]
+				var au string
+				if d, ok := md["authorization"]; ok {
+					au = d[0]
 				} else {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				}
-				if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
+				if userName, token, ok := parseBasicAuth(au); !ok {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
-					if token != fmt.Sprintf("%s", v) {
+					if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
 						return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 					} else {
-						// log handler
-						return handler(c, req)
+						if token != fmt.Sprintf("%s", v) {
+							return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+						} else {
+							// log handler
+							return handler(c, req)
+						}
 					}
 				}
 			}
@@ -560,26 +701,25 @@ func (s *server) authWithServerStreamInterceptor(srv interface{}, ss grpc.Server
 			if md, ok := metadata.FromIncomingContext(ss.Context()); !ok {
 				return status.Errorf(codes.Unauthenticated, "invalid token")
 			} else {
-				var userName, token string
-				remoteAddress := md.Get(":authority")[0] // address
-				userAgent := md.Get("user-agent")[0]     // user agent
-				if d, ok := md["userName"]; ok {
-					userName = d[0]
+				userAgent := md.Get("user-agent")[0] // user agent
+				var au string
+				if d, ok := md["authorization"]; ok {
+					au = d[0]
 				} else {
 					return status.Errorf(codes.Unauthenticated, "invalid token")
 				}
-				if d, ok := md["token"]; ok {
-					token = d[0]
-				} else {
-					return status.Errorf(codes.Unauthenticated, "invalid token")
-				}
-				if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+remoteAddress+"_"+userAgent), nil); err != nil || v == nil {
+				if userName, token, ok := parseBasicAuth(au); !ok {
 					return status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
-					if token != fmt.Sprintf("%s", v) {
+					if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
 						return status.Errorf(codes.Unauthenticated, "invalid token")
 					} else {
-						return handler(srv, ss)
+						if token != fmt.Sprintf("%s", v) {
+							return status.Errorf(codes.Unauthenticated, "invalid token")
+						} else {
+							// log handler
+							return handler(srv, ss)
+						}
 					}
 				}
 			}
@@ -642,4 +782,30 @@ func (s *server) panicWithServerStreamInterceptor(srv interface{}, ss grpc.Serve
 		}
 	}()
 	return handler(srv, ss)
+}
+
+func convertInt32ToInt(items ...int32) []int {
+	var r []int
+	for _, item := range items {
+		r = append(r, int(item))
+	}
+	return r
+}
+
+func parseBasicAuth(auth string) (username, password string, ok bool) {
+	const prefix = "Basic "
+	// Case insensitive prefix match. See Issue 22736.
+	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
+		return
+	}
+	c, err := base64.StdEncoding.DecodeString(auth[len(prefix):])
+	if err != nil {
+		return
+	}
+	cs := string(c)
+	s := strings.IndexByte(cs, ':')
+	if s < 0 {
+		return
+	}
+	return cs[:s], cs[s+1:], true
 }
