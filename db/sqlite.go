@@ -63,7 +63,9 @@ func query(sqlitePath, queryString string) ([]map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		_ = db.Close()
+	}(db)
 	rows, err := db.Query(queryString)
 	if err != nil {
 		return nil, sqliteExecutionError{"sqliteExecutionError: " + err.Error()}
@@ -134,20 +136,38 @@ func insertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 		})
 	}
 	if err := eg.Wait(); err != nil {
-		defer tx.Rollback()
-		defer db.Close()
-		defer stmt.Close()
+		defer func(tx *sql.Tx) {
+			_ = tx.Rollback()
+		}(tx)
+		defer func(db *sql.DB) {
+			_ = db.Close()
+		}(db)
+		defer func(stmt *sql.Stmt) {
+			_ = stmt.Close()
+		}(stmt)
 		return err
 	} else {
 		if err := tx.Commit(); err != nil {
-			defer tx.Rollback()
-			defer db.Close()
-			defer stmt.Close()
+			defer func(tx *sql.Tx) {
+				_ = tx.Rollback()
+			}(tx)
+			defer func(db *sql.DB) {
+				_ = db.Close()
+			}(db)
+			defer func(stmt *sql.Stmt) {
+				_ = stmt.Close()
+			}(stmt)
 			return sqliteTransactionError{"sqliteTransactionError: " + err.Error()}
 		} else {
-			defer tx.Rollback()
-			defer db.Close()
-			defer stmt.Close()
+			defer func(tx *sql.Tx) {
+				_ = tx.Rollback()
+			}(tx)
+			defer func(db *sql.DB) {
+				_ = db.Close()
+			}(db)
+			defer func(stmt *sql.Stmt) {
+				_ = stmt.Close()
+			}(stmt)
 			return nil
 		}
 	}
@@ -159,14 +179,16 @@ func updateItems(sqlitePath string, sqlStrings ...string) error {
 	if err != nil {
 		return sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		_ = db.Close()
+	}(db)
 	tx, err := db.Begin()
 	if err != nil {
 		return sqliteTransactionError{"sqliteTransactionError: " + err.Error()}
 	}
 	for _, sqlString := range sqlStrings {
 		if _, err := tx.Exec(sqlString, nil); err != nil {
-			tx.Rollback()
+			_ = tx.Rollback()
 			return sqliteExecutionError{"sqliteExecutionError: " + err.Error()}
 		}
 	}
@@ -182,7 +204,9 @@ func updateItem(sqlitePath, sqlString string) (int64, error) {
 	if err != nil {
 		return -1, sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
 	}
-	defer db.Close()
+	defer func(db *sql.DB) {
+		_ = db.Close()
+	}(db)
 	r, err := db.Exec(sqlString, nil)
 	if err != nil {
 		return -1, sqliteConnectionError{"sqliteConnectionError: " + err.Error()}

@@ -117,8 +117,8 @@ type AddedGroupColumnsInfo struct {
 // items
 
 type AddedItemsInfo struct {
-	GroupName string `json:"groupName" binding:"required"`
-	GdbItems  `json:"gdbItems" binding:"required"`
+	GroupName  string              `json:"groupName" binding:"required"`
+	ItemValues []map[string]string `json:"itemValues" binding:"required"`
 }
 
 type DeletedItemsInfo struct {
@@ -127,16 +127,12 @@ type DeletedItemsInfo struct {
 }
 
 type ItemsInfo struct {
-	ItemsInfoWithoutRow
-	ColumnNames string `json:"columnNames"`
+	GroupName   string `json:"groupName" binding:"required"`
+	Condition   string `json:"condition" binding:"required"`
+	Clause      string `json:"clause"`
+	ColumnNames string `json:"columnNames" binding:"required"`
 	StartRow    int    `json:"startRow"`
 	RowCount    int    `json:"rowCount"`
-}
-
-type ItemsInfoWithoutRow struct {
-	GroupName string `json:"groupName"`
-	Condition string `json:"condition"`
-	Clause    string `json:"clause"`
 }
 
 type GdbItems struct {
@@ -311,7 +307,7 @@ type calcId struct {
 }
 
 type fileInfo struct {
-	FileName  string `json:"fileName"`
+	FileName  string `json:"fileName" binding:"required"`
 	GroupName string `json:"groupName"`
 }
 
