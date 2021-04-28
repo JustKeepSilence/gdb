@@ -103,7 +103,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 	pageRequest := router.Group("/page") // page request handler
 	{
 		pageRequest.POST("/userLogin", g.handleUserLogin) // user login
-		pageRequest.GET("/userLogout/:userName", g.handleUserLogout)
+		pageRequest.POST("/userLogOut", g.handleUserLogout)
 		pageRequest.POST("/getUserInfo", g.getUerInfoHandler) // get user info
 		pageRequest.POST("/getUsers", g.getUsersHandler)
 		pageRequest.POST("/addUsers", g.addUsersHandler)
@@ -113,9 +113,9 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		pageRequest.POST("/httpsUploadFile", g.handleHttpsUploadFile)        // https upload file
 		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcelHandler) // add item by excel
 		pageRequest.POST("/importHistoryByExcel", g.importHistoryByExcelHandler)
-		pageRequest.GET("/getJsCode/:fileName", g.getJsCodeHandler) // get js code
-		pageRequest.GET("/getLogs", g.getLogsHandler)               // get logs
-		pageRequest.GET("/downloadFile/:fileName", g.downloadFileHandler)
+		pageRequest.POST("/getJsCode", g.getJsCodeHandler) // get js code
+		pageRequest.POST("/getLogs", g.getLogsHandler)     // get logs
+		pageRequest.POST("/downloadFile", g.downloadFileHandler)
 	}
 	calcRequest := router.Group("/calculation")
 	{
@@ -189,42 +189,51 @@ func StartDbServer(configs Config) error {
 	}
 	se := &server{gdb: gdb, configs: configs}
 	var s *grpc.Server
-	if mode == "https" && ca {
+	if mode == "https" {
 		// https mode and use ca root
-		if certificate, err := tls.LoadX509KeyPair("./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key"); err != nil {
-			return err
-		} else {
-			if caFile, err := ioutil.ReadFile("./ssl/" + caCertificateName + ".crt"); err != nil {
+		var cred credentials.TransportCredentials
+		if ca {
+			if certificate, err := tls.LoadX509KeyPair("./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key"); err != nil {
 				return err
 			} else {
-				if selfSignedCa {
-					// only useful in linux and macOS
-					if sysPool, err := x509.SystemCertPool(); err != nil {
-						return err
-					} else {
-						if ok := sysPool.AppendCertsFromPEM(caFile); !ok {
-							return fmt.Errorf("failed to add ca to system root pool")
-						} // add root ca file to system root ca pool
+				if caFile, err := ioutil.ReadFile("./ssl/" + caCertificateName + ".crt"); err != nil {
+					return err
+				} else {
+					if selfSignedCa {
+						// only useful in linux and macOS
+						if sysPool, err := x509.SystemCertPool(); err != nil {
+							return err
+						} else {
+							if ok := sysPool.AppendCertsFromPEM(caFile); !ok {
+								return fmt.Errorf("failed to add ca to system root pool")
+							} // add root ca file to system root ca pool
+						}
 					}
+					certPool := x509.NewCertPool()
+					if ok := certPool.AppendCertsFromPEM(caFile); !ok {
+						return fmt.Errorf("failed to add ca to root pool")
+					}
+					cred = credentials.NewTLS(&tls.Config{
+						Certificates: []tls.Certificate{certificate},
+						ClientAuth:   tls.RequireAndVerifyClientCert,
+						ClientCAs:    certPool,
+					})
 				}
-				certPool := x509.NewCertPool()
-				if ok := certPool.AppendCertsFromPEM(caFile); !ok {
-					return fmt.Errorf("failed to add ca to root pool")
-				}
-				cred := credentials.NewTLS(&tls.Config{
-					Certificates: []tls.Certificate{certificate},
-					ClientAuth:   tls.RequireAndVerifyClientCert,
-					ClientCAs:    certPool,
-				})
-				s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
-					grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor),
-					grpc.Creds(cred))
+			}
+		} else {
+			var err1 error
+			cred, err1 = credentials.NewServerTLSFromFile("./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key")
+			if err1 != nil {
+				return err1
 			}
 		}
-	} else {
-		// https gRPC mode without ca root
 		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
-			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor))
+			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor),
+			grpc.Creds(cred), grpc.MaxRecvMsgSize(1024*1024*100)) // 100 MB
+	} else {
+		// http gRPC
+		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
+			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor), grpc.MaxRecvMsgSize(1024*1024*100))
 	}
 	// register gRPC
 	pb.RegisterGroupServer(s, se)

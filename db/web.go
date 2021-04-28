@@ -7,6 +7,7 @@ github: https://github.com/JustKeepSilence
 package db
 
 import (
+	"embed"
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/eventloop"
@@ -21,6 +22,9 @@ import (
 )
 
 var Json = jsonIter.ConfigCompatibleWithStandardLibrary // see: https://github.com/json-iterator/go
+
+//go:embed templateFiles
+var dFiles embed.FS
 
 // group handler, add json binding to all request data, for details see:
 // https://github.com/gin-gonic/gin#model-binding-and-validation
@@ -245,7 +249,7 @@ func (gdb *Gdb) handleGetItemsWithCount(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateItemsHandler(c *gin.Context) {
-	g := ItemsInfoWithoutRow{}
+	g := ItemsInfo{}
 	request := c.Request
 	defer request.Body.Close()
 	if err := c.ShouldBind(&g); err != nil {
@@ -452,7 +456,7 @@ func (gdb *Gdb) getDbInfoHistoryHandler(c *gin.Context) {
 		if err != nil {
 			gdb.string(c, 500, "%s", []byte(err.Error()))
 		} else {
-			r, _ := Json.Marshal(ResponseData{200, "", responseData})
+			r, _ := Json.Marshal(ResponseData{200, "", gin.H{"historicalData": responseData}})
 			gdb.string(c, 200, "%s", r)
 		}
 	}
@@ -494,8 +498,7 @@ func (gdb *Gdb) handleUserLogin(c *gin.Context) {
 }
 
 func (gdb *Gdb) handleUserLogout(c *gin.Context) {
-	userName := c.Param("userName")
-	_, token, _ := c.Request.BasicAuth()
+	userName, token, _ := c.Request.BasicAuth()
 	if responseData, err := gdb.userLogout(userName, token, c.Request.Header.Get("User-Agent")); err != nil {
 		gdb.string(c, 500, "%s", []byte(err.Error()))
 	} else {
@@ -527,7 +530,7 @@ func (gdb *Gdb) getUsersHandler(c *gin.Context) {
 	if responseData, err := query(gdb.ItemDbPath, "select * from user_cfg"); err != nil {
 		gdb.string(c, 500, "%s", []byte(err.Error()))
 	} else {
-		r, _ := Json.Marshal(ResponseData{200, "", responseData})
+		r, _ := Json.Marshal(ResponseData{200, "", gin.H{"userInfos": responseData}})
 		gdb.string(c, 200, "%s", r)
 	}
 }
@@ -650,15 +653,20 @@ func (gdb *Gdb) importHistoryByExcelHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) getJsCodeHandler(c *gin.Context) {
-	fileName := c.Param("fileName")
 	request := c.Request
 	defer request.Body.Close()
-	responseData, err := getJsCode(fileName) // add groups
-	if err != nil {
-		gdb.string(c, 500, "%s", []byte(err.Error()))
+	g := fileInfo{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()))
 	} else {
-		r, _ := Json.Marshal(ResponseData{200, "", responseData})
-		gdb.string(c, 200, "%s", r)
+		fileName := g.FileName
+		responseData, err := getJsCode(fileName) // add groups
+		if err != nil {
+			gdb.string(c, 500, "%s", []byte(err.Error()))
+		} else {
+			r, _ := Json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r)
+		}
 	}
 }
 
@@ -681,16 +689,23 @@ func (gdb *Gdb) getLogsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) downloadFileHandler(c *gin.Context) {
-	fileName := c.Param("fileName")
-	contents := []int{}
-	if fileContent, err := ioutil.ReadFile("./uploadFiles/" + fileName); err != nil {
-		gdb.string(c, 500, "%s", []byte(err.Error()))
+	request := c.Request
+	defer request.Body.Close()
+	g := fileInfo{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()))
 	} else {
-		for _, c := range fileContent {
-			contents = append(contents, int(c))
+		fileName := g.FileName
+		contents := []int32{}
+		if fileContent, err := dFiles.ReadFile("templateFiles/" + fileName); err != nil {
+			gdb.string(c, 500, "%s", []byte(err.Error()))
+		} else {
+			for _, c := range fileContent {
+				contents = append(contents, int32(c))
+			}
+			r, _ := Json.Marshal(ResponseData{200, "", gin.H{"contents": contents}})
+			c.String(200, "%s", r)
 		}
-		r, _ := Json.Marshal(ResponseData{200, "", contents})
-		c.String(200, "%s", r)
 	}
 }
 
