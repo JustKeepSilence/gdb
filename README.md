@@ -290,7 +290,7 @@ axios.post("/group/cleanGroupItems", JSON.stringify({"groupNames": ["1DCS"]}))
 ### Item
 ```jsx
 // addItems
-axios.post("/item/addItems", JSON.stringify({"groupName": "1DCS", "gdbItems": {"itemValues": [{"itemName": "YFJDY", "description": "", "unit": ""}]}))
+axios.post("/item/addItems", JSON.stringify({"groupName": "1DCS", "itemValues": [{"itemName": "YFJDY", "description": "", "unit": ""}]}))
 {"code":200,"message":"","data":{"effectedRows":1}}
 // deleteItems
 axios.post("/item/deleteItems", JSON.stringify({"groupName": "1DCS", "condition": "itemName='YFJDY'"}))
@@ -321,14 +321,14 @@ axios.post("/data/batchWriteHistoricalData", JSON.stringify({"historicalItemValu
 axios.post("/data/getRealTimeData", JSON.stringify({"groupName": "1DCS", "itemNames": ["testItem1", "testItem2"]))
 {"code":200,"message":"","data":{"realTimeData":{"testItem1": "10", "testItem2": "20"}}}
 // getHistoricalData
-axios.post("/data/getHistoricalData", JSON.stringify({"groupName":"1DCS","itemNames":["NMJL.UNIT2.20ACS:MAG50AN001SV_MA"],"startTimes":[1618843574],"endTimes":[1618929974],"intervals":[60]}))
+axios.post("/data/getHistoricalData", JSON.stringify({"itemNames":["NMJL.UNIT2.20ACS:MAG50AN001SV_MA"],"startTimes":[1618843574],"endTimes":[1618929974],"intervals":[60]}))
 {"code":200,"message":"","data":{"historicalData":{"NMJL.UNIT2.20ACS:MAG50AN001SV_MA":[[1618921777,1618922077,1618922257,1618922437,1618923817,1618924657,1618924837,1618925137,1618925317,1618925497,1618925677,1618926577,1618926937,1618927177,1618927357,1618927537,1618927897,1618928197,1618928377,1618928557,1618928737,1618928917,1618929397,1618929577,1618929757,1618929937],["-218","-250","-72","387","-319","-438","-156","139","-81","-124","-251","218","224","-215","-94","-148","440","38","-78","-418","-59","-275","-279","83","-96","478"]]}}}
 // getDbInfo
 axios.post("/data/getDbInfo")
 {"code":200,"message":"","data":{"info":{"currentTimeStamp":null,"ram":"30.44","speed":"0ms/0","writtenItems":"0"}}}
 // getDbSpeedHistory
-axios.post("/data/getDbSpeedHistory", JSON.stringify({"starTimes": [1617861409547], "endTimes": [1617862009547], "intervale": 5}))
-{"code":200,"message":"","data":{"speed":[null,null]}}
+axios.post("/data/getDbInfoHistory", JSON.stringify({"starTimes": [1617861409547], "endTimes": [1617862009547], "intervale": 5}))
+{"code":200,"message":"","data":{"historicalData":{"speed":[null,null]}}}
 
 ```
 
