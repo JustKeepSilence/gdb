@@ -138,7 +138,7 @@ func (gdb *Gdb) GetItemsWithCount(itemInfo ItemsInfo) (GdbItemsWithCount, error)
 	return GdbItemsWithCount{count, itemValues}, nil
 }
 
-func (gdb *Gdb) UpdateItems(itemInfo ItemsInfoWithoutRow) (Rows, error) {
+func (gdb *Gdb) UpdateItems(itemInfo ItemsInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
 	clause := itemInfo.Clause
