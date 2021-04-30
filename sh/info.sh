@@ -1,0 +1,1 @@
+$ windres -i gdb.rc -o gdb.syso
