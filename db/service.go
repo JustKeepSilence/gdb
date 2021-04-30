@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -32,17 +33,36 @@ import (
 
 func portInUse(portNumber int64) (int, error) {
 	res := -1
-	cmdStr := fmt.Sprintf(`netstat -ano -p tcp | findstr %d`, portNumber)
-	outBytes, _ := exec.Command("cmd", "/C", cmdStr, " ").Output()
-	resStr := fmt.Sprintf("%s", outBytes)
-	r := regexp.MustCompile(`\s\d+\s`).FindAllString(resStr, -1)
-	//  TCP    192.168.0.199:8082     0.0.0.0:0              LISTENING       9404
-	if len(r) > 0 {
-		pid, err := strconv.Atoi(strings.TrimSpace(r[0]))
-		if err != nil {
-			res = -1
+	if runtime.GOOS == "windows" {
+		cmdStr := fmt.Sprintf(`netstat -ano -p tcp | findstr %d`, portNumber)
+		outBytes, _ := exec.Command("cmd", "/C", cmdStr, " ").Output()
+		resStr := fmt.Sprintf("%s", outBytes)
+		r := regexp.MustCompile(`\s\d+\s`).FindAllString(resStr, -1)
+		//  TCP    192.168.0.199:8082     0.0.0.0:0              LISTENING       9404
+		if len(r) > 0 {
+			pid, err := strconv.Atoi(strings.TrimSpace(r[0]))
+			if err != nil {
+				res = -1
+			} else {
+				res = pid
+			}
+		}
+	} else {
+		// linux
+		cmdStr := fmt.Sprintf("netstat -anp |grep %d", portNumber)
+		outBytes, _ := exec.Command("/bin/sh", "-c", cmdStr).Output()
+		resStr := fmt.Sprintf("%s", outBytes)
+		if resStr == "" {
+			return -1, nil
 		} else {
-			res = pid
+			r := regexp.MustCompile(`\s\d+/`).FindAllString(resStr, -1)
+			if len(r) > 0 {
+				if pid, err := strconv.Atoi(strings.TrimSpace(strings.Replace(r[0], "/", "", -1))); err != nil {
+					return -1, err
+				} else {
+					return pid, nil
+				}
+			}
 		}
 	}
 	return res, nil
@@ -127,34 +147,6 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		calcRequest.POST("/deleteCalcItem", g.deleteCalculationItemHandler)
 	}
 	// web page handler
-	router.GET("/index", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
-	})
-	router.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
-	})
-	router.GET("/groups", func(c *gin.Context) {
-		c.Request.URL.Path = "/index"
-		router.HandleContext(c)
-	})
-	router.GET("/calc", func(c *gin.Context) {
-		c.Request.URL.Path = "/index"
-		router.HandleContext(c)
-	})
-	router.GET("/document", func(c *gin.Context) {
-		c.Request.URL.Path = "/index"
-		router.HandleContext(c)
-	})
-	router.GET("/userManagement", func(c *gin.Context) {
-		c.Request.URL.Path = "/index"
-		router.HandleContext(c)
-	})
-	router.GET("/log", func(c *gin.Context) {
-		c.Request.URL.Path = "/index"
-		router.HandleContext(c)
-	})
-	router.Static("/static", "./dist/static") // load static files
-	router.LoadHTMLGlob("./dist/*.html")      // render html template
 	return router
 }
 
@@ -163,9 +155,9 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 //it supports gRPC mode with CA certificate and without CA certificate enabled.
 //Self-visa certificates are only useful on linux and mac
 func StartDbServer(configs Config) error {
-	dbPath, itemDbPath, port, ip, mode, ca, caCertificateName, serverCertificateName, selfSignedCa :=
+	dbPath, itemDbPath, port, ip, mode, ca, caCertificateName, serverCertificateName, serverKeyName, selfSignedCa :=
 		configs.DbPath, configs.ItemDbPath, configs.Port, configs.IP, configs.Mode,
-		configs.Ca, configs.CaCertificateName, configs.ServerCertificateName, configs.SelfSignedCa
+		configs.Ca, configs.CaCertificateName, configs.ServerCertificateName, configs.ServerKeyName, configs.SelfSignedCa
 	if mode == "" {
 		mode = "http"
 	}
@@ -175,7 +167,11 @@ func StartDbServer(configs Config) error {
 	}
 	if checkResult != -1 {
 		// used
-		return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult)
+		if runtime.GOOS == "windows" {
+			return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using taskkill /f /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult)
+		} else {
+			return fmt.Errorf("%s: Failed to start web service: Port number %d is already occupied, process PID is %d, please consider using kill -9 /pid %d to terminate the process", time.Now().Format("2006-01-02 15:04:05"), port, checkResult, checkResult)
+		}
 	}
 	if len(ip) == 0 {
 		// not config ip
@@ -193,10 +189,10 @@ func StartDbServer(configs Config) error {
 		// https mode and use ca root
 		var cred credentials.TransportCredentials
 		if ca {
-			if certificate, err := tls.LoadX509KeyPair("./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key"); err != nil {
+			if certificate, err := tls.LoadX509KeyPair("./ssl/"+serverCertificateName, "./ssl/"+serverKeyName); err != nil {
 				return err
 			} else {
-				if caFile, err := ioutil.ReadFile("./ssl/" + caCertificateName + ".crt"); err != nil {
+				if caFile, err := ioutil.ReadFile("./ssl/" + caCertificateName); err != nil {
 					return err
 				} else {
 					if selfSignedCa {
@@ -222,7 +218,7 @@ func StartDbServer(configs Config) error {
 			}
 		} else {
 			var err1 error
-			cred, err1 = credentials.NewServerTLSFromFile("./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key")
+			cred, err1 = credentials.NewServerTLSFromFile("./ssl/"+serverCertificateName, "./ssl/"+serverKeyName)
 			if err1 != nil {
 				return err1
 			}
@@ -262,7 +258,7 @@ func StartDbServer(configs Config) error {
 	} else {
 		// https mode
 		g.Go(func() error {
-			if err := http.ListenAndServeTLS(address, "./ssl/"+serverCertificateName+".crt", "./ssl/"+serverCertificateName+".key", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if err := http.ListenAndServeTLS(address, "./ssl/"+serverCertificateName, "./ssl/"+serverKeyName, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
 					s.ServeHTTP(w, r)
 				} else {

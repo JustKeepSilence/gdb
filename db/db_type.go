@@ -13,6 +13,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"os"
+	"path/filepath"
+	"runtime"
 )
 
 type Gdb struct {
@@ -35,42 +37,44 @@ const (
 
 func (gdb *Gdb) initialDb() error {
 	var err error
-	gdb.rtDb, err = leveldb.OpenFile(gdb.DbPath+"\\realTimeData", &opt.Options{
+	var delimiter string
+	if runtime.GOOS == "windows" {
+		delimiter = "\\"
+	} else {
+		delimiter = "/"
+	}
+	gdb.rtDb, err = leveldb.OpenFile(gdb.DbPath+delimiter+"realTimeData", &opt.Options{
 		Filter:   filter.NewBloomFilter(10),
 		Comparer: compare.GdbComparer,
 	})
 	if err != nil {
-		return connectionDBError{"fail in opening " + gdb.DbPath + "\\realTimeData: " + err.Error()}
+		return connectionDBError{"fail in opening " + gdb.DbPath + delimiter + "realTimeData: " + err.Error()}
 	}
 	if gdb.rtDb == nil {
-		return connectionDBError{"fail in opening " + gdb.DbPath + "\\realTimeData: null db pointer"}
+		return connectionDBError{"fail in opening " + gdb.DbPath + delimiter + "realTimeData: null db pointer"}
 	}
-	gdb.hisDb, err = leveldb.OpenFile(gdb.DbPath+"\\historicalData", &opt.Options{
+	gdb.hisDb, err = leveldb.OpenFile(gdb.DbPath+delimiter+"historicalData", &opt.Options{
 		Filter:   filter.NewBloomFilter(10),
 		Comparer: compare.GdbComparer,
 	})
 	if err != nil {
-		return connectionDBError{"fail in opening " + gdb.DbPath + "\\historicalData: " + err.Error()}
+		return connectionDBError{"fail in opening " + gdb.DbPath + delimiter + "historicalData: " + err.Error()}
 	}
 	if gdb.hisDb == nil {
-		return connectionDBError{"fail in opening " + gdb.DbPath + "\\historicalData: null db pointer"}
+		return connectionDBError{"fail in opening " + gdb.DbPath + delimiter + "historicalData: null db pointer"}
 	}
-	gdb.infoDb, err = leveldb.OpenFile(gdb.DbPath+"\\InfoData", &opt.Options{
+	gdb.infoDb, err = leveldb.OpenFile(gdb.DbPath+delimiter+"InfoData", &opt.Options{
 		Filter:   filter.NewBloomFilter(10),
 		Comparer: compare.GdbComparer,
 	})
 	if err != nil {
-		return connectionDBError{"fail in opening " + gdb.DbPath + "\\InfoData: " + err.Error()}
+		return connectionDBError{"fail in opening " + gdb.DbPath + delimiter + "InfoData: " + err.Error()}
 	}
 	if gdb.infoDb == nil {
-		return connectionDBError{"fail in opening " + gdb.DbPath + "\\InfoData: null db pointer"}
+		return connectionDBError{"fail in opening " + gdb.DbPath + delimiter + "InfoData: null db pointer"}
 	}
-	if r, err := gdb.infoDb.Get([]byte(initialUserName), nil); err != nil {
-		return err
-	} else {
-		if r == nil {
-			_ = gdb.infoDb.Put([]byte(initialUserName), []byte(initialUserInfo), nil) // initial user info
-		}
+	if _, err := gdb.infoDb.Get([]byte(initialUserName), nil); err != nil {
+		_ = gdb.infoDb.Put([]byte(initialUserName), []byte(initialUserInfo), nil) // initial user info
 	}
 	gdb.rtDbFilter = cmap.New()
 	// add all items in SQLite to bloom filter
@@ -126,9 +130,18 @@ func NewGdb(dbPath, itemDbPath string) (*Gdb, error) {
 			return nil, err
 		}
 	}
-	g := &Gdb{
-		DbPath:     dbPath,
-		ItemDbPath: itemDbPath + "/ldb.db",
+	var g *Gdb
+	path, _ := filepath.Abs(dbPath) // get abs path of given path
+	if runtime.GOOS == "windows" {
+		g = &Gdb{
+			DbPath:     path,
+			ItemDbPath: itemDbPath + "\\ldb.db",
+		}
+	} else {
+		g = &Gdb{
+			DbPath:     path,
+			ItemDbPath: itemDbPath + "/ldb.db",
+		}
 	}
 	if err := g.initialSQLite(); err != nil {
 		return nil, err

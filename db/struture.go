@@ -46,6 +46,7 @@ type HttpsConfigs struct {
 	SelfSignedCa          bool   `json:"selfSignedCa"`
 	CaCertificateName     string `json:"caCertificateName"`
 	ServerCertificateName string `json:"serverCertificateName"`
+	ServerKeyName         string `json:"serverKeyName"`
 }
 
 // ResponseData common
