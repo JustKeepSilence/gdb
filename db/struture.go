@@ -36,9 +36,9 @@ type GdbConfigs struct {
 }
 
 type LogConfigs struct {
-	LogWriting  bool     `json:"logWriting"`
-	Level       logLevel `json:"level"`
-	ExpiredTime int      `json:"expiredTime"`
+	LogWriting  bool   `json:"logWriting"`
+	Level       string `json:"level"`
+	ExpiredTime int    `json:"expiredTime"`
 }
 
 type HttpsConfigs struct {
@@ -259,20 +259,27 @@ type addedUserInfo struct {
 	PassWord string `json:"passWord" binding:"required"`
 }
 
-type gdbUserInfo struct {
-	PassWord string   `json:"passWord"`
-	Roles    []string `json:"roles"`
-}
-
 type queryLogsInfo struct {
-	LogType   string `json:"logType"`
-	Condition string `json:"condition"` // used to search according to message
-	StartTime string `json:"startTime"`
-	EndTime   string `json:"endTime"`
+	Level     string `json:"level" binding:"required"`
+	StartTime string `json:"startTime" binding:"required"`
+	EndTime   string `json:"endTime" binding:"required"`
+	StartRow  int    `json:"startRow"`
+	RowCount  int    `json:"rowCount" binding:"required"`
+	Name      string `json:"name" binding:"required"`
 }
 
 type LogsInfo struct {
 	Infos []map[string]string `json:"infos"`
+	Count int                 `json:"count"`
+}
+
+type LogMessage struct {
+	RequestUrl    string `json:"requestUrl"`
+	RequestMethod string `json:"requestMethod"`
+	UserAgent     string `json:"userAgent"`
+	RequestBody   string `json:"requestBody"`
+	RemoteAddress string `json:"remoteAddress"`
+	Message       string `json:"message"`
 }
 
 // calc
@@ -318,12 +325,12 @@ type historyFileInfo struct {
 	SheetNames []string `json:"sheetNames"`
 }
 
-type logLevel int
-
-const (
-	Info logLevel = iota
-	Error
-)
+type deletedLogInfo struct {
+	Id                string `json:"id"`
+	StartTime         string `json:"startTime"`
+	EndTime           string `json:"endTime"`
+	UserNameCondition string `json:"userNameCondition"`
+}
 
 // errors, some errors imported , some not
 

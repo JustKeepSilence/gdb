@@ -376,25 +376,20 @@ func (s *server) GetDbInfoHistory(_ context.Context, r *pb.QuerySpeedHistoryData
 
 // page handler
 
-func (s *server) UserLogin(c context.Context, r *pb.AuthInfo) (*pb.UserToken, error) {
+func (s *server) UserLogin(_ context.Context, r *pb.AuthInfo) (*pb.UserToken, error) {
 	g := authInfo{
 		UserName: r.GetUserName(),
 		PassWord: r.GetPassWord(),
 	}
-	md, _ := metadata.FromIncomingContext(c)
-	if token, err := s.gdb.userLogin(g, md.Get("user-agent")[0]); err != nil {
+	if token, err := s.gdb.userLogin(g); err != nil {
 		return &pb.UserToken{}, nil
 	} else {
 		return &pb.UserToken{Token: token.Token}, nil
 	}
 }
 
-func (s *server) UserLogOut(c context.Context, _ *pb.UserName) (*emptypb.Empty, error) {
-	md, _ := metadata.FromIncomingContext(c)
-	au := md.Get("authorization")[0]
-	userAgent := md.Get("user-agent")[0]
-	userName, token, _ := parseBasicAuth(au)
-	if _, err := s.gdb.userLogout(userName, token, userAgent); err != nil {
+func (s *server) UserLogOut(_ context.Context, r *pb.UserName) (*emptypb.Empty, error) {
+	if _, err := s.gdb.userLogout(r.GetName()); err != nil {
 		return &emptypb.Empty{}, err
 	} else {
 		return &emptypb.Empty{}, nil
@@ -458,15 +453,35 @@ func (s *server) UpdateUsers(_ context.Context, r *pb.UpdatedUserInfo) (*pb.Rows
 }
 
 func (s *server) GetLogs(_ context.Context, r *pb.QueryLogsInfo) (*pb.LogsInfo, error) {
-	if result, err := s.gdb.getLogs(r.LogType, r.Condition, r.StartTime, r.EndTime); err != nil {
+	g := queryLogsInfo{
+		Level:     r.GetLevel(),
+		StartTime: r.GetStartTime(),
+		EndTime:   r.GetEndTime(),
+		StartRow:  int(r.GetStartRow()),
+		RowCount:  int(r.GetRowCount()),
+		Name:      r.GetName(),
+	}
+	if result, err := s.gdb.getLogs(g); err != nil {
 		return nil, err
 	} else {
-		logs := []*pb.LogInfo{}
-		for _, item := range result.Infos {
-			logs = append(logs, &pb.LogInfo{Info: item})
-		}
-		return &pb.LogsInfo{Infos: logs}, nil
+		r, _ := Json.Marshal(result.Infos)
+		return &pb.LogsInfo{Infos: string(r), Count: int32(result.Count)}, nil
 	}
+}
+
+func (s *server) DeleteLogs(_ context.Context, r *pb.DeletedLogInfo) (*pb.Rows, error) {
+	g := deletedLogInfo{
+		Id:                r.GetId(),
+		StartTime:         r.GetStartTime(),
+		EndTime:           r.GetEndTime(),
+		UserNameCondition: r.GetUserNameCondition(),
+	}
+	if result, err := s.gdb.deleteLogs(g); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
+	}
+
 }
 
 func (s *server) UploadFile(_ context.Context, r *pb.UploadedFileInfo) (*emptypb.Empty, error) {
@@ -654,13 +669,12 @@ func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.
 		if md, ok := metadata.FromIncomingContext(c); !ok {
 			return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 		} else {
-			userAgent := md.Get("user-agent")[0] // user agent
 			if methods[len(methods)-1] == "UserLogin" {
 				r := req.(*pb.AuthInfo)
 				if result, err := s.gdb.userLogin(authInfo{
 					UserName: r.GetUserName(),
 					PassWord: r.GetPassWord(),
-				}, userAgent); err != nil {
+				}); err != nil {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
 					return &pb.UserToken{Token: result.Token}, nil
@@ -675,13 +689,12 @@ func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.
 				if userName, token, ok := parseBasicAuth(au); !ok {
 					return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
-					if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
+					if r, err := query(s.gdb.ItemDbPath, "select token from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
 						return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 					} else {
-						if token != fmt.Sprintf("%s", v) {
+						if token != r[0]["token"] {
 							return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 						} else {
-							// log handler
 							return handler(c, req)
 						}
 					}
@@ -701,7 +714,6 @@ func (s *server) authWithServerStreamInterceptor(srv interface{}, ss grpc.Server
 			if md, ok := metadata.FromIncomingContext(ss.Context()); !ok {
 				return status.Errorf(codes.Unauthenticated, "invalid token")
 			} else {
-				userAgent := md.Get("user-agent")[0] // user agent
 				var au string
 				if d, ok := md["authorization"]; ok {
 					au = d[0]
@@ -711,13 +723,12 @@ func (s *server) authWithServerStreamInterceptor(srv interface{}, ss grpc.Server
 				if userName, token, ok := parseBasicAuth(au); !ok {
 					return status.Errorf(codes.Unauthenticated, "invalid token")
 				} else {
-					if v, err := s.gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
+					if r, err := query(s.gdb.ItemDbPath, "select token from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
 						return status.Errorf(codes.Unauthenticated, "invalid token")
 					} else {
-						if token != fmt.Sprintf("%s", v) {
+						if token != r[0]["token"] {
 							return status.Errorf(codes.Unauthenticated, "invalid token")
 						} else {
-							// log handler
 							return handler(srv, ss)
 						}
 					}
@@ -751,12 +762,32 @@ func (s *server) logInterceptor(c context.Context, req interface{}, info *grpc.U
 				r[strings.Replace(name, "Get", "", -1)] = result
 			}
 			rpcString, _ := Json.Marshal(r)
+			logMessage := LogMessage{
+				RequestUrl:    info.FullMethod,
+				RequestMethod: "gRPC",
+				UserAgent:     md.Get("user-agent")[0],
+				RequestBody:   fmt.Sprintf("%s", rpcString),
+				RemoteAddress: remoteAddress,
+				Message:       "",
+			}
+			var userName string
+			var au string
+			if d, ok := md["authorization"]; ok {
+				au = d[0]
+				if name, _, ok := parseBasicAuth(au); ok {
+					userName = name
+				}
+			}
 			if v, err := handler(c, req); err != nil {
-				_ = s.gdb.writeLog(Error, info.FullMethod, fmt.Sprintf("%s", rpcString), "rpc", err.Error(), remoteAddress)
+				logMessage.Message = strings.Replace(err.Error(), "'", `"`, -1)
+				m, _ := Json.Marshal(logMessage)
+				_ = s.gdb.writeLog("Error", fmt.Sprintf("%s", m), userName)
 				return v, err
 			} else {
-				if s.configs.Level == Info {
-					_ = s.gdb.writeLog(Error, info.FullMethod, fmt.Sprintf("%s", rpcString), "rpc", "", remoteAddress)
+				// no errors
+				if s.configs.Level == "Info" {
+					m, _ := Json.Marshal(logMessage)
+					_ = s.gdb.writeLog("Info", fmt.Sprintf("%s", m), userName)
 				}
 				return v, nil
 			}

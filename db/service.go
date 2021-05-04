@@ -68,12 +68,22 @@ func portInUse(portNumber int64) (int, error) {
 	return res, nil
 }
 
+func checkConfigs(mode, level string) (string, bool) {
+	if mode != "http" && mode != "https" && mode != "gRPC" {
+		return "invalid mode " + mode + ", mode must be http, https or gRPC", false
+	} else if level != "Info" && level != "Error" {
+		return "invalid level " + level + ", level must be Info or Error", false
+	} else {
+		return "", true
+	}
+}
+
 var (
 	g errgroup.Group
 )
 
 // web app router
-func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Handler {
+func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handler {
 	router := gin.New()
 	pprof.Register(router)
 	//router.Use(g.allowOptionRequest())
@@ -135,6 +145,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level logLevel) http.Hand
 		pageRequest.POST("/importHistoryByExcel", g.importHistoryByExcelHandler)
 		pageRequest.POST("/getJsCode", g.getJsCodeHandler) // get js code
 		pageRequest.POST("/getLogs", g.getLogsHandler)     // get logs
+		pageRequest.POST("/deleteLogs", g.deleteLogsHandler)
 		pageRequest.POST("/downloadFile", g.downloadFileHandler)
 	}
 	calcRequest := router.Group("/calculation")
@@ -160,6 +171,9 @@ func StartDbServer(configs Config) error {
 		configs.Ca, configs.CaCertificateName, configs.ServerCertificateName, configs.ServerKeyName, configs.SelfSignedCa
 	if mode == "" {
 		mode = "http"
+	}
+	if result, ok := checkConfigs(mode, configs.Level); !ok {
+		return fmt.Errorf(result)
 	}
 	checkResult, err := portInUse(port)
 	if err != nil {

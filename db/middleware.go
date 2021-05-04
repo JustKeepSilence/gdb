@@ -12,7 +12,7 @@ package db
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"io/ioutil"
+	"strings"
 )
 
 // authorization middleware
@@ -23,13 +23,13 @@ func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 			if userName, token, ok := c.Request.BasicAuth(); !ok {
 				c.AbortWithStatus(401)
 			} else {
-				userAgent := c.Request.Header.Get("User-Agent")
-				if v, err := gdb.infoDb.Get([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil || v == nil {
+				if r, err := query(gdb.ItemDbPath, "select token from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
 					c.AbortWithStatus(401)
 				} else {
-					if token != fmt.Sprintf("%s", v) {
+					if token != r[0]["token"] {
 						c.AbortWithStatus(401)
 					} else {
+						c.Request.Header.Add("userName", userName)
 						c.Next()
 					}
 				}
@@ -42,34 +42,32 @@ func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 
 // writing logs and response body
 
-func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData []byte) {
-	if level, ok := c.Request.Header["logLevel"]; ok {
-		if level[0] == "0" {
+func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData []byte, requestBody interface{}) {
+	if level, ok := c.Request.Header["Loglevel"]; ok {
+		b, _ := Json.Marshal(requestBody)
+		logMessage := LogMessage{
+			RequestUrl:    c.Request.URL.String(),
+			RequestMethod: c.Request.Proto,
+			UserAgent:     c.Request.UserAgent(),
+			RequestBody:   fmt.Sprintf("%s", b),
+			RemoteAddress: c.Request.RemoteAddr,
+			Message:       "",
+		}
+		if level[0] == "Info" {
 			// info level
-			if code == 200 {
-				if c.Request.Method == "POST" {
-					b, _ := ioutil.ReadAll(c.Request.Body)
-					_ = gdb.writeLog(Info, c.Request.URL.String(), fmt.Sprintf("%s", b), "POST", "", c.Request.RemoteAddr)
-				} else {
-					_ = gdb.writeLog(Info, c.Request.URL.String(), c.Request.URL.String(), "GET", "", c.Request.RemoteAddr)
-				}
-			} else {
-				if c.Request.Method == "POST" {
-					b, _ := ioutil.ReadAll(c.Request.Body)
-					_ = gdb.writeLog(Error, c.Request.URL.String(), fmt.Sprintf("%s", b), "POST", fmt.Sprintf("%s", responseData), c.Request.RemoteAddr)
-				} else {
-					_ = gdb.writeLog(Error, c.Request.URL.String(), c.Request.URL.String(), "GET", fmt.Sprintf("%s", responseData), c.Request.RemoteAddr)
-				}
+			l := level[0]
+			if code == 500 {
+				l = "Error"
+				logMessage.Message = strings.Replace(fmt.Sprintf("%s", responseData), "'", `"`, -1)
 			}
+			m, _ := Json.Marshal(logMessage)
+			_ = gdb.writeLog(l, fmt.Sprintf("%s", m), c.Request.Header.Get("userName"))
 		} else {
-			// error
+			// error level
 			if code != 200 {
-				if c.Request.Method == "POST" {
-					b, _ := ioutil.ReadAll(c.Request.Body)
-					_ = gdb.writeLog(Error, c.Request.URL.String(), fmt.Sprintf("%s", b), "POST", fmt.Sprintf("%s", responseData), c.Request.RemoteAddr)
-				} else {
-					_ = gdb.writeLog(Error, c.Request.URL.String(), c.Request.URL.String(), "GET", fmt.Sprintf("%s", responseData), c.Request.RemoteAddr)
-				}
+				logMessage.Message = fmt.Sprintf("%s", responseData)
+				m, _ := Json.Marshal(logMessage)
+				_ = gdb.writeLog("Error", fmt.Sprintf("%s", m), c.Request.Header.Get("userName"))
 			}
 		}
 	}
@@ -86,9 +84,9 @@ func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData 
 }
 
 // set logType to request headers
-func (gdb *Gdb) setLogHeaderMiddleware(level logLevel) gin.HandlerFunc {
+func (gdb *Gdb) setLogHeaderMiddleware(level string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Request.Header.Add("logLevel", string(rune(level)))
+		c.Request.Header.Add("logLevel", level)
 		c.Next()
 	}
 }
@@ -105,4 +103,13 @@ func (gdb *Gdb) corsMiddleware() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func (gdb *Gdb) writeLog(level, logMessage, requestUser string) error {
+	sqlString := "insert into log_cfg (logMessage, level, requestUser) values ('" + logMessage + "', '" + level + "','" + requestUser + "')"
+	_, err := updateItem(gdb.ItemDbPath, sqlString)
+	if err != nil {
+		return err
+	}
+	return nil
 }

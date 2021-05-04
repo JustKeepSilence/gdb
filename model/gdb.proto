@@ -4,8 +4,6 @@ option go_package="model";
 
 import "google/protobuf/empty.proto";
 
-// >protoc -I=E:\gdb\model --go-grpc_out=E:\gdb\model --go_out=E:\gdb\model E:\gdb\model\gdb.proto
-
 message Rows{
   int32 effectedRows = 1;
 }
@@ -237,18 +235,17 @@ message UserInfo{
 }
 
 message QueryLogsInfo{
-  string logType = 1;
-  string condition = 2;
-  string startTime = 3;
-  string endTime = 4;
-}
-
-message LogInfo {
-  map<string, string> info = 1;
+  string level = 1;
+  string startTime = 2;
+  string endTime = 3;
+  int32 startRow = 4;
+  int32 rowCount = 5;
+  string name = 6;
 }
 
 message LogsInfo {
-  repeated LogInfo infos = 2;
+  string infos = 1;
+  int32 count = 2;
 }
 
 message FileInfo{
@@ -288,6 +285,13 @@ message UpdatedUserInfo{
   string role = 4;
 }
 
+message DeletedLogInfo {
+  string id = 1;
+  string startTime = 2;
+  string endTime = 3;
+  string userNameCondition = 4;
+}
+
 service Page {
   rpc UserLogin(AuthInfo) returns (UserToken){}
   rpc UserLogOut(UserName) returns (google.protobuf.Empty){}
@@ -301,6 +305,7 @@ service Page {
   rpc AddItemsByExcel(FileInfo) returns (Rows){}
   rpc ImportHistoryByExcel(HistoryFileInfo) returns (google.protobuf.Empty){}
   rpc GetLogs(QueryLogsInfo) returns (LogsInfo){}
+  rpc DeleteLogs(DeletedLogInfo) returns (Rows){}
   rpc DownloadFile(FileInfo) returns (FileContents){}
 }
 

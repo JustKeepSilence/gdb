@@ -8,43 +8,39 @@ goVersion: 1.15.3
 package db
 
 import (
+	"bytes"
 	"crypto/md5"
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"io/ioutil"
-	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 )
 
 // user login
-func (gdb *Gdb) userLogin(info authInfo, userAgent string) (userToken, error) {
+func (gdb *Gdb) userLogin(info authInfo) (userToken, error) {
 	userName := info.UserName
-	v, err := gdb.infoDb.Get([]byte(userName), nil)
-	if err != nil || v == nil {
+	if r, err := query(gdb.ItemDbPath, "select passWord, isLogin from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
 		return userToken{}, userNameError{"userNameError: " + userName}
 	} else {
-		ui := gdbUserInfo{}
-		err := Json.Unmarshal(v, &ui)
-		if err != nil {
-			return userToken{}, fmt.Errorf("fail parsing userInfo: " + err.Error())
+		if r[0]["passWord"] != info.PassWord {
+			return userToken{}, userNameError{"userNameError: " + userName}
 		} else {
-			if fmt.Sprintf("%s", ui.PassWord) != info.PassWord {
-				return userToken{}, userNameError{"userNameError: " + userName}
+			b := []byte(userName + "@seu" + time.Now().Format(timeFormatString) + "JustKeepSilence")
+			token := fmt.Sprintf("%x", md5.Sum(b)) // result is 32-bit lowercase
+			if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set token='"+token+"', isLogin='true'"+" where userName='"+userName+"'"); err != nil {
+				return userToken{}, err
 			} else {
-				// correct userInfo, generate token
-				b := []byte("seu" + time.Now().Format(timeFormatString) + "JustKeepSilence")
-				token := fmt.Sprintf("%x", md5.Sum(b))                                                    // result is 32-bit lowercase
-				_ = gdb.infoDb.Put([]byte(userName+"_token"+"_"+token+"_"+userAgent), []byte(token), nil) // write token to gdb
 				return userToken{token}, nil
 			}
 		}
 	}
 }
 
-func (gdb *Gdb) userLogout(userName, userAgent, token string) (Rows, error) {
-	if err := gdb.infoDb.Delete([]byte(userName+"_token"+"_"+token+"_"+userAgent), nil); err != nil {
+func (gdb *Gdb) userLogout(userName string) (Rows, error) {
+	if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set token='' where userName='"+userName+"'"); err != nil {
 		return Rows{}, err
 	} else {
 		return Rows{1}, nil
@@ -52,36 +48,29 @@ func (gdb *Gdb) userLogout(userName, userAgent, token string) (Rows, error) {
 }
 
 func (gdb *Gdb) getUserInfo(userName string) (UserInfo, error) {
-	v, err := gdb.infoDb.Get([]byte(userName), nil)
-	if err != nil {
-		return UserInfo{}, userNameError{"userNameError: " + userName}
+	if r, err := query(gdb.ItemDbPath, "select role from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
+		return UserInfo{}, err
 	} else {
-		ui := gdbUserInfo{}
-		err := Json.Unmarshal(v, &ui)
-		if err != nil {
-			return UserInfo{}, fmt.Errorf("fail parsing userInfo: " + err.Error())
-		} else {
-			return UserInfo{
-				UserName: UserName{userName},
-				Role:     ui.Roles,
-			}, nil
-		}
+		return UserInfo{
+			UserName: UserName{userName},
+			Role:     []string{r[0]["role"]},
+		}, nil
 	}
 }
 
 func (gdb *Gdb) addUsers(info addedUserInfo) (Rows, error) {
-	userName, role := info.Name, info.Role
-	if _, err := updateItem(gdb.ItemDbPath, "insert into user_cfg (userName, role) values('"+userName+"', '"+role+"')"); err != nil {
+	sqlTemplate := template.Must(template.New("addUserTemplate").Parse(`insert into user_cfg (userName, passWord, role) 
+								values ('{{.Name}}', '{{.PassWord}}', '{{.Role}}')`))
+	var b bytes.Buffer
+	if err := sqlTemplate.Execute(&b, info); err != nil {
 		return Rows{}, err
 	} else {
-		// add userInfo to gdbInfo
-		gi := gdbUserInfo{
-			PassWord: info.PassWord,
-			Roles:    []string{info.Role},
+		sqlString := b.String()
+		if _, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
+			return Rows{}, err
+		} else {
+			return Rows{1}, nil
 		}
-		gdbInfo, _ := Json.Marshal(gi)
-		_ = gdb.infoDb.Put([]byte(userName), gdbInfo, nil) // add user info to gdb
-		return Rows{1}, nil
 	}
 }
 
@@ -89,33 +78,22 @@ func (gdb *Gdb) deleteUsers(name UserName) (Rows, error) {
 	if _, err := updateItem(gdb.ItemDbPath, "delete from user_cfg where userName='"+name.Name+"'"); err != nil {
 		return Rows{}, err
 	} else {
-		_ = gdb.infoDb.Delete([]byte(name.Name), nil)
 		return Rows{1}, nil
 	}
 }
 
 func (gdb *Gdb) updateUsers(info updatedUserInfo) (Rows, error) {
 	id, oldUserName, newUserName := info.Id, info.OldUserName, info.NewUserName
-	role, _ := Json.Marshal([]string{info.Role})
 	if oldUserName == newUserName {
 		if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set role='"+info.Role+"' where id="+strconv.Itoa(id)); err != nil {
 			return Rows{}, err
 		} else {
-			gi, _ := gdb.infoDb.Get([]byte(oldUserName), nil)
-			reg := regexp.MustCompile(`\[.*]`)
-			ngi := reg.ReplaceAll(gi, role) // new user info
-			_ = gdb.infoDb.Put([]byte(oldUserName), ngi, nil)
 			return Rows{1}, nil
 		}
 	} else {
 		if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set role='"+info.Role+"', userName='"+newUserName+"' where id="+strconv.Itoa(id)); err != nil {
 			return Rows{}, err
 		} else {
-			gi, _ := gdb.infoDb.Get([]byte(oldUserName), nil)
-			reg := regexp.MustCompile(`\[.*]`)
-			ngi := reg.ReplaceAll(gi, role) // new user info
-			_ = gdb.infoDb.Put([]byte(newUserName), ngi, nil)
-			_ = gdb.infoDb.Delete([]byte(oldUserName), nil)
 			return Rows{1}, nil
 		}
 	}
@@ -231,30 +209,53 @@ func getJsCode(fileName string) (string, error) {
 	}
 }
 
-func (gdb *Gdb) getLogs(logType, condition, startTime, endTime string) (LogsInfo, error) {
-	var queryString string
-	st, et := strings.Trim(startTime, " "), strings.Trim(endTime, " ")
-	if logType == "all" {
-		if len(st) == 0 && len(et) == 0 {
-			queryString = "select * from log_cfg where logMessage like '%" + condition + "%' order by insertTime desc"
-		} else if len(st) == 0 && len(et) != 0 {
-			queryString = "select * from log_cfg where insertTime <= '" + et + "' and logMessage like '%" + condition + "%' order by insertTime desc"
-		} else {
-			queryString = "select * from log_cfg where insertTime >= '" + st + "' and logMessage like '%" + condition + "%' order by insertTime desc"
-		}
+func (gdb *Gdb) getLogs(info queryLogsInfo) (LogsInfo, error) {
+	var queryStringTemplate, queryCountStringTemplate string
+	if info.Level == "all" {
+		queryStringTemplate = `select * from log_cfg where (insertTime > '{{.StartTime}}' and insertTime < '{{.EndTime}}') and (requestUser = '{{.Name}}' or requestUser = '') Limit {{.RowCount}} offset {{.StartRow}}`
+		queryCountStringTemplate = `select count(*) as count from log_cfg where (insertTime > '{{.StartTime}}' and insertTime < '{{.EndTime}}') and (requestUser = '{{.Name}}' or requestUser = '')`
 	} else {
-		if len(st) == 0 && len(et) == 0 {
-			queryString = "select * from log_cfg where logType='" + logType + "' " + " and logMessage like '%" + condition + "%' order by insertTime desc"
-		} else if len(st) == 0 && len(et) != 0 {
-			queryString = "select * from log_cfg where logType='" + logType + "' " + " and insertTime <= '" + et + "' and logMessage like '%" + condition + "%' order by insertTime desc"
-		} else {
-			queryString = "select * from log_cfg where logType='" + logType + "' " + " and insertTime >= '" + st + "' and logMessage like '%" + condition + "%' order by insertTime desc"
-		}
+		queryStringTemplate = `select * from log_cfg where (insertTime > '{{.StartTime}}' and insertTime < '{{.EndTime}}') and level='{{.Level}}' and (requestUser = '{{.Name}}' or requestUser = '') Limit {{.RowCount}} offset {{.StartRow}}`
+		queryCountStringTemplate = `select count(*) as count from log_cfg where (insertTime > '{{.StartTime}}' and insertTime < '{{.EndTime}}') and level='{{.Level}}' and (requestUser = '{{.Name}}' or requestUser = '')`
 	}
-	if result, err := query(gdb.ItemDbPath, queryString); err != nil {
+	var b, qb bytes.Buffer
+	sqlTemplate := template.Must(template.New("sqlTemplate").Parse(queryStringTemplate))
+	sqlQueryTemplate := template.Must(template.New("sqlQueryTemplate").Parse(queryCountStringTemplate))
+	if err := sqlTemplate.Execute(&b, info); err != nil {
 		return LogsInfo{}, err
 	} else {
-		return LogsInfo{result}, nil
+		if err := sqlQueryTemplate.Execute(&qb, info); err != nil {
+			return LogsInfo{}, err
+		} else {
+			if result, err := query(gdb.ItemDbPath, b.String()); err != nil {
+				return LogsInfo{}, err
+			} else {
+				if c, err := query(gdb.ItemDbPath, qb.String()); err != nil {
+					return LogsInfo{}, err
+				} else {
+					if count, err := strconv.Atoi(c[0]["count"]); err != nil {
+						return LogsInfo{}, err
+					} else {
+						return LogsInfo{result, count}, nil
+					}
+				}
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) deleteLogs(info deletedLogInfo) (Rows, error) {
+	id, startTime, endTime, condition := info.Id, info.StartTime, info.EndTime, info.UserNameCondition
+	var sqlString string
+	if len(strings.Trim(id, " ")) != 0 {
+		sqlString = "delete from log_cfg where id = '" + id + "'"
+	} else {
+		sqlString = "delete from log_cfg where (insertTime > '" + startTime + "' and insertTime <'" + endTime + "') and ( " + condition + ")"
+	}
+	if row, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
+		return Rows{}, err
+	} else {
+		return Rows{EffectedRows: int(row)}, nil
 	}
 }
 
