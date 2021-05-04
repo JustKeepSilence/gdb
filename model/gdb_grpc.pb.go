@@ -1114,6 +1114,7 @@ type PageClient interface {
 	AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error)
 	ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grpc.CallOption) (*LogsInfo, error)
+	DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*Rows, error)
 	DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error)
 }
 
@@ -1258,6 +1259,15 @@ func (c *pageClient) GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grp
 	return out, nil
 }
 
+func (c *pageClient) DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/DeleteLogs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *pageClient) DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error) {
 	out := new(FileContents)
 	err := c.cc.Invoke(ctx, "/model.Page/DownloadFile", in, out, opts...)
@@ -1283,6 +1293,7 @@ type PageServer interface {
 	AddItemsByExcel(context.Context, *FileInfo) (*Rows, error)
 	ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error)
 	GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error)
+	DeleteLogs(context.Context, *DeletedLogInfo) (*Rows, error)
 	DownloadFile(context.Context, *FileInfo) (*FileContents, error)
 	mustEmbedUnimplementedPageServer()
 }
@@ -1326,6 +1337,9 @@ func (UnimplementedPageServer) ImportHistoryByExcel(context.Context, *HistoryFil
 }
 func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
+}
+func (UnimplementedPageServer) DeleteLogs(context.Context, *DeletedLogInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteLogs not implemented")
 }
 func (UnimplementedPageServer) DownloadFile(context.Context, *FileInfo) (*FileContents, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadFile not implemented")
@@ -1567,6 +1581,24 @@ func _Page_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Page_DeleteLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletedLogInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).DeleteLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/DeleteLogs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).DeleteLogs(ctx, req.(*DeletedLogInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Page_DownloadFile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(FileInfo)
 	if err := dec(in); err != nil {
@@ -1635,6 +1667,10 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLogs",
 			Handler:    _Page_GetLogs_Handler,
+		},
+		{
+			MethodName: "DeleteLogs",
+			Handler:    _Page_DeleteLogs_Handler,
 		},
 		{
 			MethodName: "DownloadFile",
