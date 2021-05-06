@@ -12,7 +12,6 @@ you will love GDB.
 [![count](https://img.shields.io/github/languages/count/JustKeepSilence/gdb)]()
 
 
-
 ## Features
 - High writing performance
 - Fine control of historical data
