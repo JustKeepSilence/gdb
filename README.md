@@ -1,9 +1,17 @@
 ## GDB
 GDB is a real-time database encapsulated based on [goleveldb](https://pkg.go.dev/github.com/syndtr/goleveldb/leveldb)
 it can be used to obtain and store large amount of historical data in various ways(including gettting raw data, filtered data
-with given condition, etc...),it provides rest, gRPC interface and web client , and it 
-allows you to generate your own data based on existing data by coding js on web client.If you need deal with big data,
+with given condition, etc...),it provides rest, gRPC interface and desktop client , and it 
+allows you to generate your own data based on existing data by coding js on desktop client.If you need deal with big data,
 you will love GDB.
+
+[![GoDoc](https://pkg.go.dev/badge/github.com/gin-gonic/gin?status.svg)](https://pkg.go.dev/github.com/JustKeepSilence/gdb)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gin-gonic/gin)](https://goreportcard.com/report/github.com/JustKeepSilence/gdb)
+[![Release](https://img.shields.io/github/v/release/JustKeepSilence/gdb)](https://github.com/JustKeepSilence/gdb/releases)
+[![go-version](https://img.shields.io/github/go-mod/go-version/JustKeepSilence/gdb)]()
+[![count](https://img.shields.io/github/languages/count/JustKeepSilence/gdb)]()
+
+
 
 ## Features
 - High writing performance
@@ -12,182 +20,156 @@ you will love GDB.
 - Token-based permission control
 - restful and gRPC api
 - support https api
-- web application, desktop client
+- desktop client based on Electron
+- fine system documentation and interface documentation
 
 ## Contents
 - [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Build GDB](#build-gdb)
-- [Run With HTTPS](#run-with-https)
+    - [Installation](#installation)
+- [GdbServer](#GdbServer)
+    - [Build GDB](#build-gdb)
+    - [Download GDB](#download-gdb)
+    - [Run With HTTPS Mode](#run-with-https-mode)
+    - [Run With Authorization Mode](#run-with-authorization-mode)
 - [Restful API Examples](#restful-api-examples)
     - [Page](#page)
     - [Group](#group)
     - [Item](#item)
     - [Data](#data)
 - [gRPC API Examples](#grpc-api-examples)
-    - [Page](#page)
-    - [Group](#group)
-    - [Item](#item)
-    - [Data](#data)
-- [WebApplication](#web-application)
-- [DesktopApplication](#desktop-application)
+
+- [GdbUI](#desktop-application)
 - [FAQ](#faq)
 
 ## Quick Start
-### Integration with go language
 If you are familiar with go language, you call [install](#installation) gdb and then use it in your
-project to customize your own behavior,For more details,you can see [document](https://pkg.go.dev/github.com/JustKeepSilence/gdb),
+project to customize your own behavior,For more details,you can see [document](https://pkg.go.dev/github.com/JustKeepSilence/gdb) or 
+[examples](https://github.com/JustKeepSilence/gdb/tree/master/examples)
+The Base of gdb is group and item, item is the subset of group, you need to add group to gdb, then add item to
+group, after that, you can write realTime Data to item and get historical Data.
+
+### Installation
+Gdb is a cgo project, to run or build it, you need [gcc](https://gcc.gnu.org/) ,and install [Go](https://golang.org/) (**version 1.16+ is required**), then set GO111MODULE=ON
+```sh
+go get github.com/JustKeepSilence/gdb
+```
+
+Then import gdb in your own code
+```go
+import "github.com/JustKeepSilence/gdb/db"
+```
 ```go
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/JustKeepSilence/gdb/db"
 	"log"
+	"io/ioutil"
 	"time"
 )
 
-func main() {
-	dbPath := "./db"  // path of data
-	itemDbPath := "./itemDb"  // path of itemDb
-	g, err := db.NewGdb(dbPath, itemDbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Open db successfully")
-	//add groups:
-	groupInfos := []db.AddGroupInfo{{
-		GroupName:   "1DCS",
-		ColumnNames: []string{"groupName", "type", "description", "unit", "source"},  // every group has two cols: id and itemName
-	}}
-	if _, err := g.AddGroups(groupInfos...);err!=nil{
-		log.Fatal(err)
-	}else{
-		fmt.Println("add group successfully")
-	}
-	//add items
-	if _, err  := g.AddItems(db.AddItemInfo{
-		GroupName: "1DCS",
-		Values: []map[string]string{{"itemName": "testItem1", "groupName": "1DCS", "type": "","description": "testItem1", "unit": "", "source": ""},
-			{"itemName": "testItem2", "type": "","groupName": "1DCS", "description": "testItem2", "unit": "", "source": ""},
-			{"itemName": "testItem3", "type": "","groupName": "1DCS", "description": "testItem3", "unit": "", "source": ""},
-			{"itemName": "testItem4", "type": "","groupName": "1DCS", "description": "testItem4", "unit": "", "source": ""},
-			{"itemName": "testItem5", "type": "","groupName": "1DCS", "description": "testItem5", "unit": "", "source": ""},
-			{"itemName": "testItem6", "type": "","groupName": "1DCS", "description": "testItem6", "unit": "", "source": ""},
-			{"itemName": "testItem7", "type": "","groupName": "1DCS", "description": "testItem7", "unit": "", "source": ""},
-			{"itemName": "testItem8", "type": "","groupName": "1DCS", "description": "testItem8", "unit": "", "source": ""}},
-	});err!=nil{
-		log.Fatal(err)
-	}else{
-		fmt.Println("add items successfully!")
-	}
-	//add items by excel
-	if _, err := g.AddItemsByExcel("1DCS", "./test.xlsx");err!=nil{
-		log.Fatal(err)
-	}else{
-		fmt.Println("add items by excel successfully!")
-	}
-	//write realTime Data without timeStamp
-	if _, err := g.BatchWrite(db.BatchWriteString{
-		GroupName:     "1DCS",
-		ItemValues:    []db.ItemValue{{
-			ItemName: "testItem1",
-			Value:    "-100",
-		},{
-			ItemName: "testItem2",
-			Value: "0",
-		},{
-			ItemName: "testItem3",
-			Value: "100",
-		},{
-			ItemName: "testItem4",
-			Value: "200",
-		},{
-			ItemName: "testItem5",
-			Value: "300",
-		}},
-		WithTimeStamp: false,
-	});err!=nil{
-		log.Fatal(err)
-	}else{
-		fmt.Println("Write successfully")
-	}
-	// write realTime data without timeStamp
-	t := fmt.Sprintf("%d", time.Now().Add(-1 * time.Hour).Unix())  // unix timeStamp
-	if _, err := g.BatchWrite(db.BatchWriteString{
-		GroupName:     "1DCS",
-		ItemValues:    []db.ItemValue{{
-			ItemName: "testItem6",
-			Value: "400",
-			TimeStamp: t,
-		},{
-			ItemName: "testItem7",
-			Value: "500",
-			TimeStamp: t,
-		},{
-			ItemName: "testItem8",
-			Value: "600",
-			TimeStamp: t,
-		}},
-		WithTimeStamp: true,
-	});err!=nil{
-		log.Fatal(err)
-	}else{
-		fmt.Println("Write with timeStamp successfully")
-	}
-	// get realTime data, return the latest updated data
-	itemNames := []string{"testItem1", "testItem2", "testItem3", "testItem4", "testItem5", "testItem6", "testItem7", "testItem8"}
-	if c, err := g.GetRealTimeData(itemNames...);err!=nil{
-		log.Fatal(err)
-	}else{
-		r, _ := json.Marshal(c)
-		fmt.Println(fmt.Sprintf("%s", r))
-	}
-	if c, err := g.GetRawHistoricalData(itemNames...);err!=nil{
-		log.Fatal(err)
-	}else{
-		r, _ := json.Marshal(c)
-		fmt.Println(fmt.Sprintf("%s", r))
-	}
-	// get historical data with timeStamp
-	timeStamps := [][]int{{1612413561}, {1612413561}, {1612413561}, {1612413561}, {1612413561}}
-	if c, err := g.GetHistoricalDataWithStamp([]string{"testItem1", "testItem2", "testItem3", "testItem4", "testItem5"}, timeStamps...);err!=nil{
-		log.Fatal(err)
-	}else{
-		r, _ := json.Marshal(c)
-		fmt.Println(fmt.Sprintf("%s", r))
-	}
+func main()  {
+    // initial gdb
+	if gdb, err := db.NewGdb("./leveldb", "./itemDb");err!=nil{
+	    log.Fatal(err)	
+    }else{
+    	// add groups
+        if _, err := gdb.AddGroups(db.AddedGroupInfo{
+            GroupName:   "1DCS",
+            ColumnNames: []string{"Column1", "Column2", "Column3"},  // column name can't be itemName
+            });err!=nil{
+            log.Fatal(err)
+        }
+        // add items
+        if _, err := gdb.AddItems(db.AddedItemsInfo{
+            GroupName:  "1DCS",
+            ItemValues: []map[string]string{{"itemName": "x", "description": "x"}, {"itemName": "y", "description": "y"}, {"itemName": "z", "description": "z"},
+            {"itemName": "item1", "description": "item1"}, {"itemName": "item2", "description": "item2"}},
+            });err!=nil{
+            log.Fatal(err)
+        }
+        // batch write, y = 2 * x
+        if _, err := gdb.BatchWrite([]db.ItemValue{{ItemName: "x", Value: "1"}, {ItemName: "y", Value: "2"}}...);err!=nil{
+        log.Fatal(err)
+        }else{
+        // get latest updated value of given items
+            if r, err := gdb.GetRealTimeData("x", "y");err!=nil{
+            log.Fatal(err)
+        }else{
+            d, _ := json.Marshal(r)
+            fmt.Println(string(d))
+        }
+        }
+        // write historical data
+        // mock one hour historical data
+        var xData, yData, ts []string
+        now := time.Now()
+        fmt.Println("now: ", now.Format("2006-01-02 15:04:05"))
+        r := rand.New(rand.NewSource(99))
+        for i := 0; i < 3600; i++ {
+            x := r.Intn(3600)
+            y := 2 * x
+            t := now.Add(time.Second * time.Duration(i)).Unix() + 8 * 3600
+            xData = append(xData, fmt.Sprintf("%d", x))
+            yData = append(yData, fmt.Sprintf("%d", y))
+            ts = append(ts, fmt.Sprintf("%d", t))
+        }
+        if err := gdb.BatchWriteHistoricalData([]db.HistoricalItemValue{{ItemName: "x", Values: xData, TimeStamps: ts}, {ItemName: "y", Values: yData, TimeStamps: ts}}...);err!=nil{
+        log.Fatal(err)
+        }else{
+            // get raw historical data for debugging
+            if r, err := gdb.GetRawHistoricalData("x");err!=nil{
+            log.Fatal(err)
+        }else{
+            d, _ := json.Marshal(r)
+            _ = ioutil.WriteFile("./rawX.txt", d, 0644)
+        }
+        // get historical data with given itemName, startTime, endTime and intervals
+        stX := int(now.Add(time.Minute * 5).Unix() + 8 * 3600)
+        etX := int(now.Add(time.Minute * 25).Unix() + 8 * 3600)
+        stY := int(now.Add(time.Minute * 35).Unix() + 8 * 3600)
+        etY := int(now.Add(time.Minute * 55).Unix() + 8 * 3600)
+        if r, err := gdb.GetHistoricalData([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10});err!=nil{
+        log.Fatal(err)
+        }else{
+        d, _ := json.Marshal(r)
+        _ = ioutil.WriteFile("./hX.txt", d, 0644)
+        }
+        // get historical data with given itemName
+        if r, err := gdb.GetHistoricalDataWithStamp([]string{"x", "y"}, [][]int{{stX, etX}, {stY, etY}}...);err!=nil{
+        log.Fatal(err)
+        }else{
+        d, _ := json.Marshal(r)
+        fmt.Println(string(d))
+        }
+        // get historical data with condition
+        if r, err := gdb.GetHistoricalDataWithCondition([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}, `item["x"] > 0 && item["y"] > 1000`, []db.DeadZone{}...);err!=nil{
+        log.Fatal(err)
+        }else{
+            d, _ := json.Marshal(r)
+            _ = ioutil.WriteFile("./f.txt", d, 0644)
+            }
+        }
+    }
 }
 ```
-### Integration with other language
+Notes: In order to reduce the size of the entire project, in this case only the core functions of gdb are included, 
+unless you use gdbClient tags when compiling
+
+## GdbServer
 If you are not familiar with go, and want to use gdb as back-end database only, you can [build-gdb](#build-gdb), then run 
-gdb in your server.Also, you can [download](https://wws.lanzous.com/iHt95nkegha) the compiled binary file and run it directly.In this way, you can't customize 
-your own behavior, but you can use restful or grpc api provided by gdb, as well as token-control for every api we 
-provided.For more details you can see [restful-examples](#restful-api-examples)  or [grpc-examples](#grpc-api-examples) 
-or [documents](https://app.gitbook.com/@justkeepsilence/s/gdb/~/settings/share)
+gdb in your server.Also, you can [download](#download-gdb) the compiled installer and run it directly.
+In this way, you can't customize your own behavior, but you can use restful or grpc api provided by gdb, as well as 
+token-control for every api we provided.For more details you can see [restful-examples](#restful-api-examples) or [grpc-examples](#grpc-api-examples) or [documents](https://app.gitbook.com/@justkeepsilence/s/gdb/~/settings/share)
 
-## Installation
-Gdb is a cgo project, to run or build it, you need [gcc](https://gcc.gnu.org/) ,and install [Go](https://golang.org/) (**version 1.15+ is required**), then set GO111MODULE=ON
+
+### Build GDB
+you need to [install](#installation)Gdb firstly, then change to gdb/main directory and run the following command
 ```sh
-go get github.com/JustKeepSilence/gdb
+go build -tags=jsoniter -tags=gdbClient -o ../gdb
 ```
-
-Notes: Since gdb uses [gin](https://github.com/gin-gonic/gin#grouping-routes) v1.6.3 internally, you should manually add the gin.CustomRecovery function
-for details, see: https://github.com/gin-gonic/gin/issues/2615
-
-
-Then import gdb in your own code
-```go
-import "github.com/JustKeepSilence/gdb/db"
-```
-
-## Build GDB
-If you want to use gdb with other language or web application, you need build GDB.
-First you need install gcc and Go, then change directory to gdb\main, and build with
-the following command(on windows)
-```sh
-go build -tags=jsoniter -o ../db.exe main.go
-```
-you can custom your own configs in config.json.
+Notes: you must add gdbClient tags when building gdb Client, otherWise only core function without client will be compiled.
+After that, you can customize your own config in config.json.For more details about config you can see https://github.com/JustKeepSilence/gdb/blob/master/config.json
 ```json
 // Notes: you can use // single line comments in json file
 {
@@ -196,7 +178,7 @@ you can custom your own configs in config.json.
     "port": 8082,
     "dbPath": "./leveldb",
     "itemDbPath": "./itemDb",
-    "applicationName": "db.exe",
+    "applicationName": "gdb",
     "authorization": true,
     "mode": "http",
     "httpsConfigs": {
@@ -208,24 +190,30 @@ you can custom your own configs in config.json.
   },
   "logConfigs": {
     "logWriting": true,
-    "Level" : 1,
+    "Level" : "Error",
     "expiredTime": 86400
   }
 }
 
 ```
 
-Notes: you need set db.exe,config.json, and dist folder in the same path to sure gdb work normally.
+Notes: you need set gdb,config.json, and ssl folder in the same path to sure gdb work normally.
 
-## Run With HTTPS
+### Download Gdb
+if you are not familiar with go at all, you can also directly download the compiled installer we provided,
+the download url is: https://wws.lanzous.com/iHt95nkegha, download passWord is 7bv4
+
+### Run With HTTPS Mode
 
 gdb support https mode for restful nad gRPC,if you want to run with https mode, you need to set 
-mode filed in configs.json to https, and custom your own https configs.Then put your own certificate
-to ssl folder and put ssl put the same path as gdb executable program.
+mode filed in configs.json to https, and customize your own https configs.Then put your own certificate
+to ssl folder and put ssl folder the same path as gdb executable program. Or you can use default certificate 
+we provided without ca root.
 
-Notes: selfSignedCa is not allowed on windows at moment.
+Notes: selfSignedCa is not allowed on windows at moment.And if you want to use ca root, you need 
+to set ca field to true and set the caCertificateName field in config.json
 
-## Run With Authorization
+### Run With Authorization Mode
 
 gdb support token authorization mode, if you want to run with authorization mode,
 you need to set authorization field to true.Then you need to add Authorization field to
@@ -235,7 +223,7 @@ header if you use restful, or to context if you use gRPC.For more details, you c
 
 ## Restful API Examples
 If you use other language to access gdb, you can use resutful interface, before use
-you need [build gdb](https://github.com/JustKeepSilence/gdb#build-gdb) or [download](), and after running the application,you can interact with 
+you need [build gdb](#build-gdb) or [download](#download-gdb), and after running the application,you can interact with 
 gdb by the restful interface easily.Here is the examples of JS(ES6).For more details see
 [document](https://justkeepsilence.gitbook.io/gdb/)
 
@@ -329,14 +317,35 @@ axios.post("/data/getDbInfo")
 // getDbSpeedHistory
 axios.post("/data/getDbInfoHistory", JSON.stringify({"starTimes": [1617861409547], "endTimes": [1617862009547], "intervale": 5}))
 {"code":200,"message":"","data":{"historicalData":{"speed":[null,null]}}}
-
 ```
 
-## Web Application
-see [web application](https://github.com/JustKeepSilence/gdb-web-app) for more details
+## gRPC API Examples
+gdb support gRPC both in http and https mode.In https mode, you need to provide a certificate corresponding to the configuration file(config.json).In authorization
+mode you also need to set authorization field in gRPC metaData.Here are examples of how to connect gdb client in go with gRPC.For more details you can see [serviceExamples](https://github.com/JustKeepSilence/gdb/blob/master/examples/service_examples.go)
+or about how to connect gdb in gRPC mode in NodeJs, you can see [gdbUI](https://github.com/JustKeepSilence/gdbUI/blob/master/src/renderer/api/index.js)
 
-## Windows Desktop Application
-see [windows ui](https://github.com/JustKeepSilence/gdb-windows-ui) for more details 
+```go
+  if cred, err := credentials.NewClientTLSFromFile("./ssl/gdbServer.crt", "gdb.com");err!=nil{
+    log.Fatal(err)
+  }else{
+    if conn, err := grpc.Dial(ip, grpc.WithTransportCredentials(cred));err!=nil{
+        log.Fatal(err)
+    }else{
+        client := model.NewPageClient(conn)
+        if r, err := client.UserLogin(context.Background(), &model.AuthInfo{
+            UserName: "admin",
+            PassWord: "685a6b21dc732a9702a96e6731811ec9",
+        });err!=nil{
+            log.Fatal(err)
+        }else{
+            fmt.Println(r.GetToken())
+        }
+    }
+}
+```
+
+## Desktop Application
+see [gdbUI](https://github.com/JustKeepSilence/gdb-windows-ui) for more details 
 
 ## FAQ
 1. How to obtain the timeStamp consistent with gdb
@@ -347,6 +356,7 @@ import (
 )
 n := time.Now
 timeStamp := time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Minute(), 0, time.UTC)
+timeStamp := n.Unix() + 8 * 3600
 ```
 So, above this, here are some examples to show how to get the timeStamp consistent with gdb
 ### C#
