@@ -72,7 +72,6 @@ service Group {
   rpc UpdateGroupColumnNames(UpdatedGroupColumnNamesInfo) returns (Cols){}
   rpc DeleteGroupColumns(DeletedGroupColumnNamesInfo) returns (Cols){}
   rpc AddGroupColumns(AddedGroupColumnsInfo) returns (Cols){}
-  rpc CleanGroupItems(GroupNamesInfo) returns (Rows){}
 }
 
 // item handler
@@ -94,6 +93,12 @@ message ItemsInfo{
   string columnNames = 2;
   int32 startRow = 3;
   int32 rowCount = 4;
+}
+
+message UpdatedItemsInfo{
+  string groupName = 1;
+  string condition = 2;
+  string clause = 3;
 }
 
 message GdbItem{
@@ -119,8 +124,9 @@ service Item {
   rpc DeleteItems(DeletedItemsInfo) returns (Rows){}
   rpc GetItems(ItemsInfo) returns (GdbItems){}
   rpc GetItemsWithCount(ItemsInfo) returns (GdbItemsWithCount){}
-  rpc UpdateItems(ItemsInfo) returns (Rows){}
+  rpc UpdateItems(UpdatedItemsInfo) returns (Rows){}
   rpc CheckItems(CheckItemsInfo) returns (google.protobuf.Empty){}
+  rpc CleanGroupItems(GroupNamesInfo) returns (Rows){}
 }
 
 // data handler
@@ -201,7 +207,6 @@ message QuerySpeedHistoryDataString{
   int32 interval = 4;
 }
 
-
 service Data {
   rpc BatchWrite(BatchWriteString) returns (Rows){}
   rpc BatchWriteWithStream(stream BatchWriteString) returns (Rows){}
@@ -210,8 +215,8 @@ service Data {
   rpc GetRealTimeData(QueryRealTimeDataString) returns (GdbRealTimeData){}
   rpc GetHistoricalData(QueryHistoricalDataString) returns (GdbHistoricalData){}
   rpc GetHistoricalDataWithStamp(QueryHistoricalDataWithTimeStampString) returns (GdbHistoricalData){}
-  rpc GetDbInfo(google.protobuf.Empty) returns (GdbInfoData){}
-  rpc GetDbInfoHistory(QuerySpeedHistoryDataString) returns (GdbHistoricalData){}
+  rpc GetHistoricalDataWithCondition(QueryHistoricalDataWithConditionString) returns(GdbHistoricalData){}
+  rpc GetRawData(QueryRealTimeDataString) returns(GdbHistoricalData){}
 }
 
 // page
@@ -307,6 +312,8 @@ service Page {
   rpc GetLogs(QueryLogsInfo) returns (LogsInfo){}
   rpc DeleteLogs(DeletedLogInfo) returns (Rows){}
   rpc DownloadFile(FileInfo) returns (FileContents){}
+  rpc GetDbInfo(google.protobuf.Empty) returns (GdbInfoData){}
+  rpc GetDbInfoHistory(QuerySpeedHistoryDataString) returns (GdbHistoricalData){}
 }
 
 // calculation

@@ -1,13 +1,15 @@
+// +build gdbClient
+
 /*
-creatTime: 2020/11/7 23:22
+creatTime: 2020/11/7
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
+goVersion: 1.16
 */
 
 package db
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -23,7 +25,7 @@ func ReadDbConfig(path string) (Config, error) {
 	} else {
 		c := Config{}
 		cf := handleJson(fmt.Sprintf("%s", b))
-		if err := json.Unmarshal(cf, &c); err != nil {
+		if err := Json.Unmarshal(cf, &c); err != nil {
 			return Config{}, err
 		} else {
 			return c, nil

@@ -5,11 +5,13 @@ github: https://github.com/JustKeepSilence
 goVersion: 1.15.3
 */
 
+// examples about how to use gRCP of gdb in go, for more details about api examples or gRPC in nodeJS
+// you can see https://github.com/JustKeepSilence/gdbUI/blob/master/src/renderer/api/index.js
+
 package examples
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"github.com/JustKeepSilence/gdb/model"
 	"google.golang.org/grpc"
@@ -17,29 +19,28 @@ import (
 	"log"
 )
 
+const (
+	ip = "192.168.1.104:8082"
+)
+
 // mock client
-func client() {
-	if certificate, err := tls.LoadX509KeyPair("./ssl/gdbClient.crt", "./ssl/gdbClient.key"); err != nil {
+func httpsClient() {
+	if cred, err := credentials.NewClientTLSFromFile("./ssl/gdbServer.crt", "github.com"); err != nil {
 		log.Fatal(err)
 	} else {
-		cred := credentials.NewTLS(&tls.Config{
-			InsecureSkipVerify: false,
-			ServerName:         "gdb.dev",
-			Certificates:       []tls.Certificate{certificate},
-		})
-		if conn, err := grpc.Dial("localhost:8082", grpc.WithTransportCredentials(cred)); err != nil {
+		if conn, err := grpc.Dial(ip, grpc.WithTransportCredentials(cred)); err != nil {
 			log.Fatal(err)
 		} else {
-			defer conn.Close()
-			c := model.NewGroupClient(conn)
-			if r, err := c.GetGroupProperty(context.Background(), &model.QueryGroupPropertyInfo{
-				GroupName: "1DCS",
-				Condition: "1=1",
+			client := model.NewPageClient(conn)
+			if r, err := client.UserLogin(context.Background(), &model.AuthInfo{
+				UserName: "admin",
+				PassWord: "685a6b21dc732a9702a96e6731811ec9",
 			}); err != nil {
 				log.Fatal(err)
 			} else {
-				fmt.Println(r.ItemColumnNames)
+				fmt.Println(r.GetToken())
 			}
+
 		}
 	}
 }

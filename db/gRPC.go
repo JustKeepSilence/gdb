@@ -1,8 +1,10 @@
+// +build gdbClient
+
 /*
 creatTime: 2021/2/8
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
-goVersion: 1.15.3
+goVersion: 1.16
 */
 
 package db
@@ -154,7 +156,6 @@ func (s *server) GetItems(_ context.Context, r *pb.ItemsInfo) (*pb.GdbItems, err
 	g := ItemsInfo{
 		GroupName:   r.GetGroupName(),
 		Condition:   r.GetCondition(),
-		Clause:      r.GetClause(),
 		ColumnNames: r.GetColumnNames(),
 		StartRow:    int(r.GetStartRow()),
 		RowCount:    int(r.GetRowCount()),
@@ -174,12 +175,11 @@ func (s *server) GetItemsWithCount(_ context.Context, r *pb.ItemsInfo) (*pb.GdbI
 	g := ItemsInfo{
 		GroupName:   r.GetGroupName(),
 		Condition:   r.GetCondition(),
-		Clause:      r.GetClause(),
 		ColumnNames: r.GetColumnNames(),
 		StartRow:    int(r.GetStartRow()),
 		RowCount:    int(r.GetRowCount()),
 	}
-	if result, err := s.gdb.GetItemsWithCount(g); err != nil {
+	if result, err := s.gdb.getItemsWithCount(g); err != nil {
 		return nil, err
 	} else {
 		v := []*pb.GdbItem{}
@@ -190,8 +190,8 @@ func (s *server) GetItemsWithCount(_ context.Context, r *pb.ItemsInfo) (*pb.GdbI
 	}
 }
 
-func (s *server) UpdateItems(_ context.Context, r *pb.ItemsInfo) (*pb.Rows, error) {
-	g := ItemsInfo{
+func (s *server) UpdateItems(_ context.Context, r *pb.UpdatedItemsInfo) (*pb.Rows, error) {
+	g := UpdatedItemsInfo{
 		GroupName: r.GetGroupName(),
 		Condition: r.GetCondition(),
 		Clause:    r.GetClause(),
@@ -221,10 +221,7 @@ func (s *server) BatchWrite(_ context.Context, r *pb.BatchWriteString) (*pb.Rows
 			Value:    itemValue.GetValue(),
 		})
 	}
-	g := BatchWriteString{
-		ItemValues: v,
-	}
-	if result, err := s.gdb.BatchWrite(g); err != nil {
+	if result, err := s.gdb.BatchWrite(v...); err != nil {
 		return nil, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
@@ -233,7 +230,7 @@ func (s *server) BatchWrite(_ context.Context, r *pb.BatchWriteString) (*pb.Rows
 
 // BatchWriteWithStream write data with client stream
 func (s *server) BatchWriteWithStream(stream pb.Data_BatchWriteWithStreamServer) error {
-	bs := []BatchWriteString{}
+	bs := []batchWriteString{}
 	for {
 		b, err := stream.Recv()
 		if err == io.EOF {
@@ -241,7 +238,7 @@ func (s *server) BatchWriteWithStream(stream pb.Data_BatchWriteWithStreamServer)
 			for _, ss := range bs {
 				writingString := ss
 				eg.Go(func() error {
-					if _, err := s.gdb.BatchWrite(writingString); err != nil {
+					if _, err := s.gdb.BatchWrite(writingString.ItemValues...); err != nil {
 						return fmt.Errorf("writing error :" + err.Error())
 					} else {
 						return nil
@@ -263,7 +260,7 @@ func (s *server) BatchWriteWithStream(stream pb.Data_BatchWriteWithStreamServer)
 					Value:    itemValue.GetValue(),
 				})
 			}
-			bs = append(bs, BatchWriteString{
+			bs = append(bs, batchWriteString{
 				ItemValues: v,
 			})
 		}
@@ -280,8 +277,7 @@ func (s *server) BatchWriteHistoricalData(_ context.Context, r *pb.BatchWriteHis
 			TimeStamps: v[i].TimeStamps,
 		})
 	}
-	b := BatchWriteHistoricalString{values}
-	if err := s.gdb.BatchWriteHistoricalData(b); err != nil {
+	if err := s.gdb.BatchWriteHistoricalData(values...); err != nil {
 		return &emptypb.Empty{}, err
 	} else {
 		return &emptypb.Empty{}, nil
@@ -289,7 +285,7 @@ func (s *server) BatchWriteHistoricalData(_ context.Context, r *pb.BatchWriteHis
 }
 
 func (s *server) BatchWriteHistoricalDataWithStream(stream pb.Data_BatchWriteHistoricalDataWithStreamServer) error {
-	bs := []BatchWriteHistoricalString{}
+	bs := []batchWriteHistoricalString{}
 	for {
 		b, err := stream.Recv()
 		if err == io.EOF {
@@ -297,7 +293,7 @@ func (s *server) BatchWriteHistoricalDataWithStream(stream pb.Data_BatchWriteHis
 			for _, ss := range bs {
 				writingString := ss
 				eg.Go(func() error {
-					if err := s.gdb.BatchWriteHistoricalData(writingString); err != nil {
+					if err := s.gdb.BatchWriteHistoricalData(writingString.HistoricalItemValues...); err != nil {
 						return fmt.Errorf("writing error :" + err.Error())
 					} else {
 						return nil
@@ -320,7 +316,7 @@ func (s *server) BatchWriteHistoricalDataWithStream(stream pb.Data_BatchWriteHis
 					TimeStamps: itemValue.TimeStamps,
 				})
 			}
-			bs = append(bs, BatchWriteHistoricalString{HistoricalItemValues: v})
+			bs = append(bs, batchWriteHistoricalString{HistoricalItemValues: v})
 		}
 	}
 }
@@ -329,7 +325,7 @@ func (s *server) GetRealTimeData(_ context.Context, r *pb.QueryRealTimeDataStrin
 	if result, err := s.gdb.GetRealTimeData(r.ItemNames...); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(result.RealTimeData)
+		v, _ := Json.Marshal(result)
 		return &pb.GdbRealTimeData{RealTimeData: fmt.Sprintf("%s", v)}, nil
 	}
 }
@@ -338,7 +334,7 @@ func (s *server) GetHistoricalData(_ context.Context, r *pb.QueryHistoricalDataS
 	if result, err := s.gdb.GetHistoricalData(r.GetItemNames(), convertInt32ToInt(r.GetStartTimes()...), convertInt32ToInt(r.GetEndTimes()...), convertInt32ToInt(r.GetIntervals()...)); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(result.HistoricalData)
+		v, _ := Json.Marshal(result)
 		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", v)}, nil
 	}
 }
@@ -351,8 +347,34 @@ func (s *server) GetHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistor
 	if result, err := s.gdb.GetHistoricalDataWithStamp(r.GetItemNames(), t...); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(result.HistoricalData)
+		v, _ := Json.Marshal(result)
 		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", v)}, nil
+	}
+}
+
+func (s *server) GetHistoricalDataWithCondition(_ context.Context, r *pb.QueryHistoricalDataWithConditionString) (*pb.GdbHistoricalData, error) {
+	dz := []DeadZone{}
+	for _, zone := range r.GetDeadZones() {
+		dz = append(dz, DeadZone{
+			ItemName:      zone.ItemName,
+			DeadZoneCount: int(zone.DeadZoneCount),
+		})
+	}
+	if result, err := s.gdb.GetHistoricalDataWithCondition(r.GetItemNames(), convertInt32ToInt(r.GetStartTimes()...),
+		convertInt32ToInt(r.GetEndTimes()...), convertInt32ToInt(r.GetIntervals()...), r.GetFilterCondition(), dz...); err != nil {
+		return &pb.GdbHistoricalData{}, nil
+	} else {
+		v, _ := Json.Marshal(result)
+		return &pb.GdbHistoricalData{HistoricalData: string(v)}, nil
+	}
+}
+
+func (s *server) GetRawData(_ context.Context, r *pb.QueryRealTimeDataString) (*pb.GdbHistoricalData, error) {
+	if result, err := s.gdb.GetRawHistoricalData(r.GetItemNames()...); err != nil {
+		return &pb.GdbHistoricalData{}, nil
+	} else {
+		v, _ := Json.Marshal(result)
+		return &pb.GdbHistoricalData{HistoricalData: string(v)}, nil
 	}
 }
 
@@ -360,7 +382,7 @@ func (s *server) GetDbInfo(_ context.Context, _ *emptypb.Empty) (*pb.GdbInfoData
 	if result, err := s.gdb.getDbInfo(); err != nil {
 		return nil, err
 	} else {
-		v, _ := Json.Marshal(result.Info)
+		v, _ := Json.Marshal(result)
 		return &pb.GdbInfoData{Info: fmt.Sprintf("%s", v)}, nil
 	}
 }
@@ -430,7 +452,7 @@ func (s *server) AddUsers(_ context.Context, r *pb.AddUserInfo) (*pb.Rows, error
 }
 
 func (s *server) DeleteUsers(_ context.Context, r *pb.UserName) (*pb.Rows, error) {
-	g := UserName{Name: r.GetName()}
+	g := userName{Name: r.GetName()}
 	if result, err := s.gdb.deleteUsers(g); err != nil {
 		return &pb.Rows{}, err
 	} else {
@@ -520,7 +542,7 @@ func (s *server) UploadFileWithStream(stream pb.Page_UploadFileWithStreamServer)
 }
 
 func (s *server) AddItemsByExcel(_ context.Context, r *pb.FileInfo) (*pb.Rows, error) {
-	if result, err := s.gdb.AddItemsByExcel(r.GetGroupName(), "./uploadFiles/"+r.GetFileName()); err != nil {
+	if result, err := s.gdb.addItemsByExcel(r.GetGroupName(), "./uploadFiles/"+r.GetFileName()); err != nil {
 		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
@@ -528,7 +550,7 @@ func (s *server) AddItemsByExcel(_ context.Context, r *pb.FileInfo) (*pb.Rows, e
 }
 
 func (s *server) ImportHistoryByExcel(_ context.Context, r *pb.HistoryFileInfo) (*emptypb.Empty, error) {
-	if err := s.gdb.ImportHistoryByExcel("./uploadFiles/"+r.GetFileName(), r.GetItemNames(), r.GetSheetNames()...); err != nil {
+	if err := s.gdb.importHistoryByExcel("./uploadFiles/"+r.GetFileName(), r.GetItemNames(), r.GetSheetNames()...); err != nil {
 		return &emptypb.Empty{}, err
 	} else {
 		return &emptypb.Empty{}, nil
@@ -762,7 +784,7 @@ func (s *server) logInterceptor(c context.Context, req interface{}, info *grpc.U
 				r[strings.Replace(name, "Get", "", -1)] = result
 			}
 			rpcString, _ := Json.Marshal(r)
-			logMessage := LogMessage{
+			logMessage := logMessage{
 				RequestUrl:    info.FullMethod,
 				RequestMethod: "gRPC",
 				UserAgent:     md.Get("user-agent")[0],

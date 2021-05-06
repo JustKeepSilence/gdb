@@ -1,241 +1,283 @@
 package examples
 
+// examples about how to use gdb in go, for more details you
+// can see document:https://pkg.go.dev/github.com/JustKeepSilence/gdb
+
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	"github.com/JustKeepSilence/gdb/db"
 	"io/ioutil"
 	"log"
 	"math/rand"
-	"net/http"
-	"strconv"
-	"strings"
 	"time"
 )
 
-const (
-	ip   = "http://192.168.1.2"
-	port = "9000"
-)
-
-func main() {
-	//errorGroupTest()
-	mockWritingData("./test.xlsx")
-	//dbPath := "./db"         // path of data
-	//itemDbPath := "./itemDb" // path of itemDb
-	//g, err := db.NewGdb(dbPath, itemDbPath)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//fmt.Println("Open db successfully")
-	////add groups:
-	//groupInfos := []db.AddGroupInfo{{
-	//	GroupName:   "1DCS",
-	//	ColumnNames: []string{"groupName", "type", "description", "unit", "source"}, // every group has two cols: id and itemName
-	//}}
-	//if _, err := g.AddGroups(groupInfos...); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	fmt.Println("add group successfully")
-	//}
-	////add items
-	//if _, err := g.AddItems(db.AddItemInfo{
-	//	GroupName: "1DCS",
-	//	Values: []map[string]string{{"itemName": "testItem1", "groupName": "1DCS", "type": "", "description": "testItem1", "unit": "", "source": ""},
-	//		{"itemName": "testItem2", "type": "", "groupName": "1DCS", "description": "testItem2", "unit": "", "source": ""},
-	//		{"itemName": "testItem3", "type": "", "groupName": "1DCS", "description": "testItem3", "unit": "", "source": ""},
-	//		{"itemName": "testItem4", "type": "", "groupName": "1DCS", "description": "testItem4", "unit": "", "source": ""},
-	//		{"itemName": "testItem5", "type": "", "groupName": "1DCS", "description": "testItem5", "unit": "", "source": ""},
-	//		{"itemName": "testItem6", "type": "", "groupName": "1DCS", "description": "testItem6", "unit": "", "source": ""},
-	//		{"itemName": "testItem7", "type": "", "groupName": "1DCS", "description": "testItem7", "unit": "", "source": ""},
-	//		{"itemName": "testItem8", "type": "", "groupName": "1DCS", "description": "testItem8", "unit": "", "source": ""}},
-	//}); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	fmt.Println("add items successfully!")
-	//}
-	////add items by excel
-	//if _, err := g.AddItemsByExcel("1DCS", "./test.xlsx"); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	fmt.Println("add items by excel successfully!")
-	//}
-	////write realTime Data without timeStamp
-	//if _, err := g.BatchWrite(db.BatchWriteString{
-	//	GroupName: "1DCS",
-	//	ItemValues: []db.ItemValue{{
-	//		ItemName: "testItem1",
-	//		Value:    "-100",
-	//	}, {
-	//		ItemName: "testItem2",
-	//		Value:    "0",
-	//	}, {
-	//		ItemName: "testItem3",
-	//		Value:    "100",
-	//	}, {
-	//		ItemName: "testItem4",
-	//		Value:    "200",
-	//	}, {
-	//		ItemName: "testItem5",
-	//		Value:    "300",
-	//	}},
-	//	WithTimeStamp: false,
-	//}); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	fmt.Println("Write successfully")
-	//}
-	//// write realTime data without timeStamp
-	//t := fmt.Sprintf("%d", time.Now().Add(-1*time.Hour).Unix()) // unix timeStamp
-	//if _, err := g.BatchWrite(db.BatchWriteString{
-	//	GroupName: "1DCS",
-	//	ItemValues: []db.ItemValue{{
-	//		ItemName:  "testItem6",
-	//		Value:     "400",
-	//		TimeStamp: t,
-	//	}, {
-	//		ItemName:  "testItem7",
-	//		Value:     "500",
-	//		TimeStamp: t,
-	//	}, {
-	//		ItemName:  "testItem8",
-	//		Value:     "600",
-	//		TimeStamp: t,
-	//	}},
-	//	WithTimeStamp: true,
-	//}); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	fmt.Println("Write with timeStamp successfully")
-	//}
-	//// get realTime data, return the latest updated data
-	//itemNames := []string{"testItem1", "testItem2", "testItem3", "testItem4", "testItem5", "testItem6", "testItem7", "testItem8"}
-	//if c, err := g.GetRealTimeData(itemNames...); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	r, _ := json.Marshal(c)
-	//	fmt.Println(fmt.Sprintf("%s", r))
-	//}
-	//if c, err := g.GetRawHistoricalData(itemNames...); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	r, _ := json.Marshal(c)
-	//	fmt.Println(fmt.Sprintf("%s", r))
-	//}
-	//// get historical data with timeStamp
-	//timeStamps := [][]int{{1612413561}, {1612413561}, {1612413561}, {1612413561}, {1612413561}}
-	//if c, err := g.GetHistoricalDataWithStamp([]string{"testItem1", "testItem2", "testItem3", "testItem4", "testItem5"}, timeStamps...); err != nil {
-	//	log.Fatal(err)
-	//} else {
-	//	r, _ := json.Marshal(c)
-	//	fmt.Println(fmt.Sprintf("%s", r))
-	//}
+func initialDb() (*db.Gdb, error) {
+	if gdb, err := db.NewGdb("./leveldb", "./itemDb"); err != nil {
+		return nil, err
+	} else {
+		return gdb, nil
+	}
 }
 
-// mock writing data
-
-func mockWritingData(filePath string) {
-	contents, err := readExcel(filePath)
-	if err != nil {
-		fmt.Println(err)
-		time.Sleep(60 * time.Second)
-	}
-	count := 1
-	s := rand.NewSource(64)
-	rr := rand.New(s)
-	itemValues := []db.ItemValue{}
-	for index, itemName := range contents {
-		if itemName == "JL1_10DAS27A:HAG46AA101ZF.CIN          " {
-			fmt.Println(index)
-		}
-		itemValues = append(itemValues, db.ItemValue{
-			ItemName: strings.Trim(itemName, " "),
-			Value:    strconv.Itoa(rr.Intn(1000)),
-		})
-	}
-	for {
-		ct := time.Now().Second()
-		if ct == 10 || ct == 11 || ct == 12 || ct == 13 || ct == 20 || ct == 21 || ct == 22 || ct == 23 {
-			content := map[string]interface{}{"itemValues": itemValues, "groupName": "1DCS"}
-			requestData, _ := json.Marshal(content)
-			r, err := SendPost(requestData, count)
-			fmt.Printf(", wirting result: %s, v: %s\n", fmt.Sprintf("%s", r), itemValues[0].Value)
-			if err != nil {
-				log.Fatal(err)
-			}
-			count++
-			time.Sleep(time.Second)
+func group() {
+	if gdb, err := initialDb(); err != nil {
+		log.Fatal(err)
+	} else {
+		// add groups
+		if _, err := gdb.AddGroups(db.AddedGroupInfo{
+			GroupName:   "1DCS",
+			ColumnNames: []string{"Column1", "Column2", "Column3"}, // column name can't be itemName
+		}); err != nil {
+			log.Fatal(err)
 		} else {
-			values := []db.ItemValue{}
-			for _, itemName := range contents {
-				values = append(values, db.ItemValue{
-					ItemName: strings.Trim(itemName, " "),
-					Value:    strconv.Itoa(rr.Intn(1000)),
-				})
-			}
-			content := map[string]interface{}{"itemValues": values, "groupName": "1DCS"}
-			requestData, _ := json.Marshal(content)
-			r, err := SendPost(requestData, count)
-			fmt.Printf(", writing result: %s, v: %s\n", fmt.Sprintf("%s", r), values[0].Value)
-			if err != nil {
+			fmt.Println("add group 1DCS successfully")
+		}
+		//delete groups
+		if _, err := gdb.DeleteGroups(db.GroupNamesInfo{GroupNames: []string{"1DCS"}}); err != nil {
+			log.Fatal(err)
+		}
+		// get groups
+		if r, err := gdb.GetGroups(); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println("get groups:", r.GroupNames)
+		}
+		// get group property
+		if r, err := gdb.GetGroupProperty("1DCS", "1=1"); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println("get group property: ", r.ItemColumnNames, r.ItemCount)
+		}
+		// update group name
+		if _, err := gdb.UpdateGroupNames(db.UpdatedGroupNameInfo{
+			OldGroupName: "1DCS",
+			NewGroupName: "2DCS",
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			if r, err := gdb.GetGroups(); err != nil {
 				log.Fatal(err)
+			} else {
+				fmt.Println("update group name: ", r.GroupNames)
 			}
-			count++
-			time.Sleep(time.Second)
+		}
+		// update group column name
+		if _, err := gdb.UpdateGroupColumnNames(db.UpdatedGroupColumnNamesInfo{
+			GroupName:      "2DCS",
+			OldColumnNames: []string{"Column1", "Column2"},
+			NewColumnNames: []string{"Column11", "Column22"},
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			if r, err := gdb.GetGroupProperty("2DCS", "1=1"); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println("update group column name:", r.ItemColumnNames)
+			}
+		}
+		// delete group columns
+		if _, err := gdb.DeleteGroupColumns(db.DeletedGroupColumnNamesInfo{
+			GroupName:   "2DCS",
+			ColumnNames: []string{"Column3"},
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			if r, err := gdb.GetGroupProperty("2DCS", "1=1"); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println("delete group columns:", r.ItemColumnNames)
+			}
+		}
+		// add group columns
+		if _, err := gdb.AddGroupColumns(db.AddedGroupColumnsInfo{
+			GroupName:     "2DCS",
+			ColumnNames:   []string{"Column3", "Column4"},
+			DefaultValues: []string{"", ""},
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			if r, err := gdb.GetGroupProperty("2DCS", "1=1"); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println("add group columns:", r.ItemColumnNames)
+			}
 		}
 	}
 }
 
-func readExcel(filePath string) ([]string, error) {
-	f, err := excelize.OpenFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-	rows, err := f.Rows("Sheet1")
-	if err != nil {
-		return nil, err
-	}
-	insertedData := []string{}
-	for rows.Next() {
-		row, err := rows.Columns()
-		insertedData = append(insertedData, row[0])
-		if err != nil {
-			return nil, err
+func item() {
+	if gdb, err := initialDb(); err != nil {
+		log.Fatal(err)
+	} else {
+		if _, err := gdb.AddGroups(db.AddedGroupInfo{
+			GroupName:   "1DCS",
+			ColumnNames: []string{"description"},
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println("add 1DCS successfully!")
 		}
-
+		// add items
+		if _, err := gdb.AddItems(db.AddedItemsInfo{
+			GroupName: "1DCS",
+			ItemValues: []map[string]string{{"itemName": "x", "description": "x"}, {"itemName": "y", "description": "y"}, {"itemName": "z", "description": "z"},
+				{"itemName": "item1", "description": "item1"}, {"itemName": "item2", "description": "item2"}},
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			// startRow = -1 represent get all items with the given condition
+			if r, err := gdb.GetItems(db.ItemsInfo{
+				GroupName:   "1DCS",
+				Condition:   "1=1",
+				ColumnNames: "*",
+				StartRow:    -1,
+				RowCount:    0,
+			}); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println(r.ItemValues)
+			}
+			if r, err := gdb.GetItems(db.ItemsInfo{
+				GroupName:   "1DCS",
+				Condition:   "itemName like '%item%'",
+				ColumnNames: "itemName",
+				StartRow:    -1,
+				RowCount:    0,
+			}); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println(r.ItemValues)
+			}
+		}
+		// delete items
+		if _, err := gdb.DeleteItems(db.DeletedItemsInfo{
+			GroupName: "1DCS",
+			Condition: "itemName like '%item%'",
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			if r, err := gdb.GetItems(db.ItemsInfo{
+				GroupName:   "1DCS",
+				Condition:   "1=1",
+				ColumnNames: "*",
+				StartRow:    -1,
+				RowCount:    0,
+			}); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println(r.ItemValues)
+			}
+		}
+		// update items
+		if _, err := gdb.UpdateItems(db.UpdatedItemsInfo{
+			GroupName: "1DCS",
+			Clause:    "description='x1'",
+			Condition: "itemName='x'",
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			if r, err := gdb.GetItems(db.ItemsInfo{
+				GroupName:   "1DCS",
+				Condition:   "1=1",
+				ColumnNames: "itemName, description",
+				StartRow:    -1,
+				RowCount:    0,
+			}); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println(r.ItemValues)
+			}
+		}
+		// check items
+		if err := gdb.CheckItems("1DCS", "x", "x1"); err != nil {
+			fmt.Println(err)
+		}
+		// clean group items
+		if _, err := gdb.CleanGroupItems("1DCS"); err != nil {
+			log.Fatal(err)
+		} else {
+			if r, err := gdb.GetItems(db.ItemsInfo{
+				GroupName:   "1DCS",
+				Condition:   "1=1",
+				ColumnNames: "*",
+				StartRow:    -1,
+				RowCount:    0,
+			}); err != nil {
+				log.Fatal(err)
+			} else {
+				fmt.Println(r)
+			}
+		}
 	}
-	return insertedData[1:], nil
 }
 
-func SendPost(requestBody []byte, count int) ([]byte, error) {
-	sb := strings.Builder{}
-	sb.Write([]byte(ip))
-	sb.Write([]byte(":"))
-	sb.Write([]byte(port))
-	sb.Write([]byte("/data/batchWrite"))
-	url := sb.String()
-	buf := bytes.NewBuffer(requestBody)
-	request, err := http.NewRequest("POST", url, buf)
-	if err != nil {
-		return nil, fmt.Errorf("fail in constructing request: %s", err)
+func data() {
+	if gdb, err := initialDb(); err != nil {
+		log.Fatal(err)
+	} else {
+		// batch write, y = 2 * x
+		if _, err := gdb.BatchWrite([]db.ItemValue{{ItemName: "x", Value: "1"}, {ItemName: "y", Value: "2"}}...); err != nil {
+			log.Fatal(err)
+		} else {
+			// get latest updated value of given items
+			if r, err := gdb.GetRealTimeData("x", "y"); err != nil {
+				log.Fatal(err)
+			} else {
+				d, _ := json.Marshal(r)
+				fmt.Println(string(d))
+			}
+		}
+		// write historical data
+		// mock one hour historical data
+		var xData, yData, ts []string
+		now := time.Now()
+		fmt.Println("now: ", now.Format("2006-01-02 15:04:05"))
+		r := rand.New(rand.NewSource(99))
+		for i := 0; i < 3600; i++ {
+			x := r.Intn(3600)
+			y := 2 * x
+			t := now.Add(time.Second*time.Duration(i)).Unix() + 8*3600
+			xData = append(xData, fmt.Sprintf("%d", x))
+			yData = append(yData, fmt.Sprintf("%d", y))
+			ts = append(ts, fmt.Sprintf("%d", t))
+		}
+		if err := gdb.BatchWriteHistoricalData([]db.HistoricalItemValue{{ItemName: "x", Values: xData, TimeStamps: ts}, {ItemName: "y", Values: yData, TimeStamps: ts}}...); err != nil {
+			log.Fatal(err)
+		} else {
+			// get raw historical data for debugging
+			if r, err := gdb.GetRawHistoricalData("x"); err != nil {
+				log.Fatal(err)
+			} else {
+				d, _ := json.Marshal(r)
+				_ = ioutil.WriteFile("./rawX.txt", d, 0644)
+			}
+			// get historical data with given itemName, startTime, endTime and intervals
+			stX := int(now.Add(time.Minute*5).Unix() + 8*3600)
+			etX := int(now.Add(time.Minute*25).Unix() + 8*3600)
+			stY := int(now.Add(time.Minute*35).Unix() + 8*3600)
+			etY := int(now.Add(time.Minute*55).Unix() + 8*3600)
+			if r, err := gdb.GetHistoricalData([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}); err != nil {
+				log.Fatal(err)
+			} else {
+				d, _ := json.Marshal(r)
+				_ = ioutil.WriteFile("./hX.txt", d, 0644)
+			}
+			// get historical data with given itemName
+			if r, err := gdb.GetHistoricalDataWithStamp([]string{"x", "y"}, [][]int{{stX, etX}, {stY, etY}}...); err != nil {
+				log.Fatal(err)
+			} else {
+				d, _ := json.Marshal(r)
+				fmt.Println(string(d))
+			}
+			// get historical data with condition
+			if r, err := gdb.GetHistoricalDataWithCondition([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}, `item["x"] > 0 && item["y"] > 1000`, []db.DeadZone{}...); err != nil {
+				log.Fatal(err)
+			} else {
+				d, _ := json.Marshal(r)
+				_ = ioutil.WriteFile("./f.txt", d, 0644)
+			}
+		}
 	}
-	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	request.Header.Set("Authorization", `{"username": "admin", "password": "admin@123"}`)
-	client := http.Client{}
-	t0 := time.Now()
-	resp, err := client.Do(request.WithContext(context.TODO()))
-	t1 := time.Now()
-	fmt.Printf("[%s]: %d wirting consuming :%d ms", time.Now().Format("2006-01-02 15:04:05"), count, t1.Sub(t0).Milliseconds())
-	if err != nil {
-		return nil, fmt.Errorf("fail in requesting: %s", err)
-	}
-	defer resp.Body.Close()
-	respBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("fail in reading response: %s", err)
-	}
-	return respBytes, nil
 }

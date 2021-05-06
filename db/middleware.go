@@ -1,8 +1,10 @@
+// +build gdbClient
+
 /*
 creatTime: 2021/3/18
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
-goVersion: 1.15.3
+goVersion: 1.16
 */
 
 package db
@@ -45,7 +47,7 @@ func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData []byte, requestBody interface{}) {
 	if level, ok := c.Request.Header["Loglevel"]; ok {
 		b, _ := Json.Marshal(requestBody)
-		logMessage := LogMessage{
+		logMessage := logMessage{
 			RequestUrl:    c.Request.URL.String(),
 			RequestMethod: c.Request.Proto,
 			UserAgent:     c.Request.UserAgent(),

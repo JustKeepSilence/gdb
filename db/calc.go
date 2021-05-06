@@ -1,3 +1,5 @@
+// +build gdbClient
+
 /*
 creatTime: 2020/12/26
 creator: JustKeepSilence
@@ -13,7 +15,7 @@ import (
 )
 
 // test
-func (gdb *Gdb) testCalculation(expression string) (CalculationResult, error) {
+func (gdb *Gdb) testCalculation(expression string) (calculationResult, error) {
 	loop := eventloop.NewEventLoop()
 	var runError error
 	var result goja.Value
@@ -32,17 +34,17 @@ func (gdb *Gdb) testCalculation(expression string) (CalculationResult, error) {
 		result, runError = vm.RunProgram(p)
 	})
 	if runError != nil {
-		return CalculationResult{}, runTimeError{"runTimeError:" + runError.Error()}
+		return calculationResult{}, runTimeError{"runTimeError:" + runError.Error()}
 	}
-	return CalculationResult{result.Export()}, nil
+	return calculationResult{result.Export()}, nil
 }
 
-func (gdb *Gdb) getCalculationItem(condition string) (CalcItemsInfo, error) {
+func (gdb *Gdb) getCalculationItem(condition string) (calcItemsInfo, error) {
 	rows, err := query(gdb.ItemDbPath, "select id, description, expression, status, duration, errorMessage, createTime, updatedTime from calc_cfg where "+condition)
 	if err != nil {
-		return CalcItemsInfo{}, err
+		return calcItemsInfo{}, err
 	}
-	return CalcItemsInfo{rows}, nil
+	return calcItemsInfo{rows}, nil
 }
 
 func (gdb *Gdb) updateCalculationItem(info updatedCalcInfo) (Rows, error) {

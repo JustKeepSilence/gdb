@@ -2,7 +2,7 @@
 creatTime: 2020/12/17
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
-goVersion: 1.15.3
+goVersion: 1.16
 */
 
 package db
@@ -84,7 +84,7 @@ type GroupPropertyInfo struct {
 	ItemColumnNames []string `json:"itemColumnNames"`
 }
 
-type QueryGroupPropertyInfo struct {
+type queryGroupPropertyInfo struct {
 	GroupName string `json:"groupName" binding:"required"`
 	Condition string `json:"condition" binding:"required"`
 }
@@ -130,17 +130,22 @@ type DeletedItemsInfo struct {
 type ItemsInfo struct {
 	GroupName   string `json:"groupName" binding:"required"`
 	Condition   string `json:"condition" binding:"required"`
-	Clause      string `json:"clause"`
 	ColumnNames string `json:"columnNames" binding:"required"`
 	StartRow    int    `json:"startRow"`
 	RowCount    int    `json:"rowCount"`
+}
+
+type UpdatedItemsInfo struct {
+	GroupName string `json:"groupName" binding:"required"`
+	Condition string `json:"condition" binding:"required"`
+	Clause    string `json:"clause" binding:"required"`
 }
 
 type GdbItems struct {
 	ItemValues []map[string]string `json:"itemValues"`
 }
 
-type GdbItemsWithCount struct {
+type gdbItemsWithCount struct {
 	ItemCount int64 `json:"itemCount"`
 	GdbItems
 }
@@ -163,37 +168,37 @@ type HistoricalItemValue struct {
 	TimeStamps []string `json:"timeStamps" binding:"required"`
 }
 
-type BatchWriteString struct {
+type batchWriteString struct {
 	ItemValues []ItemValue `json:"itemValues" binding:"required"`
 }
 
-type BatchWriteHistoricalString struct {
+type batchWriteHistoricalString struct {
 	HistoricalItemValues []HistoricalItemValue `json:"historicalItemValues" binding:"required"`
 }
 
-type QueryRealTimeDataString struct {
+type queryRealTimeDataString struct {
 	ItemNames []string `json:"itemNames"` // ItemNames
 }
 
-type GdbRealTimeData struct {
+type gdbRealTimeData struct {
 	RealTimeData cmap.ConcurrentMap `json:"realTimeData"`
 }
 
-type QueryHistoricalDataString struct {
+type queryHistoricalDataString struct {
 	ItemNames  []string `json:"itemNames" binding:"required"`  // ItemNames
 	StartTimes []int    `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
 	EndTimes   []int    `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
 	Intervals  []int    `json:"intervals" binding:"required"`  // interval
 }
 
-type QuerySpeedHistoryDataString struct {
+type querySpeedHistoryDataString struct {
 	ItemName   string `json:"itemName" binding:"required"`
 	StartTimes []int  `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
 	EndTimes   []int  `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
 	Interval   int    `json:"interval" binding:"required"`   // interval
 }
 
-type QueryHistoricalDataWithTimeStampString struct {
+type queryHistoricalDataWithTimeStampString struct {
 	ItemNames  []string `json:"itemNames"`  // ItemNames
 	TimeStamps [][]int  `json:"timeStamps"` // time stamp
 }
@@ -203,7 +208,7 @@ type DeadZone struct {
 	DeadZoneCount int    `json:"deadZoneCount"`
 }
 
-type QueryHistoricalDataWithConditionString struct {
+type queryHistoricalDataWithConditionString struct {
 	ItemNames       []string   `json:"itemNames"`       // ItemNames
 	TimeStamps      [][]int    `json:"timeStamps"`      // time stamp
 	StartTimes      []int      `json:"startTimes"`      // startTime Unix TimeStamp
@@ -213,11 +218,11 @@ type QueryHistoricalDataWithConditionString struct {
 	DeadZones       []DeadZone `json:"deadZones"`       // deadZone filter condition
 }
 
-type GdbHistoricalData struct {
+type gdbHistoricalData struct {
 	HistoricalData cmap.ConcurrentMap `json:"historicalData"`
 }
 
-type GdbInfoData struct {
+type gdbInfoData struct {
 	Info cmap.ConcurrentMap `json:"info"`
 }
 
@@ -237,12 +242,12 @@ type userToken struct {
 	Token string `json:"token"`
 }
 
-type UserName struct {
+type userName struct {
 	Name string `json:"name" binding:"required"`
 }
 
-type UserInfo struct {
-	UserName `json:"userName" binding:"required"`
+type userInfo struct {
+	userName `json:"userName" binding:"required"`
 	Role     []string `json:"role" binding:"required"`
 }
 
@@ -268,12 +273,12 @@ type queryLogsInfo struct {
 	Name      string `json:"name" binding:"required"`
 }
 
-type LogsInfo struct {
+type logsInfo struct {
 	Infos []map[string]string `json:"infos"`
 	Count int                 `json:"count"`
 }
 
-type LogMessage struct {
+type logMessage struct {
 	RequestUrl    string `json:"requestUrl"`
 	RequestMethod string `json:"requestMethod"`
 	UserAgent     string `json:"userAgent"`
@@ -291,7 +296,7 @@ type addedCalcItemInfo struct {
 	Description string `json:"description"`
 }
 
-type CalculationResult struct {
+type calculationResult struct {
 	Result interface{} `json:"result"`
 }
 
@@ -299,7 +304,7 @@ type queryCalcItemsInfo struct {
 	Condition string `json:"condition"`
 }
 
-type CalcItemsInfo struct {
+type calcItemsInfo struct {
 	Infos []map[string]string `json:"infos"`
 }
 
@@ -350,11 +355,11 @@ func (ge groupNameError) Error() string {
 	return ge.ErrorInfo
 }
 
-type ColumnNameError struct {
+type columnNameError struct {
 	ErrorInfo string
 }
 
-func (cn ColumnNameError) Error() string {
+func (cn columnNameError) Error() string {
 	return cn.ErrorInfo
 }
 
@@ -382,11 +387,11 @@ func (rt runTimeError) Error() string {
 	return rt.ErrorInfo
 }
 
-type ExcelError struct {
+type excelError struct {
 	ErrorInfo string
 }
 
-func (oe ExcelError) Error() string {
+func (oe excelError) Error() string {
 	return oe.ErrorInfo
 }
 

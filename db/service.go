@@ -1,8 +1,10 @@
+// +build gdbClient
+
 /*
 creatTime: 2021/2/7
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
-goVersion: 1.15.3
+goVersion: 1.16
 */
 
 package db
@@ -107,7 +109,6 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 		group.POST("/updateGroupColumnNames", g.updateGroupColumnNamesHandler)
 		group.POST("/deleteGroupColumns", g.deleteGroupColumnsHandler)
 		group.POST("/addGroupColumns", g.addGroupColumnsHandler)
-		group.POST("/cleanGroupItems", g.cleanGroupItemsHandler)
 	}
 	item := router.Group("/item") // item handler
 	{
@@ -117,6 +118,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 		item.POST("/getItemsWithCount", g.handleGetItemsWithCount) // get item with  count
 		item.POST("/updateItems", g.updateItemsHandler)
 		item.POST("/checkItems", g.checkItemsHandler)
+		item.POST("/cleanGroupItems", g.cleanGroupItemsHandler)
 	}
 	data := router.Group("/data") // data handler
 	{
@@ -126,8 +128,6 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 		data.POST("/getHistoricalData", g.getHistoricalDataHandler)
 		data.POST("/getHistoricalDataWithStamp", g.getHistoricalDataWithStampHandler)
 		data.POST("/getHistoricalDataWithCondition", g.getHistoricalDataWithConditionHandler)
-		data.POST("/getDbInfo", g.getDbInfoHandler)
-		data.POST("/getDbInfoHistory", g.getDbInfoHistoryHandler)
 		data.POST("/getRawData", g.getRawDataHandler)
 	}
 	pageRequest := router.Group("/page") // page request handler
@@ -147,6 +147,8 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 		pageRequest.POST("/getLogs", g.getLogsHandler)     // get logs
 		pageRequest.POST("/deleteLogs", g.deleteLogsHandler)
 		pageRequest.POST("/downloadFile", g.downloadFileHandler)
+		pageRequest.POST("/getDbInfo", g.getDbInfoHandler)
+		pageRequest.POST("/getDbInfoHistory", g.getDbInfoHistoryHandler)
 	}
 	calcRequest := router.Group("/calculation")
 	{

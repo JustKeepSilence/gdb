@@ -1,8 +1,10 @@
+// +build gdbClient
+
 /*
 creatTime: 2020/12/10
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
-goVersion: 1.15.3
+goVersion: 1.16
 */
 
 package db
@@ -22,7 +24,7 @@ import (
 // user login
 func (gdb *Gdb) userLogin(info authInfo) (userToken, error) {
 	userName := info.UserName
-	if r, err := query(gdb.ItemDbPath, "select passWord, isLogin from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
+	if r, err := query(gdb.ItemDbPath, "select passWord from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
 		return userToken{}, userNameError{"userNameError: " + userName}
 	} else {
 		if r[0]["passWord"] != info.PassWord {
@@ -30,7 +32,7 @@ func (gdb *Gdb) userLogin(info authInfo) (userToken, error) {
 		} else {
 			b := []byte(userName + "@seu" + time.Now().Format(timeFormatString) + "JustKeepSilence")
 			token := fmt.Sprintf("%x", md5.Sum(b)) // result is 32-bit lowercase
-			if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set token='"+token+"', isLogin='true'"+" where userName='"+userName+"'"); err != nil {
+			if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set token='"+token+"'"+" where userName='"+userName+"'"); err != nil {
 				return userToken{}, err
 			} else {
 				return userToken{token}, nil
@@ -47,12 +49,12 @@ func (gdb *Gdb) userLogout(userName string) (Rows, error) {
 	}
 }
 
-func (gdb *Gdb) getUserInfo(userName string) (UserInfo, error) {
-	if r, err := query(gdb.ItemDbPath, "select role from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
-		return UserInfo{}, err
+func (gdb *Gdb) getUserInfo(n string) (userInfo, error) {
+	if r, err := query(gdb.ItemDbPath, "select role from user_cfg where userName='"+n+"'"); err != nil || len(r) == 0 {
+		return userInfo{}, err
 	} else {
-		return UserInfo{
-			UserName: UserName{userName},
+		return userInfo{
+			userName: userName{Name: n},
 			Role:     []string{r[0]["role"]},
 		}, nil
 	}
@@ -74,7 +76,7 @@ func (gdb *Gdb) addUsers(info addedUserInfo) (Rows, error) {
 	}
 }
 
-func (gdb *Gdb) deleteUsers(name UserName) (Rows, error) {
+func (gdb *Gdb) deleteUsers(name userName) (Rows, error) {
 	if _, err := updateItem(gdb.ItemDbPath, "delete from user_cfg where userName='"+name.Name+"'"); err != nil {
 		return Rows{}, err
 	} else {
@@ -99,11 +101,11 @@ func (gdb *Gdb) updateUsers(info updatedUserInfo) (Rows, error) {
 	}
 }
 
-// AddItemsByExcel add items by excel
-func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
+// addItemsByExcel add items by excel
+func (gdb *Gdb) addItemsByExcel(groupName, filePath string) (Rows, error) {
 	f, err := excelize.OpenFile(filePath)
 	if err != nil {
-		return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
+		return Rows{-1}, excelError{"excelError: " + err.Error()}
 	} else {
 		// open excel successfully
 		sheetName := f.GetSheetList()[0] // use first worksheet
@@ -112,7 +114,7 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 		var items AddedItemsInfo
 		var values []map[string]string
 		if err != nil {
-			return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
+			return Rows{-1}, excelError{"excelError: " + err.Error()}
 		} else {
 			// get rows successfully
 			count := 0
@@ -121,7 +123,7 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 					// check headers
 					h, err := rows.Columns() // columns of excel
 					if err != nil {
-						return Rows{-1}, ExcelError{"ExcelError: " + err.Error()}
+						return Rows{-1}, excelError{"excelError: " + err.Error()}
 					} else {
 						// get headers successfully
 						cols, err := gdb.GetGroupProperty(groupName, "1=1")
@@ -130,7 +132,7 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 						}
 						headers = cols.ItemColumnNames // columns of database
 						if !equal(h, headers) {
-							return Rows{-1}, ExcelError{"ExcelError: Inconsistent header"}
+							return Rows{-1}, excelError{"excelError: Inconsistent header"}
 						}
 					}
 				} else {
@@ -161,9 +163,9 @@ func (gdb *Gdb) AddItemsByExcel(groupName, filePath string) (Rows, error) {
 	}
 }
 
-func (gdb *Gdb) ImportHistoryByExcel(fileName string, itemNames []string, sheetNames ...string) error {
+func (gdb *Gdb) importHistoryByExcel(fileName string, itemNames []string, sheetNames ...string) error {
 	if f, err := excelize.OpenFile(fileName); err != nil {
-		return ExcelError{"ExcelError: " + err.Error()}
+		return excelError{"excelError: " + err.Error()}
 	} else {
 		infos := []HistoricalItemValue{}
 		for index := 0; index < len(itemNames); index++ {
@@ -191,7 +193,7 @@ func (gdb *Gdb) ImportHistoryByExcel(fileName string, itemNames []string, sheetN
 				infos = append(infos, info)
 			}
 		}
-		if err := gdb.BatchWriteHistoricalData(BatchWriteHistoricalString{HistoricalItemValues: infos}); err != nil {
+		if err := gdb.BatchWriteHistoricalData(infos...); err != nil {
 			return err
 		} else {
 			return nil
@@ -209,7 +211,7 @@ func getJsCode(fileName string) (string, error) {
 	}
 }
 
-func (gdb *Gdb) getLogs(info queryLogsInfo) (LogsInfo, error) {
+func (gdb *Gdb) getLogs(info queryLogsInfo) (logsInfo, error) {
 	var queryStringTemplate, queryCountStringTemplate string
 	if info.Level == "all" {
 		queryStringTemplate = `select * from log_cfg where (insertTime > '{{.StartTime}}' and insertTime < '{{.EndTime}}') and (requestUser = '{{.Name}}' or requestUser = '') Limit {{.RowCount}} offset {{.StartRow}}`
@@ -222,21 +224,21 @@ func (gdb *Gdb) getLogs(info queryLogsInfo) (LogsInfo, error) {
 	sqlTemplate := template.Must(template.New("sqlTemplate").Parse(queryStringTemplate))
 	sqlQueryTemplate := template.Must(template.New("sqlQueryTemplate").Parse(queryCountStringTemplate))
 	if err := sqlTemplate.Execute(&b, info); err != nil {
-		return LogsInfo{}, err
+		return logsInfo{}, err
 	} else {
 		if err := sqlQueryTemplate.Execute(&qb, info); err != nil {
-			return LogsInfo{}, err
+			return logsInfo{}, err
 		} else {
 			if result, err := query(gdb.ItemDbPath, b.String()); err != nil {
-				return LogsInfo{}, err
+				return logsInfo{}, err
 			} else {
 				if c, err := query(gdb.ItemDbPath, qb.String()); err != nil {
-					return LogsInfo{}, err
+					return logsInfo{}, err
 				} else {
 					if count, err := strconv.Atoi(c[0]["count"]); err != nil {
-						return LogsInfo{}, err
+						return logsInfo{}, err
 					} else {
-						return LogsInfo{result, count}, nil
+						return logsInfo{result, count}, nil
 					}
 				}
 			}

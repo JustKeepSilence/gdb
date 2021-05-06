@@ -2,7 +2,7 @@
 creatTime: 2020/12/8
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
-goVersion: 1.15.3
+goVersion: 1.16
 */
 
 package db
@@ -15,10 +15,7 @@ import (
 	"strings"
 )
 
-/*
-ItemHandler
-*/
-
+// AddItems to gdb,you can not add existed items
 func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	itemValues := itemInfo.ItemValues
@@ -57,7 +54,7 @@ func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 				}
 			} else {
 				// key not exist
-				return Rows{-1}, ColumnNameError{"ColumnNameError: " + columnNames[i]}
+				return Rows{-1}, columnNameError{"columnNameError: " + columnNames[i]}
 			}
 
 		}
@@ -78,6 +75,8 @@ func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 	return Rows{len(itemValues)}, nil
 }
 
+// DeleteItems delete items from given group according to condition, condition is where clause
+// in sqlite
 func (gdb *Gdb) DeleteItems(itemInfo DeletedItemsInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
@@ -96,6 +95,9 @@ func (gdb *Gdb) DeleteItems(itemInfo DeletedItemsInfo) (Rows, error) {
 	return Rows{int(rows)}, nil
 }
 
+// GetItems get items from gdb according to the given columnName, condition,startRow and rowCount.
+// columnName is the columnName you want to get, and condition is where clause, startRow and rowCount
+// is used to page query, if startRow is -1, that is get all items without pagination
 func (gdb *Gdb) GetItems(itemInfo ItemsInfo) (GdbItems, error) {
 	groupName := itemInfo.GroupName // groupName
 	columns := itemInfo.ColumnNames // column
@@ -120,25 +122,27 @@ func (gdb *Gdb) GetItems(itemInfo ItemsInfo) (GdbItems, error) {
 	return GdbItems{ItemValues: rows}, nil
 }
 
-func (gdb *Gdb) GetItemsWithCount(itemInfo ItemsInfo) (GdbItemsWithCount, error) {
+func (gdb *Gdb) getItemsWithCount(itemInfo ItemsInfo) (gdbItemsWithCount, error) {
 	condition := itemInfo.Condition
 	groupName := itemInfo.GroupName
 	c, err := query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
 	if err != nil {
-		return GdbItemsWithCount{}, err
+		return gdbItemsWithCount{}, err
 	}
 	itemValues, err := gdb.GetItems(itemInfo)
 	if err != nil {
-		return GdbItemsWithCount{}, nil
+		return gdbItemsWithCount{}, nil
 	}
 	count, err := strconv.ParseInt(c[0]["count"], 10, 64)
 	if err != nil {
-		return GdbItemsWithCount{}, nil
+		return gdbItemsWithCount{}, nil
 	}
-	return GdbItemsWithCount{count, itemValues}, nil
+	return gdbItemsWithCount{count, itemValues}, nil
 }
 
-func (gdb *Gdb) UpdateItems(itemInfo ItemsInfo) (Rows, error) {
+// UpdateItems update items in gdb according to given condition and clause.condition is where
+// clause in sqlite and clause is set clause in sqlite
+func (gdb *Gdb) UpdateItems(itemInfo UpdatedItemsInfo) (Rows, error) {
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
 	clause := itemInfo.Clause
@@ -157,6 +161,7 @@ func (gdb *Gdb) UpdateItems(itemInfo ItemsInfo) (Rows, error) {
 	}
 }
 
+// CheckItems check whether the given items existed in the given group
 func (gdb *Gdb) CheckItems(groupName string, itemNames ...string) error {
 	for _, itemName := range itemNames {
 		sqlString := "select 1 from '" + groupName + "' where itemName='" + itemName + "' limit 1"

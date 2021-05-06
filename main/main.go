@@ -1,3 +1,5 @@
+// +build gdbClient
+
 package main
 
 import (

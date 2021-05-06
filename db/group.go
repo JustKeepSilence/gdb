@@ -1,7 +1,8 @@
 /*
-creatTime: 2020/11/11 9:19
+creatTime: 2020/11/11
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
+goVersion: 1.16
 */
 
 package db
@@ -22,11 +23,6 @@ and the corresponding group table in the SQLite database
 every group has two default columns:id and itemName, so when adding groups, needn't to
 specify the information of theses to columns
 */
-
-type OperationResponseData struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
 
 const (
 	/* Predefined keywords, the name of the group can not be repeated in the first place
@@ -54,7 +50,7 @@ const (
     			  `
 )
 
-// AddGroups add group to GDB
+// AddGroups add group to gdb
 func (gdb *Gdb) AddGroups(groupInfos ...AddedGroupInfo) (Rows, error) {
 	groupNames := [][]string{}
 	columnNames := [][]string{}
@@ -65,7 +61,7 @@ func (gdb *Gdb) AddGroups(groupInfos ...AddedGroupInfo) (Rows, error) {
 		}
 		index, r := checkColumnNames(groupInfo.ColumnNames...) // check columnName
 		if index != -1 {
-			return Rows{}, ColumnNameError{"ColumnNameError:" + groupInfo.ColumnNames[index]}
+			return Rows{}, columnNameError{"columnNameError:" + groupInfo.ColumnNames[index]}
 		}
 		columnNames = append(columnNames, r)
 		groupNames = append(groupNames, []string{groupName})
@@ -99,7 +95,7 @@ func (gdb *Gdb) AddGroups(groupInfos ...AddedGroupInfo) (Rows, error) {
 	return Rows{len(groupNames)}, nil
 }
 
-// DeleteGroups /*delete group from GDB
+// DeleteGroups delete group from gdb
 func (gdb *Gdb) DeleteGroups(groupInfos GroupNamesInfo) (Rows, error) {
 	c := 0
 	groupNames := groupInfos.GroupNames
@@ -135,7 +131,8 @@ func (gdb *Gdb) GetGroups() (GroupNamesInfo, error) {
 	return GroupNamesInfo{groupNames}, nil
 }
 
-// GetGroupProperty get the column and item count of the given groupName
+// GetGroupProperty get the column name and item count of the given groupName and condition
+// condition is the where clause of sqlite
 func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo, error) {
 	c, err := query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names of given table
 	if err != nil {
@@ -152,7 +149,7 @@ func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo
 	return GroupPropertyInfo{ItemCount: itemCount[0]["count"], ItemColumnNames: columnNames[1:]}, nil
 }
 
-// UpdateGroupNames update groupNames, the operation is atomic
+// UpdateGroupNames update groupNames
 func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupNameInfo) (Rows, error) {
 	c := 0
 	sqlStrings := []string{}
@@ -181,19 +178,19 @@ func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupNameInfo) (Rows, erro
 	return Rows{c}, nil
 }
 
-// UpdateGroupColumnNames update column names of group, the operation is atomic
+// UpdateGroupColumnNames update column names of group
 func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnNamesInfo) (Cols, error) {
 	oldColumnNames, newColumnNames, groupName := info.OldColumnNames, info.NewColumnNames, info.GroupName
 	if len(oldColumnNames) != len(newColumnNames) {
-		return Cols{}, ColumnNameError{"columnNameError: inconsistent columnNames"}
+		return Cols{}, columnNameError{"columnNameError: inconsistent columnNames"}
 	}
 	index, addedColumnNames := checkColumnNames(newColumnNames...) // check whether new columnName is valid
 	if index != -1 {
-		return Cols{}, ColumnNameError{"columnNameError: invalid columnName " + addedColumnNames[index]}
+		return Cols{}, columnNameError{"columnNameError: invalid columnName " + addedColumnNames[index]}
 	}
 	index, checkedOldColumnNames := checkColumnNames(oldColumnNames...) // check whether to modify id, itemName
 	if index != -1 {
-		return Cols{}, ColumnNameError{"columnError: can't modify column " + oldColumnNames[index]}
+		return Cols{}, columnNameError{"columnError: can't modify column " + oldColumnNames[index]}
 	}
 	sqlStrings := []string{}
 	for i := 0; i < len(checkedOldColumnNames); i++ {
@@ -206,11 +203,11 @@ func (gdb *Gdb) UpdateGroupColumnNames(info UpdatedGroupColumnNamesInfo) (Cols, 
 	return Cols{len(newColumnNames)}, nil
 }
 
-// DeleteGroupColumns delete columns from group, the operation is atomic
+// DeleteGroupColumns delete columns from group
 func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, error) {
 	groupName, deletedColumnNames := info.GroupName, info.ColumnNames
 	if contains(deletedColumnNames...) {
-		return Cols{}, ColumnNameError{"columnNameError"}
+		return Cols{}, columnNameError{"columnNameError"}
 	}
 	r, err := gdb.GetGroupProperty(groupName, "1=1") // get existed columns of given group
 	if err != nil {
@@ -222,7 +219,7 @@ func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, erro
 	ds := mapset.NewSet(convertStringToInterface(deletedColumnNames...)...) // deleted groups
 	// check whether the column to be deleted exist
 	if !ds.IsSubset(cs) {
-		return Cols{}, ColumnNameError{"columnNameError: some columns don't exist"}
+		return Cols{}, columnNameError{"columnNameError: some columns don't exist"}
 	}
 	rs := cs.Difference(ds)
 	rs.Remove("itemName")

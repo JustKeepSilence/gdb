@@ -1,7 +1,8 @@
 /*
-creatTime: 2020/11/10 14:51
+creatTime: 2020/11/10
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
+goVersion: 1.16
 */
 
 package db

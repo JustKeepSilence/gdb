@@ -1,7 +1,8 @@
 /*
-creatTime: 2020/11/9 20:53
+creatTime: 2020/11/9
 creator: JustKeepSilence
 github: https://github.com/JustKeepSilence
+goVersion: 1.16
 */
 
 package db
@@ -27,10 +28,10 @@ type Gdb struct {
 }
 
 const (
-	TimeKey      = "currentTimeStamp"
-	Ram          = "ram"
-	WrittenItems = "writtenItems"
-	Speed        = "speed"
+	timeKey      = "currentTimeStamp"
+	ram          = "ram"
+	writtenItems = "writtenItems"
+	speed        = "speed"
 )
 
 func (gdb *Gdb) initialDb() error {

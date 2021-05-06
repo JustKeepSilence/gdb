@@ -27,7 +27,6 @@ type GroupClient interface {
 	UpdateGroupColumnNames(ctx context.Context, in *UpdatedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error)
 	DeleteGroupColumns(ctx context.Context, in *DeletedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error)
 	AddGroupColumns(ctx context.Context, in *AddedGroupColumnsInfo, opts ...grpc.CallOption) (*Cols, error)
-	CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error)
 }
 
 type groupClient struct {
@@ -110,15 +109,6 @@ func (c *groupClient) AddGroupColumns(ctx context.Context, in *AddedGroupColumns
 	return out, nil
 }
 
-func (c *groupClient) CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
-	err := c.cc.Invoke(ctx, "/model.Group/CleanGroupItems", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // GroupServer is the server API for Group service.
 // All implementations must embed UnimplementedGroupServer
 // for forward compatibility
@@ -131,7 +121,6 @@ type GroupServer interface {
 	UpdateGroupColumnNames(context.Context, *UpdatedGroupColumnNamesInfo) (*Cols, error)
 	DeleteGroupColumns(context.Context, *DeletedGroupColumnNamesInfo) (*Cols, error)
 	AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*Cols, error)
-	CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error)
 	mustEmbedUnimplementedGroupServer()
 }
 
@@ -162,9 +151,6 @@ func (UnimplementedGroupServer) DeleteGroupColumns(context.Context, *DeletedGrou
 }
 func (UnimplementedGroupServer) AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*Cols, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddGroupColumns not implemented")
-}
-func (UnimplementedGroupServer) CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CleanGroupItems not implemented")
 }
 func (UnimplementedGroupServer) mustEmbedUnimplementedGroupServer() {}
 
@@ -323,24 +309,6 @@ func _Group_AddGroupColumns_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Group_CleanGroupItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GroupNamesInfo)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(GroupServer).CleanGroupItems(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/model.Group/CleanGroupItems",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GroupServer).CleanGroupItems(ctx, req.(*GroupNamesInfo))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // Group_ServiceDesc is the grpc.ServiceDesc for Group service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -380,10 +348,6 @@ var Group_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "AddGroupColumns",
 			Handler:    _Group_AddGroupColumns_Handler,
 		},
-		{
-			MethodName: "CleanGroupItems",
-			Handler:    _Group_CleanGroupItems_Handler,
-		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "gdb.proto",
@@ -397,8 +361,9 @@ type ItemClient interface {
 	DeleteItems(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*Rows, error)
 	GetItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItems, error)
 	GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItemsWithCount, error)
-	UpdateItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*Rows, error)
+	UpdateItems(ctx context.Context, in *UpdatedItemsInfo, opts ...grpc.CallOption) (*Rows, error)
 	CheckItems(ctx context.Context, in *CheckItemsInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error)
 }
 
 type itemClient struct {
@@ -438,14 +403,14 @@ func (c *itemClient) GetItems(ctx context.Context, in *ItemsInfo, opts ...grpc.C
 
 func (c *itemClient) GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItemsWithCount, error) {
 	out := new(GdbItemsWithCount)
-	err := c.cc.Invoke(ctx, "/model.Item/GetItemsWithCount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Item/getItemsWithCount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *itemClient) UpdateItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*Rows, error) {
+func (c *itemClient) UpdateItems(ctx context.Context, in *UpdatedItemsInfo, opts ...grpc.CallOption) (*Rows, error) {
 	out := new(Rows)
 	err := c.cc.Invoke(ctx, "/model.Item/UpdateItems", in, out, opts...)
 	if err != nil {
@@ -463,6 +428,15 @@ func (c *itemClient) CheckItems(ctx context.Context, in *CheckItemsInfo, opts ..
 	return out, nil
 }
 
+func (c *itemClient) CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Item/CleanGroupItems", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ItemServer is the server API for Item service.
 // All implementations must embed UnimplementedItemServer
 // for forward compatibility
@@ -471,8 +445,9 @@ type ItemServer interface {
 	DeleteItems(context.Context, *DeletedItemsInfo) (*Rows, error)
 	GetItems(context.Context, *ItemsInfo) (*GdbItems, error)
 	GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error)
-	UpdateItems(context.Context, *ItemsInfo) (*Rows, error)
+	UpdateItems(context.Context, *UpdatedItemsInfo) (*Rows, error)
 	CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error)
+	CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error)
 	mustEmbedUnimplementedItemServer()
 }
 
@@ -490,13 +465,16 @@ func (UnimplementedItemServer) GetItems(context.Context, *ItemsInfo) (*GdbItems,
 	return nil, status.Errorf(codes.Unimplemented, "method GetItems not implemented")
 }
 func (UnimplementedItemServer) GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetItemsWithCount not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method getItemsWithCount not implemented")
 }
-func (UnimplementedItemServer) UpdateItems(context.Context, *ItemsInfo) (*Rows, error) {
+func (UnimplementedItemServer) UpdateItems(context.Context, *UpdatedItemsInfo) (*Rows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateItems not implemented")
 }
 func (UnimplementedItemServer) CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckItems not implemented")
+}
+func (UnimplementedItemServer) CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CleanGroupItems not implemented")
 }
 func (UnimplementedItemServer) mustEmbedUnimplementedItemServer() {}
 
@@ -575,7 +553,7 @@ func _Item_GetItemsWithCount_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Item/GetItemsWithCount",
+		FullMethod: "/model.Item/getItemsWithCount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ItemServer).GetItemsWithCount(ctx, req.(*ItemsInfo))
@@ -584,7 +562,7 @@ func _Item_GetItemsWithCount_Handler(srv interface{}, ctx context.Context, dec f
 }
 
 func _Item_UpdateItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ItemsInfo)
+	in := new(UpdatedItemsInfo)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -596,7 +574,7 @@ func _Item_UpdateItems_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/model.Item/UpdateItems",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemServer).UpdateItems(ctx, req.(*ItemsInfo))
+		return srv.(ItemServer).UpdateItems(ctx, req.(*UpdatedItemsInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -615,6 +593,24 @@ func _Item_CheckItems_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ItemServer).CheckItems(ctx, req.(*CheckItemsInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Item_CleanGroupItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GroupNamesInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ItemServer).CleanGroupItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Item/CleanGroupItems",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ItemServer).CleanGroupItems(ctx, req.(*GroupNamesInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -639,7 +635,7 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Item_GetItems_Handler,
 		},
 		{
-			MethodName: "GetItemsWithCount",
+			MethodName: "getItemsWithCount",
 			Handler:    _Item_GetItemsWithCount_Handler,
 		},
 		{
@@ -649,6 +645,10 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckItems",
 			Handler:    _Item_CheckItems_Handler,
+		},
+		{
+			MethodName: "CleanGroupItems",
+			Handler:    _Item_CleanGroupItems_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -666,8 +666,8 @@ type DataClient interface {
 	GetRealTimeData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbRealTimeData, error)
 	GetHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithTimeStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
-	GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error)
-	GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetRawData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 }
 
 type dataClient struct {
@@ -791,18 +791,18 @@ func (c *dataClient) GetHistoricalDataWithStamp(ctx context.Context, in *QueryHi
 	return out, nil
 }
 
-func (c *dataClient) GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error) {
-	out := new(GdbInfoData)
-	err := c.cc.Invoke(ctx, "/model.Data/GetDbInfo", in, out, opts...)
+func (c *dataClient) GetHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetHistoricalDataWithCondition", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dataClient) GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+func (c *dataClient) GetRawData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
 	out := new(GdbHistoricalData)
-	err := c.cc.Invoke(ctx, "/model.Data/GetDbInfoHistory", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Data/GetRawData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -820,8 +820,8 @@ type DataServer interface {
 	GetRealTimeData(context.Context, *QueryRealTimeDataString) (*GdbRealTimeData, error)
 	GetHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
 	GetHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithTimeStampString) (*GdbHistoricalData, error)
-	GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error)
-	GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error)
+	GetHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error)
+	GetRawData(context.Context, *QueryRealTimeDataString) (*GdbHistoricalData, error)
 	mustEmbedUnimplementedDataServer()
 }
 
@@ -850,11 +850,11 @@ func (UnimplementedDataServer) GetHistoricalData(context.Context, *QueryHistoric
 func (UnimplementedDataServer) GetHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithTimeStampString) (*GdbHistoricalData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetHistoricalDataWithStamp not implemented")
 }
-func (UnimplementedDataServer) GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfo not implemented")
+func (UnimplementedDataServer) GetHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetHistoricalDataWithCondition not implemented")
 }
-func (UnimplementedDataServer) GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfoHistory not implemented")
+func (UnimplementedDataServer) GetRawData(context.Context, *QueryRealTimeDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRawData not implemented")
 }
 func (UnimplementedDataServer) mustEmbedUnimplementedDataServer() {}
 
@@ -1011,38 +1011,38 @@ func _Data_GetHistoricalDataWithStamp_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_GetDbInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
+func _Data_GetHistoricalDataWithCondition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithConditionString)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).GetDbInfo(ctx, in)
+		return srv.(DataServer).GetHistoricalDataWithCondition(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/GetDbInfo",
+		FullMethod: "/model.Data/GetHistoricalDataWithCondition",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).GetDbInfo(ctx, req.(*emptypb.Empty))
+		return srv.(DataServer).GetHistoricalDataWithCondition(ctx, req.(*QueryHistoricalDataWithConditionString))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_GetDbInfoHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QuerySpeedHistoryDataString)
+func _Data_GetRawData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRealTimeDataString)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).GetDbInfoHistory(ctx, in)
+		return srv.(DataServer).GetRawData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/GetDbInfoHistory",
+		FullMethod: "/model.Data/GetRawData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).GetDbInfoHistory(ctx, req.(*QuerySpeedHistoryDataString))
+		return srv.(DataServer).GetRawData(ctx, req.(*QueryRealTimeDataString))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1075,12 +1075,12 @@ var Data_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Data_GetHistoricalDataWithStamp_Handler,
 		},
 		{
-			MethodName: "GetDbInfo",
-			Handler:    _Data_GetDbInfo_Handler,
+			MethodName: "GetHistoricalDataWithCondition",
+			Handler:    _Data_GetHistoricalDataWithCondition_Handler,
 		},
 		{
-			MethodName: "GetDbInfoHistory",
-			Handler:    _Data_GetDbInfoHistory_Handler,
+			MethodName: "GetRawData",
+			Handler:    _Data_GetRawData_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -1116,6 +1116,8 @@ type PageClient interface {
 	GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grpc.CallOption) (*LogsInfo, error)
 	DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*Rows, error)
 	DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error)
+	GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error)
+	GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 }
 
 type pageClient struct {
@@ -1234,7 +1236,7 @@ func (x *pageUploadFileWithStreamClient) CloseAndRecv() (*emptypb.Empty, error) 
 
 func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error) {
 	out := new(Rows)
-	err := c.cc.Invoke(ctx, "/model.Page/AddItemsByExcel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Page/addItemsByExcel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1243,7 +1245,7 @@ func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...
 
 func (c *pageClient) ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/model.Page/ImportHistoryByExcel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Page/importHistoryByExcel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1277,6 +1279,24 @@ func (c *pageClient) DownloadFile(ctx context.Context, in *FileInfo, opts ...grp
 	return out, nil
 }
 
+func (c *pageClient) GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error) {
+	out := new(GdbInfoData)
+	err := c.cc.Invoke(ctx, "/model.Page/GetDbInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Page/GetDbInfoHistory", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PageServer is the server API for Page service.
 // All implementations must embed UnimplementedPageServer
 // for forward compatibility
@@ -1295,6 +1315,8 @@ type PageServer interface {
 	GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error)
 	DeleteLogs(context.Context, *DeletedLogInfo) (*Rows, error)
 	DownloadFile(context.Context, *FileInfo) (*FileContents, error)
+	GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error)
+	GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error)
 	mustEmbedUnimplementedPageServer()
 }
 
@@ -1330,10 +1352,10 @@ func (UnimplementedPageServer) UploadFileWithStream(Page_UploadFileWithStreamSer
 	return status.Errorf(codes.Unimplemented, "method UploadFileWithStream not implemented")
 }
 func (UnimplementedPageServer) AddItemsByExcel(context.Context, *FileInfo) (*Rows, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddItemsByExcel not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method addItemsByExcel not implemented")
 }
 func (UnimplementedPageServer) ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ImportHistoryByExcel not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method importHistoryByExcel not implemented")
 }
 func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
@@ -1343,6 +1365,12 @@ func (UnimplementedPageServer) DeleteLogs(context.Context, *DeletedLogInfo) (*Ro
 }
 func (UnimplementedPageServer) DownloadFile(context.Context, *FileInfo) (*FileContents, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadFile not implemented")
+}
+func (UnimplementedPageServer) GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfo not implemented")
+}
+func (UnimplementedPageServer) GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfoHistory not implemented")
 }
 func (UnimplementedPageServer) mustEmbedUnimplementedPageServer() {}
 
@@ -1537,7 +1565,7 @@ func _Page_AddItemsByExcel_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Page/AddItemsByExcel",
+		FullMethod: "/model.Page/addItemsByExcel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PageServer).AddItemsByExcel(ctx, req.(*FileInfo))
@@ -1555,7 +1583,7 @@ func _Page_ImportHistoryByExcel_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Page/ImportHistoryByExcel",
+		FullMethod: "/model.Page/importHistoryByExcel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PageServer).ImportHistoryByExcel(ctx, req.(*HistoryFileInfo))
@@ -1617,6 +1645,42 @@ func _Page_DownloadFile_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Page_GetDbInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetDbInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetDbInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetDbInfo(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_GetDbInfoHistory_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySpeedHistoryDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetDbInfoHistory(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetDbInfoHistory",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetDbInfoHistory(ctx, req.(*QuerySpeedHistoryDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Page_ServiceDesc is the grpc.ServiceDesc for Page service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1657,11 +1721,11 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Page_UploadFile_Handler,
 		},
 		{
-			MethodName: "AddItemsByExcel",
+			MethodName: "addItemsByExcel",
 			Handler:    _Page_AddItemsByExcel_Handler,
 		},
 		{
-			MethodName: "ImportHistoryByExcel",
+			MethodName: "importHistoryByExcel",
 			Handler:    _Page_ImportHistoryByExcel_Handler,
 		},
 		{
@@ -1675,6 +1739,14 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DownloadFile",
 			Handler:    _Page_DownloadFile_Handler,
+		},
+		{
+			MethodName: "GetDbInfo",
+			Handler:    _Page_GetDbInfo_Handler,
+		},
+		{
+			MethodName: "GetDbInfoHistory",
+			Handler:    _Page_GetDbInfoHistory_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
