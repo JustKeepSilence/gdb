@@ -345,7 +345,7 @@ or about how to connect gdb in gRPC mode in NodeJs, you can see [gdbUI](https://
 ```
 
 ## Desktop Application
-see [gdbUI](https://github.com/JustKeepSilence/gdb-windows-ui) for more details 
+see [gdbUI](https://github.com/JustKeepSilence/gdbUI) for more details 
 
 ## FAQ
 1. How to obtain the timeStamp consistent with gdb
