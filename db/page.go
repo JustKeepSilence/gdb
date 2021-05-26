@@ -54,13 +54,16 @@ func (gdb *Gdb) getUserInfo(n string) (userInfo, error) {
 		return userInfo{}, err
 	} else {
 		return userInfo{
-			userName: userName{Name: n},
+			UserName: n,
 			Role:     []string{r[0]["role"]},
 		}, nil
 	}
 }
 
 func (gdb *Gdb) addUsers(info addedUserInfo) (Rows, error) {
+	if !strings.Contains(roles, info.Role) {
+		return Rows{}, fmt.Errorf("role must be developer or common_user or super_user")
+	}
 	sqlTemplate := template.Must(template.New("addUserTemplate").Parse(`insert into user_cfg (userName, passWord, role) 
 								values ('{{.Name}}', '{{.PassWord}}', '{{.Role}}')`))
 	var b bytes.Buffer
@@ -85,15 +88,25 @@ func (gdb *Gdb) deleteUsers(name userName) (Rows, error) {
 }
 
 func (gdb *Gdb) updateUsers(info updatedUserInfo) (Rows, error) {
-	id, oldUserName, newUserName := info.Id, info.OldUserName, info.NewUserName
-	if oldUserName == newUserName {
-		if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set role='"+info.Role+"' where id="+strconv.Itoa(id)); err != nil {
-			return Rows{}, err
-		} else {
-			return Rows{1}, nil
-		}
+	if info.NewPassWord == "" {
+		r, _ := query(gdb.ItemDbPath, "select passWord from user_cfg where userName='"+info.UserName+"'")
+		info.NewPassWord = r[0]["passWord"]
+	}
+	if info.NewUserName == "" {
+		info.NewUserName = info.UserName
+	}
+	if info.NewRole == "" {
+		r, _ := query(gdb.ItemDbPath, "select role from user_cfg where userName='"+info.UserName+"'")
+		info.NewRole = r[0]["role"]
+	}
+	sqlTemplate := template.Must(template.New("updateUserTemplate").Parse(`update user_cfg set role='{{.NewRole}}', userName='{{.NewUserName}}',
+								 passWord='{{.NewPassWord}}' where userName='{{.UserName}}'`))
+	var b bytes.Buffer
+	if err := sqlTemplate.Execute(&b, info); err != nil {
+		return Rows{}, err
 	} else {
-		if _, err := updateItem(gdb.ItemDbPath, "update user_cfg set role='"+info.Role+"', userName='"+newUserName+"' where id="+strconv.Itoa(id)); err != nil {
+		sqlString := b.String()
+		if _, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
 			return Rows{}, err
 		} else {
 			return Rows{1}, nil
@@ -163,10 +176,18 @@ func (gdb *Gdb) addItemsByExcel(groupName, filePath string) (Rows, error) {
 	}
 }
 
-func (gdb *Gdb) importHistoryByExcel(fileName string, itemNames []string, sheetNames ...string) error {
+func (gdb *Gdb) importHistoryByExcel(fileName, groupName string, itemNames []string, sheetNames ...string) error {
 	if f, err := excelize.OpenFile(fileName); err != nil {
 		return excelError{"excelError: " + err.Error()}
 	} else {
+		dataTypes := []string{}
+		for _, itemName := range itemNames {
+			if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupName); !ok {
+				return fmt.Errorf("item " + itemName + " not existed")
+			} else {
+				dataTypes = append(dataTypes, t.(string))
+			}
+		}
 		infos := []HistoricalItemValue{}
 		for index := 0; index < len(itemNames); index++ {
 			sheetName, itemName := sheetNames[index], itemNames[index]
@@ -174,9 +195,10 @@ func (gdb *Gdb) importHistoryByExcel(fileName string, itemNames []string, sheetN
 				return err
 			} else {
 				info := HistoricalItemValue{ItemName: itemName}
-				var values, timeStamps []string
+				var values []string
+				var timeStamps []int
 				for rows.Next() {
-					// first row is timeStamp, second is time
+					// first row is timeStamp, second is value
 					if c, err := rows.Columns(); err != nil {
 						return err
 					} else {
@@ -184,13 +206,18 @@ func (gdb *Gdb) importHistoryByExcel(fileName string, itemNames []string, sheetN
 						if t, err := time.Parse(timeFormatString, c[0]); err != nil {
 							return err
 						} else {
-							timeStamps = append(timeStamps, fmt.Sprintf("%d", t.Unix()))
+							timeStamps = append(timeStamps, int(t.Unix()))
 						}
 					}
 				}
-				info.Values = values
-				info.TimeStamps = timeStamps
-				infos = append(infos, info)
+				if v, err := convertValues(dataTypes[index], values...); err != nil {
+					return err
+				} else {
+					info.Values = v
+					info.TimeStamps = timeStamps
+					info.GroupName = groupName
+					infos = append(infos, info)
+				}
 			}
 		}
 		if err := gdb.BatchWriteHistoricalData(infos...); err != nil {
@@ -205,9 +232,7 @@ func getJsCode(fileName string) (string, error) {
 	if b, err := ioutil.ReadFile("./uploadFiles/" + fileName); err != nil {
 		return "", err
 	} else {
-		c := strings.Replace(fmt.Sprintf("%s", b), "\r\n", "<br />", -1)
-		c1 := strings.Replace(c, "\n", "<br />", -1)
-		return c1, nil
+		return string(b), nil
 	}
 }
 
