@@ -46,7 +46,7 @@ func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 
 func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData []byte, requestBody interface{}) {
 	if level, ok := c.Request.Header["Loglevel"]; ok {
-		b, _ := Json.Marshal(requestBody)
+		b, _ := json.Marshal(requestBody)
 		logMessage := logMessage{
 			RequestUrl:    c.Request.URL.String(),
 			RequestMethod: c.Request.Proto,
@@ -62,19 +62,19 @@ func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData 
 				l = "Error"
 				logMessage.Message = strings.Replace(fmt.Sprintf("%s", responseData), "'", `"`, -1)
 			}
-			m, _ := Json.Marshal(logMessage)
+			m, _ := json.Marshal(logMessage)
 			_ = gdb.writeLog(l, fmt.Sprintf("%s", m), c.Request.Header.Get("userName"))
 		} else {
 			// error level
 			if code != 200 {
 				logMessage.Message = fmt.Sprintf("%s", responseData)
-				m, _ := Json.Marshal(logMessage)
+				m, _ := json.Marshal(logMessage)
 				_ = gdb.writeLog("Error", fmt.Sprintf("%s", m), c.Request.Header.Get("userName"))
 			}
 		}
 	}
 	if code == 500 {
-		r, _ := Json.Marshal(ResponseData{
+		r, _ := json.Marshal(ResponseData{
 			Code:    500,
 			Message: fmt.Sprintf("%s", responseData),
 			Data:    "",
