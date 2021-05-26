@@ -10,8 +10,11 @@ goVersion: 1.16
 package db
 
 import (
+	"bytes"
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/eventloop"
+	"text/template"
+	"time"
 )
 
 // test
@@ -21,12 +24,13 @@ func (gdb *Gdb) testCalculation(expression string) (calculationResult, error) {
 	var result goja.Value
 	var p *goja.Program
 	loop.Run(func(vm *goja.Runtime) {
-		vm.Set("getRtData", gdb.getRtData)           // get realTime data
-		vm.Set("getHData", gdb.getHData)             // get history
-		vm.Set("writeRtData", gdb.BatchWrite)        // write data
-		vm.Set("getTimeStamp", gdb.getUnixTimeStamp) // get timeStamp of given time string
-		vm.Set("getNowTime", gdb.getNowTime)         // get current Time
-		vm.Set("getTime", gdb.getTime)               // get time
+		vm.Set("getRtData", gdb.getRtData)
+		vm.Set("getHData", gdb.GetHistoricalData)
+		vm.Set("getHDataWithTs", gdb.GetHistoricalDataWithStamp)
+		vm.Set("writeRtData", gdb.writeRtData)
+		vm.Set("getTimeStamp", gdb.getUnixTimeStamp)
+		vm.Set("etNowTime", gdb.getNowTime)
+		vm.Set("getTime", gdb.getTime)
 		p, runError = goja.Compile("main.js", expression, false)
 		if p == nil {
 			return
@@ -48,10 +52,17 @@ func (gdb *Gdb) getCalculationItem(condition string) (calcItemsInfo, error) {
 }
 
 func (gdb *Gdb) updateCalculationItem(info updatedCalcInfo) (Rows, error) {
-	id, description, expression, duration := info.Id, info.Description, info.Expression, info.Duration
-	r, err := updateItem(gdb.ItemDbPath, "update calc_cfg set description='"+description+"', expression='"+expression+"', duration='"+duration+"' where id="+id)
-	if err != nil {
-		return Rows{}, nil
+	info.UpdatedTime = time.Now().Format(timeFormatString)
+	sqlTemplate := template.Must(template.New("updatedCalcTemplate").Parse(`update calc_cfg set description='{{.Description}}', expression='{{.Expression}}', duration='{{.Duration}}', updatedTime='{{.UpdatedTime}}' where id={{.Id}}`))
+	var b bytes.Buffer
+	if err := sqlTemplate.Execute(&b, info); err != nil {
+		return Rows{}, err
+	} else {
+		sqlString := b.String()
+		if r, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
+			return Rows{}, err
+		} else {
+			return Rows{int(r)}, nil
+		}
 	}
-	return Rows{int(r)}, nil
 }
