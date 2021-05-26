@@ -131,17 +131,12 @@ service Item {
 
 // data handler
 
-message ItemValue{
-  string itemName = 1;
-  string value = 2;
-  string timeStamp = 3;
-}
-
 message BatchWriteString{
-  repeated ItemValue itemValues = 3;
+  string itemValues = 3;
 }
 
 message QueryRealTimeDataString{
+  repeated string groupNames = 2;
   repeated string itemNames = 1;
 }
 
@@ -152,6 +147,7 @@ message GdbRealTimeData{
 }
 
 message QueryHistoricalDataString{
+  repeated string groupNames = 5;
   repeated string itemNames = 1;
   repeated int32 startTimes = 2;
   repeated int32 endTimes = 3;
@@ -167,6 +163,7 @@ message TimeStamp {
 }
 
 message QueryHistoricalDataWithTimeStampString{
+  repeated string groupNames = 3;
   repeated string itemNames = 1;
   repeated TimeStamp timeStamps = 2;
 }
@@ -177,6 +174,7 @@ message DeadZone {
 }
 
 message QueryHistoricalDataWithConditionString{
+  repeated string groupNames = 8;
   repeated string itemNames = 1;
   repeated TimeStamp timeStamps = 2;
   repeated int32 startTimes = 3;
@@ -190,21 +188,15 @@ message GdbInfoData{
   string info = 1;
 }
 
-message HistoricalItemValue{
-  string itemName = 1;
-  repeated string values = 2;
-  repeated string timeStamps = 3;
-}
-
 message BatchWriteHistoricalString {
-  repeated HistoricalItemValue historicalItemValues = 1;
+  string historicalItemValues = 1;
 }
 
 message QuerySpeedHistoryDataString{
   string itemName = 1;
   repeated int32 startTimes = 2;
   repeated int32 endTimes = 3;
-  int32 interval = 4;
+  repeated int32 intervals = 4;
 }
 
 service Data {
@@ -235,7 +227,7 @@ message UserName{
 }
 
 message UserInfo{
-  UserName userName = 1;
+  string userName = 1;
   repeated string role = 2;
 }
 
@@ -264,6 +256,7 @@ message UploadedFileInfo{
 }
 
 message HistoryFileInfo {
+  string groupName = 4;
   string fileName = 1;
   repeated string itemNames = 2;
   repeated string sheetNames = 3;
@@ -284,10 +277,10 @@ message AddUserInfo{
 }
 
 message UpdatedUserInfo{
-  int32 id = 1;
-  string oldUserName = 2;
-  string newUserName = 3;
-  string role = 4;
+  string userName = 1;
+  string newUserName = 2;
+  string newPassWord = 3;
+  string newRole = 4;
 }
 
 message DeletedLogInfo {
@@ -337,12 +330,8 @@ message QueryCalcItemsInfo{
   string condition = 1;
 }
 
-message CalcItemInfo{
-  map<string, string> info = 1;
-}
-
 message CalcItemsInfo{
-  repeated CalcItemInfo infos = 2;
+  string infos = 1;
 }
 
 message UpdatedCalcInfo{
@@ -356,7 +345,16 @@ message CalcId {
   repeated string id = 1;
 }
 
+message TestCalcItemInfo {
+  string expression = 1;
+}
+
+message TestResult {
+  string result = 1;
+}
+
 service Calc {
+  rpc TestCalcItem(TestCalcItemInfo) returns (TestResult){}
   rpc AddCalcItem(AddedCalcItemInfo) returns (CalculationResult){}
   rpc AddCalcItemWithStream(stream AddedCalcItemInfo) returns (CalculationResults){}
   rpc GetCalcItems(QueryCalcItemsInfo) returns (CalcItemsInfo){}

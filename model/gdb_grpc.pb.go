@@ -403,7 +403,7 @@ func (c *itemClient) GetItems(ctx context.Context, in *ItemsInfo, opts ...grpc.C
 
 func (c *itemClient) GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItemsWithCount, error) {
 	out := new(GdbItemsWithCount)
-	err := c.cc.Invoke(ctx, "/model.Item/getItemsWithCount", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Item/GetItemsWithCount", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +465,7 @@ func (UnimplementedItemServer) GetItems(context.Context, *ItemsInfo) (*GdbItems,
 	return nil, status.Errorf(codes.Unimplemented, "method GetItems not implemented")
 }
 func (UnimplementedItemServer) GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method getItemsWithCount not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method GetItemsWithCount not implemented")
 }
 func (UnimplementedItemServer) UpdateItems(context.Context, *UpdatedItemsInfo) (*Rows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateItems not implemented")
@@ -553,7 +553,7 @@ func _Item_GetItemsWithCount_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Item/getItemsWithCount",
+		FullMethod: "/model.Item/GetItemsWithCount",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ItemServer).GetItemsWithCount(ctx, req.(*ItemsInfo))
@@ -635,7 +635,7 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Item_GetItems_Handler,
 		},
 		{
-			MethodName: "getItemsWithCount",
+			MethodName: "GetItemsWithCount",
 			Handler:    _Item_GetItemsWithCount_Handler,
 		},
 		{
@@ -1236,7 +1236,7 @@ func (x *pageUploadFileWithStreamClient) CloseAndRecv() (*emptypb.Empty, error) 
 
 func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error) {
 	out := new(Rows)
-	err := c.cc.Invoke(ctx, "/model.Page/addItemsByExcel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Page/AddItemsByExcel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1245,7 +1245,7 @@ func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...
 
 func (c *pageClient) ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/model.Page/importHistoryByExcel", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Page/ImportHistoryByExcel", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1352,10 +1352,10 @@ func (UnimplementedPageServer) UploadFileWithStream(Page_UploadFileWithStreamSer
 	return status.Errorf(codes.Unimplemented, "method UploadFileWithStream not implemented")
 }
 func (UnimplementedPageServer) AddItemsByExcel(context.Context, *FileInfo) (*Rows, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method addItemsByExcel not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method AddItemsByExcel not implemented")
 }
 func (UnimplementedPageServer) ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method importHistoryByExcel not implemented")
+	return nil, status.Errorf(codes.Unimplemented, "method ImportHistoryByExcel not implemented")
 }
 func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
@@ -1565,7 +1565,7 @@ func _Page_AddItemsByExcel_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Page/addItemsByExcel",
+		FullMethod: "/model.Page/AddItemsByExcel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PageServer).AddItemsByExcel(ctx, req.(*FileInfo))
@@ -1583,7 +1583,7 @@ func _Page_ImportHistoryByExcel_Handler(srv interface{}, ctx context.Context, de
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Page/importHistoryByExcel",
+		FullMethod: "/model.Page/ImportHistoryByExcel",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PageServer).ImportHistoryByExcel(ctx, req.(*HistoryFileInfo))
@@ -1721,11 +1721,11 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Page_UploadFile_Handler,
 		},
 		{
-			MethodName: "addItemsByExcel",
+			MethodName: "AddItemsByExcel",
 			Handler:    _Page_AddItemsByExcel_Handler,
 		},
 		{
-			MethodName: "importHistoryByExcel",
+			MethodName: "ImportHistoryByExcel",
 			Handler:    _Page_ImportHistoryByExcel_Handler,
 		},
 		{
@@ -1763,6 +1763,7 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalcClient interface {
+	TestCalcItem(ctx context.Context, in *TestCalcItemInfo, opts ...grpc.CallOption) (*TestResult, error)
 	AddCalcItem(ctx context.Context, in *AddedCalcItemInfo, opts ...grpc.CallOption) (*CalculationResult, error)
 	AddCalcItemWithStream(ctx context.Context, opts ...grpc.CallOption) (Calc_AddCalcItemWithStreamClient, error)
 	GetCalcItems(ctx context.Context, in *QueryCalcItemsInfo, opts ...grpc.CallOption) (*CalcItemsInfo, error)
@@ -1778,6 +1779,15 @@ type calcClient struct {
 
 func NewCalcClient(cc grpc.ClientConnInterface) CalcClient {
 	return &calcClient{cc}
+}
+
+func (c *calcClient) TestCalcItem(ctx context.Context, in *TestCalcItemInfo, opts ...grpc.CallOption) (*TestResult, error) {
+	out := new(TestResult)
+	err := c.cc.Invoke(ctx, "/model.Calc/TestCalcItem", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *calcClient) AddCalcItem(ctx context.Context, in *AddedCalcItemInfo, opts ...grpc.CallOption) (*CalculationResult, error) {
@@ -1872,6 +1882,7 @@ func (c *calcClient) DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grp
 // All implementations must embed UnimplementedCalcServer
 // for forward compatibility
 type CalcServer interface {
+	TestCalcItem(context.Context, *TestCalcItemInfo) (*TestResult, error)
 	AddCalcItem(context.Context, *AddedCalcItemInfo) (*CalculationResult, error)
 	AddCalcItemWithStream(Calc_AddCalcItemWithStreamServer) error
 	GetCalcItems(context.Context, *QueryCalcItemsInfo) (*CalcItemsInfo, error)
@@ -1886,6 +1897,9 @@ type CalcServer interface {
 type UnimplementedCalcServer struct {
 }
 
+func (UnimplementedCalcServer) TestCalcItem(context.Context, *TestCalcItemInfo) (*TestResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TestCalcItem not implemented")
+}
 func (UnimplementedCalcServer) AddCalcItem(context.Context, *AddedCalcItemInfo) (*CalculationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCalcItem not implemented")
 }
@@ -1918,6 +1932,24 @@ type UnsafeCalcServer interface {
 
 func RegisterCalcServer(s grpc.ServiceRegistrar, srv CalcServer) {
 	s.RegisterService(&Calc_ServiceDesc, srv)
+}
+
+func _Calc_TestCalcItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TestCalcItemInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CalcServer).TestCalcItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Calc/TestCalcItem",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CalcServer).TestCalcItem(ctx, req.(*TestCalcItemInfo))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Calc_AddCalcItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -2061,6 +2093,10 @@ var Calc_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "model.Calc",
 	HandlerType: (*CalcServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "TestCalcItem",
+			Handler:    _Calc_TestCalcItem_Handler,
+		},
 		{
 			MethodName: "AddCalcItem",
 			Handler:    _Calc_AddCalcItem_Handler,
