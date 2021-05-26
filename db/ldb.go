@@ -15,6 +15,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"golang.org/x/sync/errgroup"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,21 +25,40 @@ import (
 // BatchWrite write realTimeData, all items to be written should be existed in gdb.
 // otherWise will fail to writing.
 func (gdb *Gdb) BatchWrite(infos ...ItemValue) (Rows, error) {
-	itemNames, itemValues := []string{}, []string{}
+	itemNames, itemValues, groupNames := []string{}, []string{}, []string{}
 	// without timeStamp
 	for _, itemValue := range infos {
-		k := itemValue.ItemName
+		k := strings.Trim(itemValue.ItemName, " ")
 		if len(k) == 0 {
-			return Rows{}, fmt.Errorf("error itemName")
+			return Rows{}, fmt.Errorf("itemName can't be empty string")
 		}
-		v := itemValue.Value
-		itemNames = append(itemNames, k)
-		itemValues = append(itemValues, v)
-	}
-	index, ok := gdb.checkItems(itemNames...)
-	// check if all items given exist
-	if !ok {
-		return Rows{}, itemError{"itemError: " + itemNames[index]}
+		if t, ok := gdb.rtDbFilter.Get(k + joiner + itemValue.GroupName); !ok {
+			return Rows{}, itemError{"itemError: " + k}
+		} else {
+			v := itemValue.Value
+			vt := reflect.TypeOf(v).String()
+			if vt == t.(string) || t == "int64" {
+				// check whether type of value and item is consistent
+				itemNames = append(itemNames, k)
+				groupNames = append(groupNames, itemValue.GroupName)
+				switch t {
+				case "int64":
+					itemValues = append(itemValues, fmt.Sprintf("%.f", v.(float64)))
+					break
+				case "float64":
+					itemValues = append(itemValues, fmt.Sprintf("%f", v.(float64)))
+					break
+				case "bool":
+					itemValues = append(itemValues, strconv.FormatBool(v.(bool)))
+					break
+				default:
+					itemValues = append(itemValues, v.(string))
+					break
+				}
+			} else {
+				return Rows{}, fmt.Errorf("inconsistent type of value and item")
+			}
+		}
 	}
 	currentTimeStamp := int(time.Now().Unix()) + 8*3600
 	currentTimeStampString := strconv.Itoa(currentTimeStamp)
@@ -54,7 +74,8 @@ func (gdb *Gdb) BatchWrite(infos ...ItemValue) (Rows, error) {
 	g.Go(func() error {
 		batch := leveldb.Batch{}
 		for i := 0; i < len(itemNames); i++ {
-			batch.Put([]byte(itemNames[i]), []byte(itemValues[i]))
+			// itemName = itemName + joiner + groupName
+			batch.Put([]byte(itemNames[i]+joiner+groupNames[i]), []byte(itemValues[i]))
 		}
 		if err := gdb.rtDb.Write(&batch, nil); err != nil {
 			return err
@@ -66,7 +87,8 @@ func (gdb *Gdb) BatchWrite(infos ...ItemValue) (Rows, error) {
 		batch := leveldb.Batch{}
 		for i := 0; i < len(itemNames); i++ {
 			sb := strings.Builder{}
-			sb.Write([]byte(itemNames[i]))
+			// itemName = itemName + joiner + groupName + timeStamp
+			sb.Write([]byte(itemNames[i] + joiner + groupNames[i]))
 			sb.Write([]byte(currentTimeStampString))
 			batch.Put([]byte(sb.String()), []byte(itemValues[i]))
 		}
@@ -86,33 +108,66 @@ func (gdb *Gdb) BatchWrite(infos ...ItemValue) (Rows, error) {
 // BatchWriteHistoricalData write historicalData, all items to be written should be existed in gdb.
 // and the timeStamp should be unix timeStamp
 func (gdb *Gdb) BatchWriteHistoricalData(infos ...HistoricalItemValue) error {
-	itemNames := []string{}
+	itemNames, itemValues, timeStamps, groupNames := []string{}, [][]string{}, [][]string{}, []string{}
 	for i := 0; i < len(infos); i++ {
-		itemNames = append(itemNames, infos[i].ItemName)
-	}
-	if index, ok := gdb.checkItems(itemNames...); !ok {
-		return fmt.Errorf("item " + itemNames[index] + " not existed")
+		itemName := infos[i].ItemName
+		if t, ok := gdb.rtDbFilter.Get(itemName + joiner + infos[i].GroupName); !ok {
+			return fmt.Errorf("item " + itemName + " not exsited")
+		} else {
+			itemNames = append(itemNames, itemName)
+			groupNames = append(groupNames, infos[i].GroupName)
+			if len(infos[i].TimeStamps) != len(infos[i].Values) {
+				return fmt.Errorf("inconsistent length of values and timestamps")
+			}
+			values, ts := []string{}, []string{}
+			for index := 0; index < len(infos[i].Values); index++ {
+				v := infos[i].Values[index]
+				vt := reflect.TypeOf(v).String()
+				if vt == t.(string) || t == "int64" {
+					// check whether type of value and item is consistent
+					switch t {
+					case "int64":
+						// do not why reflect.TypeOf in go will judge int64 as float 64 after json serialization
+						// so we convert int64 to float64 with %.f which will guarantee the strconv.ParseInt function
+						// will work normally as well
+						values = append(values, fmt.Sprintf("%.f", v.(float64)))
+						break
+					case "float64":
+						values = append(values, fmt.Sprintf("%f", v.(float64)))
+						break
+					case "bool":
+						values = append(values, strconv.FormatBool(v.(bool)))
+						break
+					default:
+						values = append(values, v.(string))
+						break
+					}
+					ts = append(ts, fmt.Sprintf("%d", infos[i].TimeStamps[index]))
+					//return nil
+				} else {
+					return fmt.Errorf("inconsistent type of value and item")
+				}
+			}
+			itemValues = append(itemValues, values)
+			timeStamps = append(timeStamps, ts)
+		}
 	}
 	g := errgroup.Group{}
-	for _, item := range infos {
-		info := item
+	for j := 0; j < len(itemNames); j++ {
+		index := j
+		itemName, values, ts, groupName := itemNames[index], itemValues[index], timeStamps[index], groupNames[index]
 		g.Go(func() error {
-			itemName, values, timeStamps := info.ItemName, info.Values, info.TimeStamps
-			if len(values) != len(timeStamps) {
-				return fmt.Errorf("inconsistent length of values and timestamps")
+			batch := leveldb.Batch{}
+			for i := 0; i < len(values); i++ {
+				sb := strings.Builder{}
+				sb.Write([]byte(itemName + joiner + groupName))
+				sb.Write([]byte(ts[i]))
+				batch.Put([]byte(sb.String()), []byte(values[i]))
+			}
+			if err := gdb.hisDb.Write(&batch, nil); err != nil {
+				return err
 			} else {
-				batch := leveldb.Batch{}
-				for i := 0; i < len(values); i++ {
-					sb := strings.Builder{}
-					sb.Write([]byte(itemName))
-					sb.Write([]byte(timeStamps[i]))
-					batch.Put([]byte(sb.String()), []byte(values[i]))
-				}
-				if err := gdb.hisDb.Write(&batch, nil); err != nil {
-					return err
-				} else {
-					return nil
-				}
+				return nil
 			}
 		})
 	}
@@ -125,26 +180,128 @@ func (gdb *Gdb) BatchWriteHistoricalData(infos ...HistoricalItemValue) error {
 
 // GetRealTimeData get realTime data,that is the latest updated value of item.All items should be
 // existed in gdb, otherWise will fail to getting data
-func (gdb *Gdb) GetRealTimeData(itemNames ...string) (cmap.ConcurrentMap, error) {
-	if index, ok := gdb.checkItems(itemNames...); !ok {
-		return nil, fmt.Errorf("item " + itemNames[index] + " not existed")
+func (gdb *Gdb) GetRealTimeData(groupNames []string, itemNames ...string) (cmap.ConcurrentMap, error) {
+	dataTypes := []string{}
+	for index, itemName := range itemNames {
+		if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupNames[index]); !ok {
+			return nil, fmt.Errorf("item " + itemName + " not existed")
+		} else {
+			dataTypes = append(dataTypes, t.(string))
+		}
+	}
+	sn, err := gdb.rtDb.GetSnapshot()
+	if sn == nil || err != nil {
+		return nil, snError{"snError"}
+	}
+	defer sn.Release() // release
+	m := cmap.New()
+	g := errgroup.Group{}
+	for index, itemName := range itemNames {
+		name, i := itemName, index
+		g.Go(func() error {
+			v, err := sn.Get([]byte(name+joiner+groupNames[i]), nil)
+			if err != nil {
+				//  key not exist
+				m.Set(name, nil)
+			} else {
+				switch dataTypes[i] {
+				case "int64":
+					if tv, err := strconv.ParseInt(string(v), 10, 64); err != nil {
+						return err
+					} else {
+						m.Set(name, tv)
+					}
+					break
+				case "float64":
+					if tv, err := strconv.ParseFloat(string(v), 64); err != nil {
+						return err
+					} else {
+						m.Set(name, tv) // set values
+					}
+					break
+				case "bool":
+					if tv, err := strconv.ParseBool(string(v)); err != nil {
+						return err
+					} else {
+						m.Set(name, tv)
+					}
+					break
+				default:
+					m.Set(name, string(v))
+					break
+				}
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
 	} else {
-		sn, err := gdb.rtDb.GetSnapshot()
+		return m, nil
+	}
+
+}
+
+// GetHistoricalData get historical data, timeStamp should be unix timeStamp, and units of
+// interval is seconds.All items should be existed in gdb, otherWise will fail to getting data
+func (gdb *Gdb) GetHistoricalData(groupNames, itemNames []string, startTimeStamps []int, endTimeStamps []int, intervals []int) (cmap.ConcurrentMap, error) {
+	if len(startTimeStamps) == len(endTimeStamps) && len(endTimeStamps) == len(intervals) {
+		dataTypes := []string{}
+		for index, itemName := range itemNames {
+			if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupNames[index]); !ok {
+				return nil, fmt.Errorf("item " + itemName + " not existed")
+			} else {
+				dataTypes = append(dataTypes, t.(string))
+			}
+		}
+		rawData := cmap.New()
+		sn, err := gdb.hisDb.GetSnapshot()
 		if sn == nil || err != nil {
 			return nil, snError{"snError"}
 		}
 		defer sn.Release() // release
-		m := cmap.New()
 		g := errgroup.Group{}
-		for _, itemName := range itemNames {
-			name := itemName
+		for j, itemName := range itemNames {
+			name, index := itemName, j
 			g.Go(func() error {
-				v, err := sn.Get([]byte(name), nil)
-				if err != nil {
-					//  key not exist
-					m.Set(name, nil)
+				var values []string
+				var timeStamps []int64
+				for i := 0; i < len(startTimeStamps); i++ {
+					s := startTimeStamps[i] // startTime
+					e := endTimeStamps[i]   // endTime
+					interval := intervals[i]
+					if s >= e {
+						// startTime > endTime, continue
+						continue
+					}
+					startKey := strings.Builder{}
+					startKey.Write([]byte(name + joiner + groupNames[index]))
+					startKey.Write([]byte(strconv.Itoa(s)))
+					endKey := strings.Builder{}
+					endKey.Write([]byte(name + joiner + groupNames[index]))
+					endKey.Write([]byte(strconv.Itoa(e)))
+					it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
+					count := 0
+					var st int64 // start time stamp of data
+					for it.Next() {
+						tt, _ := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), name+joiner+groupNames[index], "", -1), 10, 64) // get time stamp
+						if count == 0 {
+							st = tt // get start time stamp of data
+							values = append(values, string(it.Value()))
+							timeStamps = append(timeStamps, tt)
+						} else {
+							if (tt-st)%int64(interval) == 0 {
+								values = append(values, string(it.Value()))
+								timeStamps = append(timeStamps, tt)
+							}
+						}
+						count++
+					}
+				}
+				if v, err := convertValues(dataTypes[index], values...); err != nil {
+					return err
 				} else {
-					m.Set(name, fmt.Sprintf("%s", v)) // set values
+					rawData.Set(name, []interface{}{timeStamps, v})
 				}
 				return nil
 			})
@@ -152,71 +309,7 @@ func (gdb *Gdb) GetRealTimeData(itemNames ...string) (cmap.ConcurrentMap, error)
 		if err := g.Wait(); err != nil {
 			return nil, err
 		} else {
-			return m, nil
-		}
-	}
-}
-
-// GetHistoricalData get historical data, timeStamp should be unix timeStamp, and units of
-// interval is seconds.All items should be existed in gdb, otherWise will fail to getting data
-func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int, endTimeStamps []int, intervals []int) (cmap.ConcurrentMap, error) {
-	if len(startTimeStamps) == len(endTimeStamps) && len(endTimeStamps) == len(intervals) {
-		if index, ok := gdb.checkItems(itemNames...); !ok {
-			return nil, fmt.Errorf("item " + itemNames[index] + " not existed")
-		} else {
-			rawData := cmap.New()
-			sn, err := gdb.hisDb.GetSnapshot()
-			if sn == nil || err != nil {
-				return nil, snError{"snError"}
-			}
-			defer sn.Release() // release
-			g := errgroup.Group{}
-			for _, itemName := range itemNames {
-				name := itemName
-				g.Go(func() error {
-					var values []string
-					var timeStamps []int64
-					for i := 0; i < len(startTimeStamps); i++ {
-						s := startTimeStamps[i] // startTime
-						e := endTimeStamps[i]   // endTime
-						interval := intervals[i]
-						if s >= e {
-							// startTime > endTime, continue
-							continue
-						}
-						startKey := strings.Builder{}
-						startKey.Write([]byte(name))
-						startKey.Write([]byte(strconv.Itoa(s)))
-						endKey := strings.Builder{}
-						endKey.Write([]byte(name))
-						endKey.Write([]byte(strconv.Itoa(e)))
-						it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
-						count := 0
-						var st int64 // start time stamp of data
-						for it.Next() {
-							tt, _ := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), name, "", -1), 10, 64) // get time stamp
-							if count == 0 {
-								st = tt // get start time stamp of data
-								values = append(values, fmt.Sprintf("%s", it.Value()))
-								timeStamps = append(timeStamps, tt)
-							} else {
-								if (tt-st)%int64(interval) == 0 {
-									values = append(values, fmt.Sprintf("%s", it.Value()))
-									timeStamps = append(timeStamps, tt)
-								}
-							}
-							count++
-						}
-					}
-					rawData.Set(name, []interface{}{timeStamps, values})
-					return nil
-				})
-			}
-			if err := g.Wait(); err != nil {
-				return nil, err
-			} else {
-				return rawData, nil
-			}
+			return rawData, nil
 		}
 	} else {
 		return nil, fmt.Errorf("inconsistent length of startTimeStamps, endTimeStamps, intervals")
@@ -225,75 +318,91 @@ func (gdb *Gdb) GetHistoricalData(itemNames []string, startTimeStamps []int, end
 
 // GetRawHistoricalData get raw(that is all  historical data, it should only be used for debugging.
 // All items should be existed in gdb, otherWise will fail to getting data
-func (gdb *Gdb) GetRawHistoricalData(itemNames ...string) (cmap.ConcurrentMap, error) {
-	if index, ok := gdb.checkItems(itemNames...); !ok {
-		return nil, fmt.Errorf("item " + itemNames[index] + " not existed")
-	} else {
-		rawData := cmap.New()
-		g := errgroup.Group{}
-		sn, err := gdb.hisDb.GetSnapshot()
-		if sn == nil || err != nil {
-			return nil, snError{"snError"}
-		}
-		defer sn.Release()
-		for _, name := range itemNames {
-			itemName := name
-			g.Go(func() error {
-				itemValues, timeStamps := []string{}, []int64{}
-				it := sn.NewIterator(util.BytesPrefix([]byte(itemName)), nil)
-				for it.Next() {
-					t, err := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), itemName, "", -1), 10, 64)
-					if err != nil {
-						//return err
-					}
-					v := fmt.Sprintf("%s", it.Value())
-					itemValues = append(itemValues, v)
-					timeStamps = append(timeStamps, t)
-				}
-				rawData.Set(itemName, []interface{}{timeStamps, itemValues})
-				return nil
-			})
-		}
-		if err := g.Wait(); err != nil {
-			return nil, err
+func (gdb *Gdb) GetRawHistoricalData(groupNames []string, itemNames ...string) (cmap.ConcurrentMap, error) {
+	dataTypes := []string{}
+	for index, itemName := range itemNames {
+		if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupNames[index]); !ok {
+			return nil, fmt.Errorf("item " + itemName + " not existed")
 		} else {
-			return rawData, nil
+			dataTypes = append(dataTypes, t.(string))
 		}
+	}
+	rawData := cmap.New()
+	g := errgroup.Group{}
+	sn, err := gdb.hisDb.GetSnapshot()
+	if sn == nil || err != nil {
+		return nil, snError{"snError"}
+	}
+	defer sn.Release()
+	for i, name := range itemNames {
+		itemName, index := name, i
+		g.Go(func() error {
+			values, timeStamps := []string{}, []int64{}
+			it := sn.NewIterator(util.BytesPrefix([]byte(itemName+joiner+groupNames[index])), nil)
+			for it.Next() {
+				t, err := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()),
+					itemName+joiner+groupNames[index], "", -1), 10, 64)
+				if err != nil {
+					return err
+				}
+				values = append(values, string(it.Value()))
+				timeStamps = append(timeStamps, t)
+			}
+			if v, err := convertValues(dataTypes[index], values...); err != nil {
+				return err
+			} else {
+				rawData.Set(itemName, []interface{}{timeStamps, v})
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	} else {
+		return rawData, nil
 	}
 }
 
 // GetHistoricalDataWithStamp get history data according to the given time stamps
-func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]int) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetHistoricalDataWithStamp(groupNames, itemNames []string, timeStamps ...[]int) (cmap.ConcurrentMap, error) {
+	dataTypes := []string{}
+	for index, itemName := range itemNames {
+		if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupNames[index]); !ok {
+			return nil, fmt.Errorf("item " + itemName + " not existed")
+		} else {
+			dataTypes = append(dataTypes, t.(string))
+		}
+	}
 	if len(itemNames) != len(timeStamps) {
 		return nil, fmt.Errorf("inconsistent length of itemNames and timeStamps")
 	}
-	if index, ok := gdb.checkItems(itemNames...); !ok {
-		return nil, fmt.Errorf("item " + itemNames[index] + " not existed")
-	} else {
-		rawData := cmap.New()
-		sn, err := gdb.hisDb.GetSnapshot()
-		if sn == nil || err != nil {
-			return nil, snError{"snError"}
-		}
-		defer sn.Release() // release
-		g := errgroup.Group{}
-		for index, itemName := range itemNames {
-			name, i := itemName, index
-			g.Go(func() error {
-				var values []string
-				for j := 0; j < len(timeStamps[i]); j++ {
-					v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[i][j])), nil)
-					values = append(values, fmt.Sprintf("%s", v))
-				}
-				rawData.Set(name, []interface{}{values, timeStamps[i]})
+	rawData := cmap.New()
+	sn, err := gdb.hisDb.GetSnapshot()
+	if sn == nil || err != nil {
+		return nil, snError{"snError"}
+	}
+	defer sn.Release() // release
+	g := errgroup.Group{}
+	for index, itemName := range itemNames {
+		name, i := itemName, index
+		g.Go(func() error {
+			var values []string
+			for j := 0; j < len(timeStamps[i]); j++ {
+				v, _ := sn.Get([]byte(name+joiner+groupNames[i]+fmt.Sprintf("%d", timeStamps[i][j])), nil)
+				values = append(values, string(v))
+			}
+			if v, err := convertValues(dataTypes[i], values...); err != nil {
+				return err
+			} else {
+				rawData.Set(name, []interface{}{timeStamps[i], v})
 				return nil
-			})
-		}
-		if err := g.Wait(); err != nil {
-			return nil, err
-		} else {
-			return rawData, nil
-		}
+			}
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	} else {
+		return rawData, nil
 	}
 }
 
@@ -306,7 +415,7 @@ func (gdb *Gdb) GetHistoricalDataWithStamp(itemNames []string, timeStamps ...[]i
 // logic about item1 and item2 And or logic, no matter what the number is expanded, there may be a judgment error.
 // DeadZone is used to define the maximum number of continuous data allowed by itemName.eg,the deadZoneCount of item x
 // is 2, that is all data in x whose number of continuous > 2 will be filtered
-func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []int, endTime []int, intervals []int, filterCondition string, zones ...DeadZone) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetHistoricalDataWithCondition(groupNames, itemNames []string, startTime []int, endTime []int, intervals []int, filterCondition string, zones ...DeadZone) (cmap.ConcurrentMap, error) {
 	var filterItemNames []string // filter item
 	if strings.Trim(filterCondition, " ") == "true" {
 		filterItemNames = itemNames
@@ -321,7 +430,15 @@ func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []i
 			return nil, conditionError{"conditionError: invalid condition, items must be included by [] and condition can't be null "}
 		}
 	}
-	filterHistoryData, err := gdb.getHistoricalDataWithMinLength(filterItemNames, startTime, endTime, intervals) // get history of filter item
+	dataTypes := []string{}
+	for index, itemName := range itemNames {
+		if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupNames[index]); !ok {
+			return nil, fmt.Errorf("item " + itemName + " not existed")
+		} else {
+			dataTypes = append(dataTypes, t.(string))
+		}
+	}
+	filterHistoryData, err := gdb.getHistoricalDataWithMinLength(groupNames, filterItemNames, startTime, endTime, intervals, dataTypes...) // get history of filter item
 	if err != nil {
 		return nil, err
 	}
@@ -345,13 +462,13 @@ func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []i
 		timeStamps = append(timeStamps, sfr["timeStamp"].(int64))
 	}
 	if len(zones) != 0 {
-		if data, err := gdb.getHistoricalDataWithStampAndDeadZoneCount(itemNames, timeStamps, zones...); err != nil {
+		if data, err := gdb.getHistoricalDataWithStampAndDeadZoneCount(groupNames, itemNames, timeStamps, zones, dataTypes...); err != nil {
 			return nil, err
 		} else {
 			return data, nil
 		}
 	} else {
-		if data, err := gdb.getHistoricalDataWithStringTimeStamp(itemNames, timeStamps...); err != nil {
+		if data, err := gdb.getHistoricalDataWithStringTimeStamp(groupNames, itemNames, timeStamps, dataTypes...); err != nil {
 			return nil, err
 		} else {
 			return data, nil
@@ -359,7 +476,7 @@ func (gdb *Gdb) GetHistoricalDataWithCondition(itemNames []string, startTime []i
 	}
 }
 
-func (gdb *Gdb) getHistoricalDataWithStringTimeStamp(itemNames []string, timeStamps ...int64) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getHistoricalDataWithStringTimeStamp(groupNames, itemNames []string, timeStamps []int64, dataTypes ...string) (cmap.ConcurrentMap, error) {
 	rawData := cmap.New()
 	sn, err := gdb.hisDb.GetSnapshot()
 	if sn == nil || err != nil {
@@ -367,16 +484,21 @@ func (gdb *Gdb) getHistoricalDataWithStringTimeStamp(itemNames []string, timeSta
 	}
 	defer sn.Release() // release
 	g := errgroup.Group{}
-	for _, itemName := range itemNames {
-		name := itemName
+	for i, itemName := range itemNames {
+		name, index := itemName, i
 		g.Go(func() error {
 			var values []string
 			for j := 0; j < len(timeStamps); j++ {
-				v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[j])), nil)
+				v, _ := sn.Get([]byte(name+joiner+groupNames[index]+fmt.Sprintf("%d", timeStamps[j])), nil)
 				values = append(values, fmt.Sprintf("%s", v))
 			}
-			rawData.Set(name, []interface{}{timeStamps, values})
-			return nil
+			if v, err := convertValues(dataTypes[index], values...); err != nil {
+				return err
+			} else {
+				rawData.Set(name, []interface{}{timeStamps, v})
+				return nil
+			}
+
 		})
 	}
 	if err := g.Wait(); err != nil {
@@ -386,7 +508,7 @@ func (gdb *Gdb) getHistoricalDataWithStringTimeStamp(itemNames []string, timeSta
 	}
 }
 
-func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(itemNames []string, timeStamps []int64, zones ...DeadZone) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(groupNames, itemNames []string, timeStamps []int64, zones []DeadZone, dataTypes ...string) (cmap.ConcurrentMap, error) {
 	rawData := cmap.New()
 	sn, err := gdb.hisDb.GetSnapshot()
 	if sn == nil || err != nil {
@@ -394,8 +516,8 @@ func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(itemNames []string, t
 	}
 	defer sn.Release() // release
 	g := errgroup.Group{}
-	for _, itemName := range itemNames {
-		name := itemName
+	for j, itemName := range itemNames {
+		name, index := itemName, j
 		g.Go(func() error {
 			var values []string
 			var lastValue string
@@ -406,11 +528,15 @@ func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(itemNames []string, t
 			if filterIndex == -1 {
 				// don't filter
 				for i := 0; i < len(timeStamps); i++ {
-					v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[i])), nil)
+					v, _ := sn.Get([]byte(name+joiner+groupNames[index]+fmt.Sprintf("%d", timeStamps[i])), nil)
 					values = append(values, fmt.Sprintf("%s", v))
 				}
-				rawData.Set(name, []interface{}{timeStamps, values})
-				return nil
+				if v, err := convertValues(dataTypes[index], values...); err != nil {
+					return err
+				} else {
+					rawData.Set(name, []interface{}{timeStamps, v})
+					return nil
+				}
 			}
 			deadZoneCounts := zones[filterIndex].DeadZoneCount
 			if deadZoneCounts == 1 {
@@ -419,13 +545,13 @@ func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(itemNames []string, t
 			} else if deadZoneCounts < 1 {
 				// don't filter
 				for i := 0; i < len(timeStamps); i++ {
-					v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[i])), nil)
+					v, _ := sn.Get([]byte(name+joiner+groupNames[index]+fmt.Sprintf("%d", timeStamps[i])), nil)
 					values = append(values, fmt.Sprintf("%s", v))
 				}
 			} else {
 				// filter
 				for i := 0; i < len(timeStamps); i++ {
-					v, _ := sn.Get([]byte(name+fmt.Sprintf("%d", timeStamps[i])), nil)
+					v, _ := sn.Get([]byte(name+joiner+groupNames[index]+fmt.Sprintf("%d", timeStamps[i])), nil)
 					vs := fmt.Sprintf("%s", v)
 					if lastValue != vs {
 						// not Repeated
@@ -444,8 +570,12 @@ func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(itemNames []string, t
 					}
 				}
 			}
-			rawData.Set(name, []interface{}{timeStamps, values})
-			return nil
+			if v, err := convertValues(dataTypes[index], values...); err != nil {
+				return err
+			} else {
+				rawData.Set(name, []interface{}{timeStamps, v})
+				return nil
+			}
 		})
 	}
 	if err := g.Wait(); err != nil {
@@ -455,7 +585,7 @@ func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(itemNames []string, t
 	}
 }
 
-func (gdb *Gdb) getHistoricalDataWithMinLength(itemNames []string, startTime []int, endTime []int, intervals []int) ([]map[string]interface{}, error) {
+func (gdb *Gdb) getHistoricalDataWithMinLength(groupNames, itemNames []string, startTime []int, endTime []int, intervals []int, dataTypes ...string) ([]map[string]interface{}, error) {
 	rawData := cmap.New()
 	lengthMap := make([]int, len(itemNames))
 	sn, err := gdb.hisDb.GetSnapshot()
@@ -478,16 +608,16 @@ func (gdb *Gdb) getHistoricalDataWithMinLength(itemNames []string, startTime []i
 					continue
 				}
 				startKey := strings.Builder{}
-				startKey.Write([]byte(name))
+				startKey.Write([]byte(name + joiner + groupNames[j]))
 				startKey.Write([]byte(strconv.Itoa(s)))
 				endKey := strings.Builder{}
-				endKey.Write([]byte(name))
+				endKey.Write([]byte(name + joiner + groupNames[j]))
 				endKey.Write([]byte(strconv.Itoa(e)))
 				it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
 				count := 0
 				var st int64 // start time stamp of data
 				for it.Next() {
-					tt, _ := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), name, "", -1), 10, 64) // get time stamp
+					tt, _ := strconv.ParseInt(strings.Replace(fmt.Sprintf("%s", it.Key()), name+joiner+groupNames[j], "", -1), 10, 64) // get time stamp
 					if count == 0 {
 						st = tt // get start time stamp of data
 						values = append(values, fmt.Sprintf("%s", it.Value()))
@@ -501,9 +631,13 @@ func (gdb *Gdb) getHistoricalDataWithMinLength(itemNames []string, startTime []i
 					count++
 				}
 			}
-			rawData.Set(name, []interface{}{timeStamps, values})
-			lengthMap[j] = len(values)
-			return nil
+			if v, err := convertValues(dataTypes[j], values...); err != nil {
+				return err
+			} else {
+				rawData.Set(name, []interface{}{timeStamps, v})
+				lengthMap[j] = len(values)
+				return nil
+			}
 		})
 	}
 	if err := g.Wait(); err != nil {
@@ -516,10 +650,7 @@ func (gdb *Gdb) getHistoricalDataWithMinLength(itemNames []string, startTime []i
 			for index, name := range itemNames {
 				v, _ := rawData.Get(name)
 				vs := v.([]interface{})
-				d, err := strconv.ParseFloat(vs[1].([]string)[i], 64)
-				if err != nil {
-					break
-				}
+				d := vs[1].([]interface{})[i]
 				t[name] = d // values
 				if index == 0 {
 					// first
@@ -537,17 +668,6 @@ func (gdb *Gdb) getHistoricalDataWithMinLength(itemNames []string, startTime []i
 	}
 }
 
-// check if all itemNames given exist
-func (gdb *Gdb) checkItems(itemNames ...string) (int, bool) {
-	for index, itemName := range itemNames {
-		_, ok := gdb.rtDbFilter.Get(itemName)
-		if !ok {
-			return index, false
-		}
-	}
-	return -1, true
-}
-
 // following method is used by calc
 // get unix timestamp of the given time,t should b yyyy-mm-dd hh:mm:ss
 func (gdb *Gdb) getUnixTimeStamp(t string) int64 {
@@ -555,7 +675,7 @@ func (gdb *Gdb) getUnixTimeStamp(t string) int64 {
 	if err != nil {
 		return -1
 	}
-	return t1.Unix()
+	return t1.Unix() + 8*3600
 }
 
 func (gdb *Gdb) getNowTime() string {
@@ -566,8 +686,8 @@ func (gdb *Gdb) getTime(d int) string {
 	return time.Now().Add(time.Duration(d) * time.Second).Format(timeFormatString)
 }
 
-func (gdb *Gdb) getRtData(itemNames []string) ([]string, error) {
-	v, err := gdb.GetRealTimeData(itemNames...)
+func (gdb *Gdb) getRtData(itemNames, groupNames []string) ([]string, error) {
+	v, err := gdb.GetRealTimeData(groupNames, itemNames...)
 	if err != nil {
 		return nil, err
 	}
@@ -582,9 +702,17 @@ func (gdb *Gdb) getRtData(itemNames []string) ([]string, error) {
 	return result, nil
 }
 
-func (gdb *Gdb) getHData(itemNames []string, timeStamps []int64) ([]string, error) {
-	r, err := gdb.getHistoricalDataWithStringTimeStamp(itemNames, timeStamps...)
-	var result []string
+func (gdb *Gdb) getHData(groupNames, itemNames []string, timeStamps []int64) ([]interface{}, error) {
+	dataTypes := []string{}
+	for index, itemName := range itemNames {
+		if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupNames[index]); !ok {
+			return nil, fmt.Errorf("item " + itemName + " not existed")
+		} else {
+			dataTypes = append(dataTypes, t.(string))
+		}
+	}
+	r, err := gdb.getHistoricalDataWithStringTimeStamp(groupNames, itemNames, timeStamps, dataTypes...)
+	var result []interface{}
 	if err != nil {
 		return nil, err
 	}
@@ -593,9 +721,22 @@ func (gdb *Gdb) getHData(itemNames []string, timeStamps []int64) ([]string, erro
 		if rv == nil {
 			return nil, fmt.Errorf("invalid itemName: " + itemName)
 		}
-		result = append(result, rv.(string))
+		result = append(result, rv)
 	}
 	return result, nil
+}
+
+func (gdb *Gdb) writeRtData(infos []map[string]interface{}) (Rows, error) {
+	items := []ItemValue{}
+	for _, info := range infos {
+		items = append(items, ItemValue{
+			GroupName: "calc",
+			ItemName:  info["itemName"].(string),
+			Value:     info["value"],
+		})
+	}
+	rows, err := gdb.BatchWrite(items...)
+	return rows, err
 }
 
 func (gdb *Gdb) getDbInfo() (cmap.ConcurrentMap, error) {
@@ -627,38 +768,85 @@ func (gdb *Gdb) getDbInfo() (cmap.ConcurrentMap, error) {
 	}
 }
 
-func (gdb *Gdb) getDbInfoHistory(itemName string, startTimeStamps []int, endTimeStamps []int, interval int) (cmap.ConcurrentMap, error) {
-	rawData := cmap.New()
-	sn, err := gdb.infoDb.GetSnapshot()
-	if sn == nil || err != nil {
-		return nil, snError{"snError"}
-	}
-	defer sn.Release() // release
-	for i := 0; i < len(startTimeStamps); i++ {
-		s := startTimeStamps[i] // startTime
-		e := endTimeStamps[i]   // endTime
-		if s >= e {
-			// startTime > endTime, continue
-			continue
+func (gdb *Gdb) getDbInfoHistory(itemName string, startTimeStamps []int, endTimeStamps []int, intervals []int) (cmap.ConcurrentMap, error) {
+	if len(startTimeStamps) == len(endTimeStamps) && len(startTimeStamps) == len(intervals) {
+		rawData := cmap.New()
+		sn, err := gdb.infoDb.GetSnapshot()
+		if sn == nil || err != nil {
+			return nil, snError{"snError"}
 		}
-		startKey := strings.Builder{}
-		startKey.Write([]byte(itemName))
-		startKey.Write([]byte(fmt.Sprintf("%d", s)))
-		endKey := strings.Builder{}
-		endKey.Write([]byte(itemName))
-		endKey.Write([]byte(fmt.Sprintf("%d", e)))
-		it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
-		var values []string
-		var count int32
-		var timeStamps []string
-		for it.Next() {
-			if int(count)%interval == 0 {
-				values = append(values, fmt.Sprintf("%s", it.Value()))
-				timeStamps = append(timeStamps, strings.Replace(fmt.Sprintf("%s", it.Key()), itemName, "", -1))
+		defer sn.Release() // release
+		for i := 0; i < len(startTimeStamps); i++ {
+			s := startTimeStamps[i] // startTime
+			e := endTimeStamps[i]   // endTime
+			interval := intervals[i]
+			if s >= e {
+				// startTime > endTime, continue
+				continue
 			}
-			count++
+			startKey := strings.Builder{}
+			startKey.Write([]byte(itemName))
+			startKey.Write([]byte(fmt.Sprintf("%d", s)))
+			endKey := strings.Builder{}
+			endKey.Write([]byte(itemName))
+			endKey.Write([]byte(fmt.Sprintf("%d", e)))
+			it := sn.NewIterator(&util.Range{Start: []byte(startKey.String()), Limit: []byte(endKey.String())}, nil)
+			var values []string
+			var count int32
+			var timeStamps []string
+			for it.Next() {
+				if int(count)%interval == 0 {
+					values = append(values, fmt.Sprintf("%s", it.Value()))
+					timeStamps = append(timeStamps, strings.Replace(fmt.Sprintf("%s", it.Key()), itemName, "", -1))
+				}
+				count++
+			}
+			rawData.Set(itemName, [][]string{timeStamps, values})
 		}
-		rawData.Set(itemName, [][]string{timeStamps, values})
+		return rawData, nil
+	} else {
+		return nil, fmt.Errorf("inconsistent length of starTimes, endTimes and intervals")
 	}
-	return rawData, nil
+}
+
+func convertValues(t string, values ...string) ([]interface{}, error) {
+	r := make([]interface{}, len(values))
+	g := errgroup.Group{}
+	for i := 0; i < len(values); i++ {
+		index := i
+		g.Go(func() error {
+			switch t {
+			case "int64":
+				if result, err := strconv.ParseInt(values[index], 10, 64); err != nil {
+					return err
+				} else {
+					r[index] = result
+				}
+				break
+			case "float64":
+				if result, err := strconv.ParseFloat(values[index], 64); err != nil {
+					return err
+				} else {
+					r[index] = result
+				}
+				break
+			case "bool":
+				if result, err := strconv.ParseBool(values[index]); err != nil {
+					return err
+				} else {
+					r[index] = result
+				}
+				break
+			default:
+				r[index] = values[index]
+				break
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return r, err
+	} else {
+		return r, nil
+	}
 }
