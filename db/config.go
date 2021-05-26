@@ -25,7 +25,7 @@ func ReadDbConfig(path string) (Config, error) {
 	} else {
 		c := Config{}
 		cf := handleJson(fmt.Sprintf("%s", b))
-		if err := Json.Unmarshal(cf, &c); err != nil {
+		if err := json.Unmarshal(cf, &c); err != nil {
 			return Config{}, err
 		} else {
 			return c, nil
