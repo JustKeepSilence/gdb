@@ -77,12 +77,12 @@ func (gdb *Gdb) AddGroups(groupInfos ...AddedGroupInfo) (Rows, error) {
 		sb.Write([]byte(groupNames[i][0]))
 		// have custom columns
 		if item := columnNames[i]; len(item) != 0 {
-			sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE,")) // system three columns :id,pointName,groupName
+			sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE, dataType text, ")) // system three columns :id,pointName,groupName
 			sb.Write([]byte(strings.Join(columnNames[i], " text, ")))
 			sb.Write([]byte(" text)"))
 		} else {
 			// no custom columns
-			sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE )"))
+			sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE, dataType text )"))
 		}
 		createTableSqlString := sb.String()
 		if err := updateItems(gdb.ItemDbPath, []string{createTableSqlString}...); err != nil {
@@ -174,7 +174,17 @@ func (gdb *Gdb) UpdateGroupNames(groupInfos ...UpdatedGroupNameInfo) (Rows, erro
 			_ = updateItems(gdb.ItemDbPath, []string{"update group_cfg set groupName='" + oldGroupName + "' where groupName='" + newGroupName + "'"}...)
 			return Rows{}, err
 		}
+		// update itemNames in gdb.Filter
+		items, _ := query(gdb.ItemDbPath, "select itemName, dataType from '"+newGroupName+"'")
+		for _, item := range items {
+			itemName := item["itemName"] + joiner + newGroupName // itemName in filter = itemName + "__" + groupName
+			oldItemName := item["itemName"] + joiner + oldGroupName
+			dataType := item["dataType"]
+			gdb.rtDbFilter.Remove(oldItemName)     // remove old itemNames in filter
+			gdb.rtDbFilter.Set(itemName, dataType) // add key to filter, don't lock
+		}
 	}
+
 	return Rows{c}, nil
 }
 
@@ -223,6 +233,7 @@ func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, erro
 	}
 	rs := cs.Difference(ds)
 	rs.Remove("itemName")
+	rs.Remove("dataType")
 	remainedColumnNames := rs.ToSlice()
 	newColumnNames := []string{} // remained columns in new table
 	for _, name := range remainedColumnNames {
@@ -231,15 +242,15 @@ func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, erro
 	sb := strings.Builder{}
 	sb.Write([]byte("CREATE TEMPORARY TABLE t1_backup("))
 	if len(newColumnNames) == 0 {
-		sb.Write([]byte("id text, itemName text "))
+		sb.Write([]byte("id integer, itemName text, dataType text"))
 	} else {
-		sb.Write([]byte("id text, itemName text, "))
+		sb.Write([]byte("id integer, itemName text, dataType text, "))
 	}
 	sb.Write([]byte(strings.Join(newColumnNames, " text, ")))
 	if len(newColumnNames) == 0 {
-		sb.Write([]byte("); insert into t1_backup select id, itemName "))
+		sb.Write([]byte("); insert into t1_backup select id, itemName, dataType "))
 	} else {
-		sb.Write([]byte("); insert into t1_backup select id, itemName, "))
+		sb.Write([]byte("); insert into t1_backup select id, itemName, dataType, "))
 		sb.Write([]byte(strings.Join(newColumnNames, ",")))
 	}
 	sb.Write([]byte(" from '"))
@@ -249,16 +260,16 @@ func (gdb *Gdb) DeleteGroupColumns(info DeletedGroupColumnNamesInfo) (Cols, erro
 	sb.Write([]byte("'; create table if not exists '"))
 	sb.Write([]byte(groupName))
 	if item := newColumnNames; len(item) != 0 {
-		sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE,"))
+		sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE,dataType text, "))
 		sb.Write([]byte(strings.Join(newColumnNames, " text, ")))
 		sb.Write([]byte(" text)"))
 	} else {
-		sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE )"))
+		sb.Write([]byte("' (id integer not null primary key, itemName text UNIQUE, dataType text )"))
 	}
 	if len(newColumnNames) == 0 {
-		sb.Write([]byte("; insert into '" + groupName + "' select id, itemName "))
+		sb.Write([]byte("; insert into '" + groupName + "' select id, itemName, dataType "))
 	} else {
-		sb.Write([]byte("; insert into '" + groupName + "' select id, itemName, " + strings.Join(newColumnNames, ",")))
+		sb.Write([]byte("; insert into '" + groupName + "' select id, itemName, dataType, " + strings.Join(newColumnNames, ",")))
 	}
 	sb.Write([]byte(" from 't1_backup' "))
 	sb.Write([]byte("; drop table t1_backup"))
@@ -277,7 +288,11 @@ func (gdb *Gdb) AddGroupColumns(info AddedGroupColumnsInfo) (Cols, error) {
 	}
 	sqlStrings := []string{}
 	for index, name := range addedColumnNames {
-		sqlStrings = append(sqlStrings, "alter table '"+groupName+"' add column '"+name+"' text default '"+defaultValues[index]+"'")
+		if len(strings.Trim(defaultValues[index], " ")) == 0 {
+			sqlStrings = append(sqlStrings, "alter table '"+groupName+"' add column '"+name+"' text default ''")
+		} else {
+			sqlStrings = append(sqlStrings, "alter table '"+groupName+"' add column '"+name+"' text default '"+defaultValues[index]+"'")
+		}
 	}
 	if err := updateItems(gdb.ItemDbPath, sqlStrings...); err != nil {
 		return Cols{}, err
@@ -315,8 +330,8 @@ func (gdb *Gdb) rollBack(groupNames ...[]string) {
 func checkColumnNames(columnNames ...string) (int, []string) {
 	r := []string{}
 	for index, columnName := range columnNames {
-		c := strings.Trim(strings.Replace(columnName, "'", "", -1), " ") // 去除两端空格和'
-		if strings.ToLower(c) == "id" || strings.ToLower(c) == "itemname" || len(c) == 0 {
+		c := strings.Trim(strings.Replace(columnName, "'", "", -1), " ")
+		if c == "id" || c == "itemName" || c == "dataType" || len(c) == 0 {
 			return index, nil
 		}
 		r = append(r, c)
@@ -328,7 +343,7 @@ func checkColumnNames(columnNames ...string) (int, []string) {
 func contains(s ...string) bool {
 	for _, s2 := range s {
 		t := strings.Trim(s2, " ")
-		if t == "itemName" || t == "id" || len(t) == 0 {
+		if t == "itemName" || t == "id" || t == "dataType" || len(t) == 0 {
 			return true
 		}
 	}
