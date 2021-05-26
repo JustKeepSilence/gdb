@@ -9,10 +9,13 @@ package db
 
 import (
 	"fmt"
-	"github.com/syndtr/goleveldb/leveldb"
 	"regexp"
 	"strconv"
 	"strings"
+)
+
+const (
+	types = "int64, float64, bool, string"
 )
 
 // AddItems to gdb,you can not add existed items
@@ -42,6 +45,7 @@ func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 	insertSqlString := sb.String()
 	var addedItemValues [][]string
 	var itemNames []string
+	dataTypes := []string{}
 	for _, itemValue := range itemValues {
 		var t []string
 		for i := 0; i < len(columnNames); i++ {
@@ -51,6 +55,14 @@ func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 				t = append(t, cv)
 				if columnNames[i] == "itemName" {
 					itemNames = append(itemNames, cv)
+				}
+				if columnNames[i] == "dataType" {
+					// check dataTypes of item
+					if strings.Trim(cv, " ") == "" || !strings.Contains(types, cv) {
+						return Rows{-1}, fmt.Errorf("dataType can't be empty, it must be " + types)
+					} else {
+						dataTypes = append(dataTypes, cv)
+					}
 				}
 			} else {
 				// key not exist
@@ -63,15 +75,9 @@ func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 	if err := insertItems(gdb.ItemDbPath, insertSqlString, addedItemValues...); err != nil {
 		return Rows{-1}, err
 	}
-	for _, itemName := range itemNames {
-		gdb.rtDbFilter.Set(itemName, struct{}{})
+	for index, itemName := range itemNames {
+		gdb.rtDbFilter.Set(itemName+joiner+groupName, dataTypes[index])
 	}
-	// initial write realTime data, all key write ""
-	batch := leveldb.Batch{}
-	for i := 0; i < len(itemNames); i++ {
-		batch.Put([]byte(itemNames[i]), []byte(""))
-	}
-	_ = gdb.rtDb.Write(&batch, nil)
 	return Rows{len(itemValues)}, nil
 }
 
