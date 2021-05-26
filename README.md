@@ -63,6 +63,8 @@ import (
 	"fmt"
 	"github.com/JustKeepSilence/gdb/db"
 	"log"
+	"math"
+	"math/rand"
 	"io/ioutil"
 	"time"
 )
@@ -80,19 +82,20 @@ func main()  {
             log.Fatal(err)
         }
         // add items
-        if _, err := gdb.AddItems(db.AddedItemsInfo{
-            GroupName:  "1DCS",
-            ItemValues: []map[string]string{{"itemName": "x", "description": "x"}, {"itemName": "y", "description": "y"}, {"itemName": "z", "description": "z"},
-            {"itemName": "item1", "description": "item1"}, {"itemName": "item2", "description": "item2"}},
-            });err!=nil{
+        if _, err := gdb.AddItems(AddedItemsInfo{
+            GroupName: "1DCS",
+            ItemValues: []map[string]string{{"itemName": "x", "description": "x", "dataType": "float64"},
+                {"itemName": "y", "description": "y", "dataType": "float64"}, {"itemName": "z", "description": "z", "dataType": "float64"},
+                {"itemName": "item1", "description": "item1", "dataType": "float64"}, {"itemName": "item2", "description": "item2", "dataType": "float64"}},
+        }); err != nil {
             log.Fatal(err)
         }
         // batch write, y = 2 * x
-        if _, err := gdb.BatchWrite([]db.ItemValue{{ItemName: "x", Value: "1"}, {ItemName: "y", Value: "2"}}...);err!=nil{
-        log.Fatal(err)
+        if _, err := gdb.BatchWrite([]db.ItemValue{{ItemName: "x", Value: 1.0, GroupName: "1DCS"}, {ItemName: "y", Value: 2.0, GroupName: "1DCS"}}...);err!=nil{
+            log.Fatal(err)
         }else{
         // get latest updated value of given items
-            if r, err := gdb.GetRealTimeData("x", "y");err!=nil{
+            if r, err := gdb.GetRealTimeData([]string{"1DCS", "1DCS"}, "x", "y");err!=nil{
             log.Fatal(err)
         }else{
             d, _ := json.Marshal(r)
@@ -101,23 +104,23 @@ func main()  {
         }
         // write historical data
         // mock one hour historical data
-        var xData, yData, ts []string
+        var xData, yData, ts []interface{}
         now := time.Now()
         fmt.Println("now: ", now.Format("2006-01-02 15:04:05"))
         r := rand.New(rand.NewSource(99))
         for i := 0; i < 3600; i++ {
-            x := r.Intn(3600)
+            x := float64(r.Intn(3600)) * math.Pi
             y := 2 * x
             t := now.Add(time.Second * time.Duration(i)).Unix() + 8 * 3600
-            xData = append(xData, fmt.Sprintf("%d", x))
-            yData = append(yData, fmt.Sprintf("%d", y))
-            ts = append(ts, fmt.Sprintf("%d", t))
+            xData = append(xData,x)
+            yData = append(yData, y)
+            ts = append(ts, int(t))
         }
-        if err := gdb.BatchWriteHistoricalData([]db.HistoricalItemValue{{ItemName: "x", Values: xData, TimeStamps: ts}, {ItemName: "y", Values: yData, TimeStamps: ts}}...);err!=nil{
-        log.Fatal(err)
+        if err := gdb.BatchWriteHistoricalData([]db.HistoricalItemValue{{ItemName: "x", Values: xData, TimeStamps: ts, GroupName: "1DCS"}, {ItemName: "y", Values: yData, TimeStamps: ts, GroupName: "1DCS"}}...);err!=nil{
+            log.Fatal(err)
         }else{
             // get raw historical data for debugging
-            if r, err := gdb.GetRawHistoricalData("x");err!=nil{
+            if r, err := gdb.GetRawHistoricalData([]string{"1DCS"}, "x");err!=nil{
             log.Fatal(err)
         }else{
             d, _ := json.Marshal(r)
@@ -128,22 +131,22 @@ func main()  {
         etX := int(now.Add(time.Minute * 25).Unix() + 8 * 3600)
         stY := int(now.Add(time.Minute * 35).Unix() + 8 * 3600)
         etY := int(now.Add(time.Minute * 55).Unix() + 8 * 3600)
-        if r, err := gdb.GetHistoricalData([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10});err!=nil{
-        log.Fatal(err)
+        if r, err := gdb.GetHistoricalData([]string{"1DCS", "1DCS"}, []string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10});err!=nil{
+            log.Fatal(err)
         }else{
-        d, _ := json.Marshal(r)
-        _ = ioutil.WriteFile("./hX.txt", d, 0644)
+            d, _ := json.Marshal(r)
+            _ = ioutil.WriteFile("./hX.txt", d, 0644)
         }
         // get historical data with given itemName
-        if r, err := gdb.GetHistoricalDataWithStamp([]string{"x", "y"}, [][]int{{stX, etX}, {stY, etY}}...);err!=nil{
-        log.Fatal(err)
+        if r, err := gdb.GetHistoricalDataWithStamp([]string{"1DCS", "1DCS"},[]string{"x", "y"}, [][]int{{stX, etX}, {stY, etY}}...);err!=nil{
+            log.Fatal(err)
         }else{
-        d, _ := json.Marshal(r)
-        fmt.Println(string(d))
+            d, _ := json.Marshal(r)
+            fmt.Println(string(d))
         }
         // get historical data with condition
         if r, err := gdb.GetHistoricalDataWithCondition([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}, `item["x"] > 0 && item["y"] > 1000`, []db.DeadZone{}...);err!=nil{
-        log.Fatal(err)
+            log.Fatal(err)
         }else{
             d, _ := json.Marshal(r)
             _ = ioutil.WriteFile("./f.txt", d, 0644)
@@ -229,93 +232,162 @@ gdb by the restful interface easily.Here is the examples of JS(ES6).For more det
 ### Page
 ```jsx
 // userLogin, passWord is md5 of `${passWord}@seu`
-axios.post("/page/userLogin", JSON.stringify({userName: "admin", passWord: "685a6b21dc732a9702a96e6731811ec9"}))
+axios.post("/page/userLogin", {userName: "admin", passWord: "685a6b21dc732a9702a96e6731811ec9"})
 {"code":200,"message":"","data":{"token":"bc947ca95872df7993fb277072eaa12d"}}
-// getUserInfo
-axios.post("/page/getUserInfo", JSON.stringify({"name": "admin"}))
-{"code":200,"message":"","data":{"name":"admin","role":["super_user"]}}
 // userLogOut
-axios.get("/page/userLogOut/admin")
+axios.post("/page/userLogOut", {userName: "admin"})
 {"code":200,"message":"","data":{"effectedRows":1}}
-// upload excel file, you need to set Content-Type to multipart/form-data
-const data = new FormData()
-data.append('file', fileContent)    // field must be 'file'
-axios({url: "/page/uploadFile", headers:{"Content-Type": "multipart/form-data"}, data, method: "post"})
-// addItemsByExcel
-axios.post("/page/addItemsByExcel", JSON.stringify({"fileName": "item.xlsx", "groupName": "1DCS"}))
-{"code":200,"message":"","data":{"effectedRows":18112}}
-// importHistoryByExcel
-axios.post("/page/importHistoryByExcel", JSON.stringify({"fileName": "data.xlsx", "itemNames": ["YFLDY"], "sheetNames": ["Sheet1"]}))
-{"code":200,"message":"","data":""}
+// getUserInfo
+axios.post("/page/getUserInfo", {"name": "admin"})
+{"code":200,"message":"","data":{"userName":"admin","role":["super_user"]}}
+// getUsers
+axios.post("/page/getUsers")
+{"code":200,"message":"","data":{"userInfos":[{"id":"1","role":"super_user","userName":"admin"}]}}
+// addUsers
+axios.post("/page/addUsers", {"name":"seu","role":"common_user","passWord":"685a6b21dc732a9702a96e6731811ec9"})
+{"code":200,"message":"","data":{"effectedRows":1}}
+// updateUsers
+axios.post("/page/updateUsers", {"userName":"seu1","newUserName":"seu1","newPassWord":"685a6b21dc732a9702a96e6731811ec9","newRole":"common_user"})
+{"code":200,"message":"","data":{"effectedRows":1}}
+// deleteUsers
+axios.post("/page/deleteUsers", {"name":"seu"})
+{"code":200,"message":"","data":{"effectedRows":1}}
+// getLogs
+axios.post("/page/getLogs", {"level":"all","startTime":"2021-05-23 14:42:29","endTime":"2021-05-24 14:42:29","startRow":0,"rowCount":10,"name":"admin"})
+{"code":200,"message":"","data":{"infos":[{"id":"2","insertTime":"2021-05-24 10:48:09","level":"Error","logMessage":"{\"requestUrl\":\"/page/userLogin\",\"requestMethod\":\"HTTP/1.1\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.165 Electron/8.3.0 Safari/537.36\",\"requestBody\":\"{\\\"userName\\\":\\\"seu\\\",\\\"passWord\\\":\\\"c3ea4503d60a70c5cf33720b8cf98716\\\"}\",\"remoteAddress\":\"192.168.0.102:61725\",\"message\":\"userNameError: seu\"}","requestUser":""},{"id":"3","insertTime":"2021-05-24 10:48:16","level":"Error","logMessage":"{\"requestUrl\":\"/page/userLogin\",\"requestMethod\":\"HTTP/1.1\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.165 Electron/8.3.0 Safari/537.36\",\"requestBody\":\"{\\\"userName\\\":\\\"seu\\\",\\\"passWord\\\":\\\"c3ea4503d60a70c5cf33720b8cf98716\\\"}\",\"remoteAddress\":\"192.168.0.102:61725\",\"message\":\"userNameError: seu\"}","requestUser":""},{"id":"4","insertTime":"2021-05-24 10:48:19","level":"Error","logMessage":"{\"requestUrl\":\"/page/userLogin\",\"requestMethod\":\"HTTP/1.1\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.165 Electron/8.3.0 Safari/537.36\",\"requestBody\":\"{\\\"userName\\\":\\\"seu\\\",\\\"passWord\\\":\\\"9c614c1c9b72324327cd78ed88f956a3\\\"}\",\"remoteAddress\":\"192.168.0.102:61725\",\"message\":\"userNameError: seu\"}","requestUser":""},{"id":"5","insertTime":"2021-05-24 10:48:23","level":"Error","logMessage":"{\"requestUrl\":\"/page/userLogin\",\"requestMethod\":\"HTTP/1.1\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.165 Electron/8.3.0 Safari/537.36\",\"requestBody\":\"{\\\"userName\\\":\\\"seu1\\\",\\\"passWord\\\":\\\"9c614c1c9b72324327cd78ed88f956a3\\\"}\",\"remoteAddress\":\"192.168.0.102:61725\",\"message\":\"userNameError: seu1\"}","requestUser":""},{"id":"6","insertTime":"2021-05-24 10:48:25","level":"Error","logMessage":"{\"requestUrl\":\"/page/userLogin\",\"requestMethod\":\"HTTP/1.1\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.165 Electron/8.3.0 Safari/537.36\",\"requestBody\":\"{\\\"userName\\\":\\\"seu1\\\",\\\"passWord\\\":\\\"c3ea4503d60a70c5cf33720b8cf98716\\\"}\",\"remoteAddress\":\"192.168.0.102:61725\",\"message\":\"userNameError: seu1\"}","requestUser":""},{"id":"7","insertTime":"2021-05-24 10:57:45","level":"Error","logMessage":"{\"requestUrl\":\"/page/userLogin\",\"requestMethod\":\"HTTP/1.1\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.165 Electron/8.3.0 Safari/537.36\",\"requestBody\":\"{\\\"userName\\\":\\\"seu\\\",\\\"passWord\\\":\\\"c3ea4503d60a70c5cf33720b8cf98716\\\"}\",\"remoteAddress\":\"192.168.0.102:61800\",\"message\":\"userNameError: seu\"}","requestUser":""},{"id":"8","insertTime":"2021-05-24 10:57:47","level":"Error","logMessage":"{\"requestUrl\":\"/page/userLogin\",\"requestMethod\":\"HTTP/1.1\",\"userAgent\":\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.165 Electron/8.3.0 Safari/537.36\",\"requestBody\":\"{\\\"userName\\\":\\\"seu\\\",\\\"passWord\\\":\\\"9c614c1c9b72324327cd78ed88f956a3\\\"}\",\"remoteAddress\":\"192.168.0.102:61800\",\"message\":\"userNameError: seu\"}","requestUser":""}],"count":7}}
+// deleteLogs
+axios.post("/page/deleteLogs", {"id":"8"})
+{"code":200,"message":"","data":{"effectedRows":1}}
+axios.post("/page/deleteLogs", {"startTime":"2021-05-23 15:12:06","endTime":"2021-05-24 15:12:06","userNameCondition":"requestUser='admin'"})
+{"code":200,"message":"","data":{"effectedRows":10}}
 // getDbInfo
 axios.post("/page/getDbInfo")
-{"code":200,"message":"","data":{"info":{"currentTimeStamp":null,"ram":"30.44","speed":"0ms/0","writtenItems":"0"}}}
+{"code":200,"message":"","data":{"info":{"currentTimeStamp":"1621869963","ram":"169.14","speed":"51ms/6137","writtenItems":"6137"}}}
 // getDbSpeedHistory
-axios.post("/page/getDbInfoHistory", JSON.stringify({"starTimes": [1617861409547], "endTimes": [1617862009547], "intervale": 5}))
-{"code":200,"message":"","data":{"historicalData":{"speed":[null,null]}}}
+axios.post("/page/getDbInfoHistory", {"itemName":"speed","startTimes":[1621209000],"endTimes":[1621382400],"intervals":[3600]})
+{"code":200,"message":"","data":{"historicalData":{"speed":[["1621209000","1621213881","1621218786","1621223692","1621228582","1621233489","1621238397","1621243288","1621248199","1621253118","1621258008","1621262917","1621267818","1621272727","1621277619","1621282529","1621287427","1621292329","1621297233","1621302117","1621307022","1621311938","1621316850","1621321740","1621326637","1621331533","1621336424","1621341332","1621346240","1621351149","1621356048","1621360950","1621365846","1621370744","1621375634","1621380559"],["81.0773ms","107.1021ms","71.0679ms","167.1601ms","56.0528ms","109.1051ms","72.067ms","35.033ms","60.0555ms","49.047ms","114.1066ms","136.1308ms","98.0942ms","159.1516ms","85.082ms","98.0938ms","56.0524ms","98.0942ms","79.0724ms","116.1117ms","181.1737ms","82.08ms","140.1347ms","91.0851ms","144.1385ms","84.0801ms","146.1406ms","120.113ms","52.0503ms","83.0774ms","155.1494ms","103.097ms","159.1507ms","66.0635ms","101.0969ms","49.0471ms"]]}}}
 ```
 
 ### Group
 ```jsx
 // addGroups
-axios.post("/group/addGroups", JSON.stringify({"groupInfos": [{"groupName": "1DCS", "columnNames": ["description", "unit"]}]}))
+axios.post("/group/addGroups", {"groupInfos": [{"groupName": "1DCS", "columnNames": ["description", "unit"]}]})
+{"code":200,"message":"","data":{"effectedRows":1}}
 // deleteGroups
-axios.post("/group/deleteGroups", JSON.stringify({"groupNames": ["1DCS"]}))
+axios.post("/group/deleteGroups", {"groupNames": ["1DCS"]})
+{"code":200,"message":"","data":{"effectedRows":1}}
 //getGroups
 axios.post("/group/getGroups")
 {"code":200,"message":"","data":{"groupNames":["calc","1DCS"]}}
 // getGroupProperty
-axios.post("/group/getGroupProperty", JSON.stringify({"groupName": "1DCS", "condition": "1=1"}))
+axios.post("/group/getGroupProperty", {"groupName": "1DCS", "condition": "1=1"})
 {"code":200,"message":"","data":{"itemCount":"6387","itemColumnNames":["itemName","groupName","dataType","description","unit","source"]}}
+// updateGroupNames
+axios.post("/group/updateGroupNames", {"infos": [{"oldGroupName": "4DCS", "newGroupName": "5DCS"}]})
+{"code":200,"message":"","data":{"effectedRows":1}}
 // updateGroupColumnNames
-axios.post("/group/updateGroupColumnNames", JSON.stringify({"groupName": "1DCS", "newColumnNames": ["unit1"], "oldColumnNames": ["unit"]}))
+axios.post("/group/updateGroupColumnNames", {"groupName": "1DCS", "newColumnNames": ["unit1"], "oldColumnNames": ["unit"]})
 {"code":200,"message":"","data":{"effectedCols":1}}
 // deleteGroupColumns
-axios.post("/group/deleteGroupColumns", JSON.stringify({"groupName": "1DCS", "columnNames": ["unit"]}))
+axios.post("/group/deleteGroupColumns", {"groupName": "1DCS", "columnNames": ["unit"]})
 {"code":200,"message":"","data":{"effectedCols":1}}
 // addGroupColumns
-axios.post("/group/addGroupColumns", JSON.stringify({"groupName": "1DCS", "columnNames": ["unit"], "defaultValues": [""]}))
-{"code":200,"message":"","data":{"effectedCols":1}}
-// cleanGroupItems
-axios.post("/group/cleanGroupItems", JSON.stringify({"groupNames": ["1DCS"]}))
+axios.post("/group/addGroupColumns", {"groupName":"5DCS","columnNames":["unit","description"],"defaultValues":["",""]})
+{"code":200,"message":"","data":{"effectedCols":2}}
 ```
 
 ### Item
 ```jsx
 // addItems
-axios.post("/item/addItems", JSON.stringify({"groupName": "1DCS", "itemValues": [{"itemName": "YFJDY", "description": "", "unit": ""}]}))
+axios.post("/item/addItems", {"groupName":"5DCS","itemValues":[{"itemName":"item1","dataType":"float64","unit":"","description":""}]})
 {"code":200,"message":"","data":{"effectedRows":1}}
 // deleteItems
-axios.post("/item/deleteItems", JSON.stringify({"groupName": "1DCS", "condition": "itemName='YFJDY'"}))
+axios.post("/item/deleteItems", {"groupName":"5DCS","condition":"itemName='item1'"})
 {"code":200,"message":"","data":{"effectedRows":1}}
-// getItems
-axois.post("/item/getItems", JSON.stringify({"columnNames": "*", "condition": "itemName like '%%'", "groupName": "1DCS", "rowCount": 10, startRow: 0}))
-{"code":200,"message":"","data":{"itemValues":[{"dataType":"5","description":"","groupName":"1DCS","id":"1","itemName":"JL1_TURBTEST1:PTJ.OUT","source":"WP1007/TURBTEST1:PTJ.OUT","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"2","itemName":"JL1_1ETS:L009_8.BO01","source":"WP1007/1ETS:L009_8.BO01","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"3","itemName":"JL1_1ETS:L001_8.BO01","source":"WP1007/1ETS:L001_8.BO01","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"4","itemName":"JL1_1OA2:L128_13.BO01","source":"WP1007/1OA2:L128_13.BO01","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"5","itemName":"JL1_1OA2:L128_2.BO01","source":"WP1007/1OA2:L128_2.BO01","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"6","itemName":"JL1_1OA2:L128_16.BO01","source":"WP1007/1OA2:L128_16.BO01","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"7","itemName":"JL1_1ETS:L001_4.BO01","source":"WP1007/1ETS:L001_4.BO01","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"8","itemName":"JL1_1ETS:L001_1.BO01","source":"WP1007/1ETS:L001_1.BO01","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"9","itemName":"JL1_1ETS:GEN_TRIP.COUT","source":"WP1007/1ETS:GEN_TRIP.COUT","unit":""},{"dataType":"5","description":"","groupName":"1DCS","id":"10","itemName":"JL1_1OA2:L128_6.BO01","source":"WP1007/1OA2:L128_6.BO01","unit":""}]}}
 // getItemsWithCount
-axois.post("/item/getItemsWithCount")
-{"code":200,"message":"","data":{"itemCount":6387,"itemValues":[{"dataType":"5","description":"汽机第一级压力","groupName":"1DCS","id":"1","itemName":"JL1_TURBTEST1:PTJ.OUT","source":"WP1007/TURBTEST1:PTJ.OUT","unit":""},{"dataType":"5","description":"汽机已复置","groupName":"1DCS","id":"2","itemName":"JL1_1ETS:L009_8.BO01","source":"WP1007/1ETS:L009_8.BO01","unit":""},{"dataType":"5","description":"ETS在线试验#3通道","groupName":"1DCS","id":"3","itemName":"JL1_1ETS:L001_8.BO01","source":"WP1007/1ETS:L001_8.BO01","unit":""},{"dataType":"5","description":"阀切换过程中","groupName":"1DCS","id":"4","itemName":"JL1_1OA2:L128_13.BO01","source":"WP1007/1OA2:L128_13.BO01","unit":""},{"dataType":"5","description":"顺序阀","groupName":"1DCS","id":"5","itemName":"JL1_1OA2:L128_2.BO01","source":"WP1007/1OA2:L128_2.BO01","unit":""},{"dataType":"5","description":"顺序阀运行","groupName":"1DCS","id":"6","itemName":"JL1_1OA2:L128_16.BO01","source":"WP1007/1OA2:L128_16.BO01","unit":""},{"dataType":"5","description":"ETS在线试验#1通道","groupName":"1DCS","id":"7","itemName":"JL1_1ETS:L001_4.BO01","source":"WP1007/1ETS:L001_4.BO01","unit":""},{"dataType":"5","description":"ETS在线试验进入试验","groupName":"1DCS","id":"8","itemName":"JL1_1ETS:L001_1.BO01","source":"WP1007/1ETS:L001_1.BO01","unit":""},{"dataType":"5","description":"发电机遮断","groupName":"1DCS","id":"9","itemName":"JL1_1ETS:GEN_TRIP.COUT","source":"WP1007/1ETS:GEN_TRIP.COUT","unit":""},{"dataType":"5","description":"单阀","groupName":"1DCS","id":"10","itemName":"JL1_1OA2:L128_6.BO01","source":"WP1007/1OA2:L128_6.BO01","unit":""}]}}
+axois.post("/item/getItemsWithCount", {"groupName":"calc","columnNames":"*","condition":"itemName like '%%'","startRow":0,"rowCount":10})
+{"code":200,"message":"","data":{"itemCount":1,"itemValues":[{"dataType":"float64","description":"","id":"1","itemName":"item1"}]}}
 // updateItems
-axios.post("/item/updateItems", JSON.stringify({"groupName": "1DCS", "condition": "id=1", "clause": "description=' ',unit='℃1'"}))
+axios.post("/item/updateItems", {"groupName": "1DCS", "condition": "id=1", "clause": "description=' ',unit='℃1'"})
 {"code":200,"message":"","data":{"effectedRows":1}}
 // checkItems
-axios.post("/item/checkItems", JSON.stringify({"groupName": "1DCS", "itemNames": ["NMJL.UNIT2.20ACS:MAG50AN001SV_MA"]}))
-{"code":500,"message":"itemName: NMJL.UNIT2.20ACS:MAG50AN001SV_MAnot existed","data":""}
+axios.post("/item/checkItems", {"groupName": "1DCS", "itemNames": ["NMJL.UNIT2.20ACS:MAG50AN001SV_MA"]})
+{"code":500,"message":"itemName: NMJL.UNIT2.20ACS:MAG50AN001SV_MA not existed","data":""}
+// cleanGroupItems
+axios.post("/item/cleanGroupItems", {"groupNames": ["1DCS"]})
+{"code":200,"message":"","data":{"effectedRows":1}}
 ```
 
 ### Data
 ```jsx
 // batchWrite
-axios.post("/data/batchWrite", JSON.stringify({"itemValues": [{"itemName":"NMJL.UNIT2.20FSSS21B:HFY24AP002ZD","value":"382"},{"itemName":"NMJL.UNIT2.20SCS10B:MAL10AA566ZC","value":"97"},{"itemName":"NMJL.UNIT2.20ACS:MAG50AN001SV_MA","value":"314"},{"itemName":"NMJL.UNIT2.20SCS08B:LAV20AP001NA","value":"-326"},{"itemName":"NMJL.UNIT2.20ECSCOMM_3A:20BTM01YC28","value":"224"},{"itemName":"FZSIS.2DCSAI.20DAS05A:LAB10DP101.PNT","value":"-266"},{"itemName":"FZSIS.2DCSAI.20DAS05A:LAB10CP101.PNT","value":"253"},{"itemName":"FZSIS.2DCSAI.20DAS05A:LAB11DP101.PNT","value":"80"},{"itemName":"FZSIS.2DCSAI.20DAS05A:LAV10CE101.PNT","value":"-70"},{"itemName":"FZSIS.2DCSAI.20DAS05A:LAF11CP101.PNT","value":"21"},{"itemName":"FZSIS.2DCSAI.20MCS07B:LAH10AA101GT.PNT","value":"-348"},{"itemName":"FZSIS.2DCSAI.20MCS07A:LAB12CP101.PNT","value":"-328"},{"itemName":"FZSIS.2DCSAI.20DAS05A:LAC10CE101.PNT","value":"143"},{"itemName":"FZSIS.2DCSAI.20MCS07A:LAB11CF101.PNT","value":"143"},{"itemName":"FZSIS.2DCSAI.20DAS05A:LAK11CS101.PNT","value":"-489"},{"itemName":"FZSIS.2DCSAI.20DAS05B:MKF10CE001.PNT","value":"86"}]}))
-{"code":200,"message":"","data":{"effectedRows":1}}
+axios.post("/data/batchWrite", {"itemValues": [{"itemName": "x", "value": 1.0, "groupName": "5DCS"}, {"itemName": "y", "value": 2.0, "groupName": "5DCS"}]})
+{"code":200,"message":"","data":{"effectedRows":2}}
 // batchWriteHistoricalData
-axios.post("/data/batchWriteHistoricalData", JSON.stringify({"historicalItemValues":[{"itemName":"YFJDY","values":["57.760","57.811","57.801","57.781","57.801","57.807","57.773","57.523","57.508"],"timeStamps":["1602347580","1602347581","1602347582","1602347583","1602347584","1602347585","1602347586","1602347587","1602347588"]}]}))
-{"code":200,"message":"","data":""}
+'use strict';
+const axios = require('axios')
+const ip = "192.168.0.199:8082"
+const count = 3600 // one hour
+const now = new Date(2021,4,24,19,44,0)
+const st = now.getTime() / 1000 + 8 * 3600
+let xData = []
+let yData = []
+let ts = []
+for (var i = 0; i < count; i++) {
+  const x = Math.floor(Math.random() * count)
+  const y = 2 * x
+  xData.push(x)
+  yData.push(y)
+  ts.push(st + i)
+}
+axios.post(`http://${ip}/data/batchWriteHistoricalData`, { "historicalItemValues": [{ "groupName": "5DCS", "itemName": "x", "values": xData, "timeStamps": ts }, { "groupName": "5DCS", "itemName": "y", "values": yData, "timeStamps": ts }] }).then((data) => {
+  console.log(data)
+}).catch((err) => {
+  console.log(err)
+})
 // getRealTimeData
-axios.post("/data/getRealTimeData", JSON.stringify({"groupName": "1DCS", "itemNames": ["testItem1", "testItem2"]))
-{"code":200,"message":"","data":{"realTimeData":{"testItem1": "10", "testItem2": "20"}}}
+axios.post(`http://${ip}/data/getRealTimeData`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"] })
+{ code: 200, message: '', data: { realTimeData: { x: 1, y: 2 } } }
 // getHistoricalData
-axios.post("/data/getHistoricalData", JSON.stringify({"itemNames":["NMJL.UNIT2.20ACS:MAG50AN001SV_MA"],"startTimes":[1618843574],"endTimes":[1618929974],"intervals":[60]}))
-{"code":200,"message":"","data":{"historicalData":{"NMJL.UNIT2.20ACS:MAG50AN001SV_MA":[[1618921777,1618922077,1618922257,1618922437,1618923817,1618924657,1618924837,1618925137,1618925317,1618925497,1618925677,1618926577,1618926937,1618927177,1618927357,1618927537,1618927897,1618928197,1618928377,1618928557,1618928737,1618928917,1618929397,1618929577,1618929757,1618929937],["-218","-250","-72","387","-319","-438","-156","139","-81","-124","-251","218","224","-215","-94","-148","440","38","-78","-418","-59","-275","-279","83","-96","478"]]}}}
+'use strict';
+const axios = require('axios')
+const ip = "192.168.0.199:8082"
+const now = new Date(2021, 4, 24, 19, 44, 0)
+const st = now.getTime() / 1000 + 8 * 3600
+axios.post(`http://${ip}/data/getHistoricalData`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "startTimes": [st], "endTimes": [st + 3600], "intervals": [60] }).then(({ data }) => {
+  console.log(JSON.stringify(data))
+}).catch((err) => {
+  console.log(err)
+})
+// getHistoricalDataWithStamp
+'use strict';
+const axios = require('axios')
+const ip = "192.168.0.199:8082"
+const now = new Date(2021, 4, 24, 19, 44, 0)
+const st = now.getTime() / 1000 + 8 * 3600
+let ts = []
+for (var i = 0; i < 60; i++) {
+  ts.push(st + i)
+}
+axios.post(`http://${ip}/data/getHistoricalDataWithStamp`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "timeStamps": [ts,ts]}).then(({ data }) => {
+  console.log(JSON.stringify(data))
+}).catch((err) => {
+  console.log(err)
+})
+// getHistoricalDataWithCondition
+'use strict';
+const axios = require('axios')
+const fs = require('fs')
+const path = require('path')
+const ip = "192.168.0.199:8082"
+const now = new Date(2021, 4, 24, 19, 44, 0)
+const st = now.getTime() / 1000 + 8 * 3600
+axios.post(`http://${ip}/data/getHistoricalDataWithCondition`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "startTimes": [st], "endTimes": [st + 3600], intervals: [10], "filterCondition": `item["x"] > 2000 && item["y"] > 1000` }).then(({ data }) => {
+  fs.writeFile(path.resolve(__dirname, './fX.txt'), JSON.stringify(data), err => { })
+  console.log(JSON.stringify(data))
+}).catch((err) => {
+  console.log(err)
+})
 ```
 
 ## gRPC API Examples
