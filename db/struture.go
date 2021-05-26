@@ -90,18 +90,18 @@ type queryGroupPropertyInfo struct {
 }
 
 type UpdatedGroupNameInfo struct {
-	OldGroupName string `json:"oldGroupName"`
-	NewGroupName string `json:"newGroupName"`
+	OldGroupName string `json:"oldGroupName" binding:"required"`
+	NewGroupName string `json:"newGroupName" binding:"required"`
 }
 
 type UpdatedGroupNamesInfo struct {
-	Infos []UpdatedGroupNameInfo `json:"infos"`
+	Infos []UpdatedGroupNameInfo `json:"infos" binding:"required"`
 }
 
 type UpdatedGroupColumnNamesInfo struct {
-	GroupName      string   `json:"groupName"`
-	OldColumnNames []string `json:"oldColumnNames"`
-	NewColumnNames []string `json:"newColumnNames"`
+	GroupName      string   `json:"groupName" binding:"required"`
+	OldColumnNames []string `json:"oldColumnNames" binding:"required"`
+	NewColumnNames []string `json:"newColumnNames" binding:"required"`
 }
 
 type DeletedGroupColumnNamesInfo struct {
@@ -158,14 +158,16 @@ type CheckItemsInfo struct {
 // data
 
 type ItemValue struct {
-	ItemName string `json:"itemName" binding:"required"`
-	Value    string `json:"value" binding:"required"`
+	GroupName string      `json:"GroupName" binding:"required"`
+	ItemName  string      `json:"itemName" binding:"required"`
+	Value     interface{} `json:"value" binding:"required"`
 }
 
 type HistoricalItemValue struct {
-	ItemName   string   `json:"itemName" binding:"required"`
-	Values     []string `json:"values" binding:"required"`
-	TimeStamps []string `json:"timeStamps" binding:"required"`
+	GroupName  string        `json:"groupName" binding:"required"`
+	ItemName   string        `json:"itemName" binding:"required"`
+	Values     []interface{} `json:"values" binding:"required"`
+	TimeStamps []int         `json:"timeStamps" binding:"required"`
 }
 
 type batchWriteString struct {
@@ -177,7 +179,8 @@ type batchWriteHistoricalString struct {
 }
 
 type queryRealTimeDataString struct {
-	ItemNames []string `json:"itemNames"` // ItemNames
+	GroupNames []string `json:"groupNames"`
+	ItemNames  []string `json:"itemNames"` // ItemNames
 }
 
 type gdbRealTimeData struct {
@@ -185,6 +188,7 @@ type gdbRealTimeData struct {
 }
 
 type queryHistoricalDataString struct {
+	GroupNames []string `json:"groupNames" binding:"required"`
 	ItemNames  []string `json:"itemNames" binding:"required"`  // ItemNames
 	StartTimes []int    `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
 	EndTimes   []int    `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
@@ -195,27 +199,28 @@ type querySpeedHistoryDataString struct {
 	ItemName   string `json:"itemName" binding:"required"`
 	StartTimes []int  `json:"startTimes" binding:"required"` // startTime Unix TimeStamp
 	EndTimes   []int  `json:"endTimes" binding:"required"`   // endTime Unix TimeStamp
-	Interval   int    `json:"interval" binding:"required"`   // interval
+	Intervals  []int  `json:"intervals" binding:"required"`  // interval
 }
 
 type queryHistoricalDataWithTimeStampString struct {
-	ItemNames  []string `json:"itemNames"`  // ItemNames
-	TimeStamps [][]int  `json:"timeStamps"` // time stamp
+	GroupNames []string `json:"groupNames" binding:"required"`
+	ItemNames  []string `json:"itemNames" binding:"required"`  // ItemNames
+	TimeStamps [][]int  `json:"timeStamps" binding:"required"` // time stamp
 }
 
 type DeadZone struct {
-	ItemName      string `json:"itemName"`
-	DeadZoneCount int    `json:"deadZoneCount"`
+	ItemName      string `json:"itemName" binding:"required"`
+	DeadZoneCount int    `json:"deadZoneCount" binding:"required"`
 }
 
 type queryHistoricalDataWithConditionString struct {
-	ItemNames       []string   `json:"itemNames"`       // ItemNames
-	TimeStamps      [][]int    `json:"timeStamps"`      // time stamp
-	StartTimes      []int      `json:"startTimes"`      // startTime Unix TimeStamp
-	EndTimes        []int      `json:"endTimes"`        // endTime Unix TimeStamp
-	Intervals       []int      `json:"intervals"`       // interval
-	FilterCondition string     `json:"filterCondition"` // filter condition: item["itemNames1"] > 100
-	DeadZones       []DeadZone `json:"deadZones"`       // deadZone filter condition
+	GroupNames      []string   `json:"groupNames" binding:"required"`
+	ItemNames       []string   `json:"itemNames" binding:"required"`       // ItemNames
+	StartTimes      []int      `json:"startTimes" binding:"required"`      // startTime Unix TimeStamp
+	EndTimes        []int      `json:"endTimes" binding:"required"`        // endTime Unix TimeStamp
+	Intervals       []int      `json:"intervals" binding:"required"`       // interval
+	FilterCondition string     `json:"filterCondition" binding:"required"` // filter condition: item["itemNames1"] > 100
+	DeadZones       []DeadZone `json:"deadZones"`                          // deadZone filter condition
 }
 
 type gdbHistoricalData struct {
@@ -247,15 +252,15 @@ type userName struct {
 }
 
 type userInfo struct {
-	userName `json:"userName" binding:"required"`
+	UserName string   `json:"userName" binding:"required"`
 	Role     []string `json:"role" binding:"required"`
 }
 
 type updatedUserInfo struct {
-	Id          int    `json:"id" binding:"required"`
-	OldUserName string `json:"OldUserName" binding:"required"`
-	NewUserName string `json:"NewUserName" binding:"required"`
-	Role        string `json:"role" binding:"required"`
+	UserName    string `json:"userName" binding:"required"`
+	NewUserName string `json:"newUserName"`
+	NewPassWord string `json:"newPassWord"`
+	NewRole     string `json:"newRole"`
 }
 
 type addedUserInfo struct {
@@ -290,10 +295,10 @@ type logMessage struct {
 // calc
 
 type addedCalcItemInfo struct {
-	Expression  string `json:"expression"`
+	Expression  string `json:"expression" binding:"required"`
 	Flag        string `json:"flag"`
-	Duration    string `json:"duration"`
-	Description string `json:"description"`
+	Duration    string `json:"duration" binding:"required"`
+	Description string `json:"description" binding:"required"`
 }
 
 type calculationResult struct {
@@ -313,10 +318,31 @@ type updatedCalcInfo struct {
 	Description string `json:"description"`
 	Expression  string `json:"expression"`
 	Duration    string `json:"duration"`
+	UpdatedTime string
 }
 
 type calcId struct {
 	Id []string `json:"id"`
+}
+
+type calcConfig struct {
+	id       int64        // calc item id
+	f        func() error // function to invoke js code
+	status   bool         // whether to calc
+	duration int64
+}
+
+type messageCalcConfig struct {
+	updatedInfos []updatedInfo
+	addedInfos   []calcConfig
+}
+
+type updatedInfo struct {
+	id           string
+	newStatus    bool
+	newDuration  int64
+	updatedFiled string
+	f            func() error
 }
 
 type fileInfo struct {
@@ -325,9 +351,10 @@ type fileInfo struct {
 }
 
 type historyFileInfo struct {
-	FileName   string   `json:"fileName"`
-	ItemNames  []string `json:"itemNames"`
-	SheetNames []string `json:"sheetNames"`
+	GroupName  string   `json:"groupName" binding:"required"`
+	FileName   string   `json:"fileName" binding:"required"`
+	ItemNames  []string `json:"itemNames" binding:"required"`
+	SheetNames []string `json:"sheetNames" binding:"required"`
 }
 
 type deletedLogInfo struct {
