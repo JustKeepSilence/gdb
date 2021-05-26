@@ -18,6 +18,7 @@ import (
 	"runtime"
 )
 
+// Gdb define the struct of gdb
 type Gdb struct {
 	rtDb       *leveldb.DB        // the pointer of realTime database
 	hisDb      *leveldb.DB        // the pointer of history database
@@ -32,6 +33,8 @@ const (
 	ram          = "ram"
 	writtenItems = "writtenItems"
 	speed        = "speed"
+	joiner       = "__"
+	roles        = "visitor, super_user, common_user"
 )
 
 func (gdb *Gdb) initialDb() error {
@@ -80,27 +83,38 @@ func (gdb *Gdb) initialDb() error {
 	groups, _ := query(gdb.ItemDbPath, "select groupName from group_cfg")
 	for _, group := range groups {
 		groupName := group["groupName"]
-		items, _ := query(gdb.ItemDbPath, "select itemName from '"+groupName+"'")
+		items, _ := query(gdb.ItemDbPath, "select itemName, dataType from '"+groupName+"'")
 		for _, item := range items {
-			itemName := item["itemName"]
-			gdb.rtDbFilter.Set(itemName, struct{}{}) // add key to filter, don't lock
+			itemName := item["itemName"] + joiner + groupName // itemName in filter = itemName + "__" + groupName
+			dataType := item["dataType"]
+			gdb.rtDbFilter.Set(itemName, dataType) // add key to filter, don't lock
 		}
 	}
 	return nil
-
 }
 
 func (gdb *Gdb) initialSQLite() error {
-	sqlCreateGroupCfgTable := `create table if not exists group_cfg (id integer not null primary key, groupName text UNIQUE)`                                                                                                                                           // add group_cfg table
-	sqlAddCalc := `insert into group_cfg (groupName) values ('calc')`                                                                                                                                                                                                   // add calc group
-	sqlAddCalcTable := `create table if not exists calc (id integer not null primary key, itemName text UNIQUE, description text)`                                                                                                                                      // add calc group
-	sqlAddCalcCfgTable := `create table if not exists calc_cfg (id integer not null primary key, description text, expression text, status text default 'false', duration text default 10, errorMessage text default '', createTime text, updatedTime text default '')` //  add calc cfg table
-	sqlAddLogCfgTable := `create table if not exists log_cfg (id integer not null primary key, logMessage text, requestUser text default '', level text, insertTime  NUMERIC DEFAULT (datetime('now','localtime')))`                                                    // create log table
+	sqlCreateGroupCfgTable := `create table if not exists group_cfg (id integer not null primary key, groupName text UNIQUE)`                                                                                                                                          // add group_cfg table
+	sqlAddCalc := `insert into group_cfg (groupName) values ('calc')`                                                                                                                                                                                                  // add calc group
+	sqlAddCalcTable := `create table if not exists calc (id integer not null primary key, itemName text UNIQUE, dataType text ,description text)`                                                                                                                      // add calc group
+	sqlAddCalcCfgTable := `create table if not exists calc_cfg (id integer not null primary key, description text, expression text, status text default 'true', duration text default 10, errorMessage text default '', createTime text, updatedTime text default '')` //  add calc cfg table
+	sqlAddLogCfgTable := `create table if not exists log_cfg (id integer not null primary key, logMessage text, requestUser text default '', level text, insertTime  NUMERIC DEFAULT (datetime('now','localtime')))`                                                   // create log table
 	// columns are id, logType,  requestString, requestMethod, requestUrl, logMessage, insertTime
 	sqlAddUserCfgTable := `create table if not exists user_cfg (id integer not null primary key, userName text UNIQUE, passWord text, role text, token text default '')`
-	_, _ = updateItem(gdb.ItemDbPath, sqlAddCalc)
-	if err := updateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable, sqlAddUserCfgTable}...); err != nil {
+	if r, err := query(gdb.ItemDbPath, "select name from sqlite_master where name='calc'"); err != nil {
 		return err
+	} else {
+		if len(r) == 0 {
+			// no calc table
+			if err := updateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable, sqlAddUserCfgTable, sqlAddCalc}...); err != nil {
+				return err
+			}
+		} else {
+			// exist calc table
+			if err := updateItems(gdb.ItemDbPath, []string{sqlCreateGroupCfgTable, sqlAddCalcTable, sqlAddCalcCfgTable, sqlAddLogCfgTable, sqlAddUserCfgTable}...); err != nil {
+				return err
+			}
+		}
 	}
 	if r, err := query(gdb.ItemDbPath, "select 1 from user_cfg where userName='admin' limit 1"); err != nil {
 		return err
@@ -132,15 +146,16 @@ func NewGdb(dbPath, itemDbPath string) (*Gdb, error) {
 	}
 	var g *Gdb
 	path, _ := filepath.Abs(dbPath) // get abs path of given path
+	itemPath, _ := filepath.Abs(itemDbPath)
 	if runtime.GOOS == "windows" {
 		g = &Gdb{
 			DbPath:     path,
-			ItemDbPath: itemDbPath + "\\ldb.db",
+			ItemDbPath: itemPath + "\\ldb.db",
 		}
 	} else {
 		g = &Gdb{
 			DbPath:     path,
-			ItemDbPath: itemDbPath + "/ldb.db",
+			ItemDbPath: itemPath + "/ldb.db",
 		}
 	}
 	if err := g.initialSQLite(); err != nil {
