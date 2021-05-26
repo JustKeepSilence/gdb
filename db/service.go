@@ -88,7 +88,6 @@ var (
 func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handler {
 	router := gin.New()
 	pprof.Register(router)
-	//router.Use(g.allowOptionRequest())
 	router.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return ""
 	})) // customer console writing,disable console writing
@@ -114,7 +113,6 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 	{
 		item.POST("/addItems", g.addItemsHandler)
 		item.POST("/deleteItems", g.deleteItemsHandler)
-		item.POST("/getItems", g.getItemsHandler)
 		item.POST("/getItemsWithCount", g.handleGetItemsWithCount) // get item with  count
 		item.POST("/updateItems", g.updateItemsHandler)
 		item.POST("/checkItems", g.checkItemsHandler)
@@ -152,6 +150,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 	}
 	calcRequest := router.Group("/calculation")
 	{
+		calcRequest.POST("/testCalcItem", g.testCalcItemHandler)
 		calcRequest.POST("/addCalcItem", g.addCalcItemHandler) // add calc item
 		calcRequest.POST("/getCalcItems", g.getCalcItemsHandler)
 		calcRequest.POST("/updateCalcItem", g.updateCalcItemHandler)
@@ -241,11 +240,11 @@ func StartDbServer(configs Config) error {
 		}
 		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
 			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor),
-			grpc.Creds(cred), grpc.MaxRecvMsgSize(1024*1024*100)) // 100 MB
+			grpc.Creds(cred))
 	} else {
-		// http gRPC
+		// http gRPC, for http gRPC ,th max message receive is 1G
 		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
-			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor), grpc.MaxRecvMsgSize(1024*1024*100))
+			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor), grpc.MaxRecvMsgSize(1024*1024*1024))
 	}
 	// register gRPC
 	pb.RegisterGroupServer(s, se)
