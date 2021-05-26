@@ -9,6 +9,7 @@ import (
 	"github.com/JustKeepSilence/gdb/db"
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand"
 	"time"
 )
@@ -122,8 +123,9 @@ func item() {
 		// add items
 		if _, err := gdb.AddItems(db.AddedItemsInfo{
 			GroupName: "1DCS",
-			ItemValues: []map[string]string{{"itemName": "x", "description": "x"}, {"itemName": "y", "description": "y"}, {"itemName": "z", "description": "z"},
-				{"itemName": "item1", "description": "item1"}, {"itemName": "item2", "description": "item2"}},
+			ItemValues: []map[string]string{{"itemName": "x", "description": "x", "dataType": "float64"},
+				{"itemName": "y", "description": "y", "dataType": "float64"}, {"itemName": "z", "description": "z", "dataType": "float64"},
+				{"itemName": "item1", "description": "item1", "dataType": "float64"}, {"itemName": "item2", "description": "item2", "dataType": "float64"}},
 		}); err != nil {
 			log.Fatal(err)
 		} else {
@@ -218,11 +220,11 @@ func data() {
 		log.Fatal(err)
 	} else {
 		// batch write, y = 2 * x
-		if _, err := gdb.BatchWrite([]db.ItemValue{{ItemName: "x", Value: "1"}, {ItemName: "y", Value: "2"}}...); err != nil {
+		if _, err := gdb.BatchWrite([]db.ItemValue{{ItemName: "x", Value: 1.0, GroupName: "1DCS"}, {ItemName: "y", Value: 2.0, GroupName: "1DCS"}}...); err != nil {
 			log.Fatal(err)
 		} else {
 			// get latest updated value of given items
-			if r, err := gdb.GetRealTimeData("x", "y"); err != nil {
+			if r, err := gdb.GetRealTimeData([]string{"1DCS", "1DCS"}, "x", "y"); err != nil {
 				log.Fatal(err)
 			} else {
 				d, _ := json.Marshal(r)
@@ -231,23 +233,24 @@ func data() {
 		}
 		// write historical data
 		// mock one hour historical data
-		var xData, yData, ts []string
+		var xData, yData []interface{}
+		var ts []int
 		now := time.Now()
 		fmt.Println("now: ", now.Format("2006-01-02 15:04:05"))
 		r := rand.New(rand.NewSource(99))
 		for i := 0; i < 3600; i++ {
-			x := r.Intn(3600)
+			x := float64(r.Intn(3600)) * math.Pi
 			y := 2 * x
 			t := now.Add(time.Second*time.Duration(i)).Unix() + 8*3600
-			xData = append(xData, fmt.Sprintf("%d", x))
-			yData = append(yData, fmt.Sprintf("%d", y))
-			ts = append(ts, fmt.Sprintf("%d", t))
+			xData = append(xData, x)
+			yData = append(yData, y)
+			ts = append(ts, int(t))
 		}
-		if err := gdb.BatchWriteHistoricalData([]db.HistoricalItemValue{{ItemName: "x", Values: xData, TimeStamps: ts}, {ItemName: "y", Values: yData, TimeStamps: ts}}...); err != nil {
+		if err := gdb.BatchWriteHistoricalData([]db.HistoricalItemValue{{ItemName: "x", Values: xData, TimeStamps: ts, GroupName: "1CS"}, {ItemName: "y", Values: yData, TimeStamps: ts, GroupName: "1DCS"}}...); err != nil {
 			log.Fatal(err)
 		} else {
 			// get raw historical data for debugging
-			if r, err := gdb.GetRawHistoricalData("x"); err != nil {
+			if r, err := gdb.GetRawHistoricalData([]string{"1DCS"}, "x"); err != nil {
 				log.Fatal(err)
 			} else {
 				d, _ := json.Marshal(r)
@@ -258,21 +261,21 @@ func data() {
 			etX := int(now.Add(time.Minute*25).Unix() + 8*3600)
 			stY := int(now.Add(time.Minute*35).Unix() + 8*3600)
 			etY := int(now.Add(time.Minute*55).Unix() + 8*3600)
-			if r, err := gdb.GetHistoricalData([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}); err != nil {
+			if r, err := gdb.GetHistoricalData([]string{"1DCS", "1DCS"}, []string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}); err != nil {
 				log.Fatal(err)
 			} else {
 				d, _ := json.Marshal(r)
 				_ = ioutil.WriteFile("./hX.txt", d, 0644)
 			}
 			// get historical data with given itemName
-			if r, err := gdb.GetHistoricalDataWithStamp([]string{"x", "y"}, [][]int{{stX, etX}, {stY, etY}}...); err != nil {
+			if r, err := gdb.GetHistoricalDataWithStamp([]string{"1DCS", "1DCS"}, []string{"x", "y"}, [][]int{{stX, etX}, {stY, etY}}...); err != nil {
 				log.Fatal(err)
 			} else {
 				d, _ := json.Marshal(r)
 				fmt.Println(string(d))
 			}
 			// get historical data with condition
-			if r, err := gdb.GetHistoricalDataWithCondition([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}, `item["x"] > 0 && item["y"] > 1000`, []db.DeadZone{}...); err != nil {
+			if r, err := gdb.GetHistoricalDataWithCondition([]string{"1DCS", "1DCS"}, []string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}, `item["x"] > 0 && item["y"] > 1000`, []db.DeadZone{}...); err != nil {
 				log.Fatal(err)
 			} else {
 				d, _ := json.Marshal(r)
