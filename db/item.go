@@ -97,7 +97,7 @@ func (gdb *Gdb) DeleteItems(itemInfo DeletedItemsInfo) (Rows, error) {
 	if err != nil {
 		return Rows{}, err
 	}
-	gdb.rtDbFilter.Remove(item[0]["itemName"]) // remove key from bloom filter
+	gdb.rtDbFilter.Remove(item[0]["itemName"] + joiner + groupName) // remove key from bloom filter
 	return Rows{int(rows)}, nil
 }
 
