@@ -348,7 +348,10 @@ axios.post(`http://${ip}/data/batchWriteHistoricalData`, { "historicalItemValues
 // getRealTimeData
 axios.post(`http://${ip}/data/getRealTimeData`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"] })
 { code: 200, message: '', data: { realTimeData: { x: 1, y: 2 } } }
+axios.post(`http://${ip}/data/getRealTimeData`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"] })
+{"code":200,"message":"","data":{"realTimeData":{"x":1,"y":2,"z":null}}}  // z is in calc group, but does not have realTimeData, so the result is null
 // getHistoricalData
+// normal 
 'use strict';
 const axios = require('axios')
 const ip = "192.168.0.199:8082"
@@ -359,7 +362,14 @@ axios.post(`http://${ip}/data/getHistoricalData`, { "groupNames": ["5DCS", "5DCS
 }).catch((err) => {
   console.log(err)
 })
+// some items does not have history in the given st and et
+axios.post(`http://${ip}/data/getHistoricalData`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "startTimes": [st], "endTimes": [st + 3600], "intervals": [60] }).then(({ data }) => {
+  console.log(JSON.stringify(data))
+}).catch((err) => {
+  console.log(err)
+})  // item z does not havb e history, so the result of z is {"z": [null, null]}
 // getHistoricalDataWithStamp
+// normal 
 'use strict';
 const axios = require('axios')
 const ip = "192.168.0.199:8082"
@@ -374,7 +384,25 @@ axios.post(`http://${ip}/data/getHistoricalDataWithStamp`, { "groupNames": ["5DC
 }).catch((err) => {
   console.log(err)
 })
+// item does not have history in the given timeStamps
+'use strict';
+const axios = require('axios')
+const ip = "192.168.0.199:8082"
+const now = new Date(2021, 4, 24, 19, 44, 0)
+const st = now.getTime() / 1000 + 8 * 3600
+let ts = []
+for (var i = 0; i < 60; i++) {
+  ts.push(st + i)
+}
+ts.push(st + 360000)  // not have history
+axios.post(`http://${ip}/data/getHistoricalDataWithStamp`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "timeStamps": [ts, ts, ts] }).then(({ data }) => {
+  console.log(JSON.stringify(data))
+}).catch((err) => {
+  console.log(err)
+})
+{"code":200,"message":"","data":{"historicalData":{"x":[[1621885440,1621885441,1621885442,1621885443,1621885444,1621885445,1621885446,1621885447,1621885448,1621885449,1621885450,1621885451,1621885452,1621885453,1621885454,1621885455,1621885456,1621885457,1621885458,1621885459,1621885460,1621885461,1621885462,1621885463,1621885464,1621885465,1621885466,1621885467,1621885468,1621885469,1621885470,1621885471,1621885472,1621885473,1621885474,1621885475,1621885476,1621885477,1621885478,1621885479,1621885480,1621885481,1621885482,1621885483,1621885484,1621885485,1621885486,1621885487,1621885488,1621885489,1621885490,1621885491,1621885492,1621885493,1621885494,1621885495,1621885496,1621885497,1621885498,1621885499,1622245440],[2389,2864,1212,1854,1877,1819,951,2781,1815,2058,2533,1508,2544,15,499,377,2120,471,577,2327,1965,217,1681,2465,2025,1401,3524,1520,3521,28,3071,112,2575,3024,1162,3032,627,659,2691,1585,3113,229,2169,396,1888,2989,467,1870,3015,2635,619,3285,510,2089,3159,733,429,1102,2077,986,null]],"y":[[1621885440,1621885441,1621885442,1621885443,1621885444,1621885445,1621885446,1621885447,1621885448,1621885449,1621885450,1621885451,1621885452,1621885453,1621885454,1621885455,1621885456,1621885457,1621885458,1621885459,1621885460,1621885461,1621885462,1621885463,1621885464,1621885465,1621885466,1621885467,1621885468,1621885469,1621885470,1621885471,1621885472,1621885473,1621885474,1621885475,1621885476,1621885477,1621885478,1621885479,1621885480,1621885481,1621885482,1621885483,1621885484,1621885485,1621885486,1621885487,1621885488,1621885489,1621885490,1621885491,1621885492,1621885493,1621885494,1621885495,1621885496,1621885497,1621885498,1621885499,1622245440],[4778,5728,2424,3708,3754,3638,1902,5562,3630,4116,5066,3016,5088,30,998,754,4240,942,1154,4654,3930,434,3362,4930,4050,2802,7048,3040,7042,56,6142,224,5150,6048,2324,6064,1254,1318,5382,3170,6226,458,4338,792,3776,5978,934,3740,6030,5270,1238,6570,1020,4178,6318,1466,858,2204,4154,1972,null]],"z":[[1621885440,1621885441,1621885442,1621885443,1621885444,1621885445,1621885446,1621885447,1621885448,1621885449,1621885450,1621885451,1621885452,1621885453,1621885454,1621885455,1621885456,1621885457,1621885458,1621885459,1621885460,1621885461,1621885462,1621885463,1621885464,1621885465,1621885466,1621885467,1621885468,1621885469,1621885470,1621885471,1621885472,1621885473,1621885474,1621885475,1621885476,1621885477,1621885478,1621885479,1621885480,1621885481,1621885482,1621885483,1621885484,1621885485,1621885486,1621885487,1621885488,1621885489,1621885490,1621885491,1621885492,1621885493,1621885494,1621885495,1621885496,1621885497,1621885498,1621885499,1622245440],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]]}}}
 // getHistoricalDataWithCondition
+/// normal 
 'use strict';
 const axios = require('axios')
 const fs = require('fs')
@@ -388,6 +416,21 @@ axios.post(`http://${ip}/data/getHistoricalDataWithCondition`, { "groupNames": [
 }).catch((err) => {
   console.log(err)
 })
+// item does not have history
+'use strict';
+const axios = require('axios')
+const fs = require('fs')
+const path = require('path')
+const ip = "192.168.0.199:8082"
+const now = new Date(2021, 6, 24, 19, 44, 0)
+const st = now.getTime() / 1000 + 8 * 3600
+axios.post(`http://${ip}/data/getHistoricalDataWithCondition`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "startTimes": [st], "endTimes": [st + 3600], intervals: [10], "filterCondition": `item["x"] > 2000 && item["y"] > 1000` }).then(({ data }) => {
+  fs.writeFile(path.resolve(__dirname, './fX.txt'), JSON.stringify(data), err => { })
+  console.log(JSON.stringify(data))
+}).catch((err) => {
+  console.log(err)
+})
+{"code":200,"message":"","data":{"historicalData":{"x":[null,null],"y":[null,null],"z":[null,null]}}}
 ```
 
 ## gRPC API Examples
