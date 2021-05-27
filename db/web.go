@@ -341,8 +341,11 @@ func (gdb *Gdb) getRealTimeDataHandler(c *gin.Context) {
 		if err != nil {
 			gdb.string(c, 500, "%s", []byte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", gdbRealTimeData{responseData}})
-			gdb.string(c, 200, "%s", r, g)
+			if r, err := json.Marshal(ResponseData{200, "", gdbRealTimeData{responseData}}); err != nil {
+				gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
 		}
 	}
 }
@@ -899,7 +902,7 @@ func (gdb *Gdb) calc() error {
 	go func() {
 		c := map[string]calcConfig{}
 		flag := true // record whether it is the first time to run
-		startTime := time.NewTicker(60 * time.Second)
+		startTime := time.NewTicker(5 * time.Second)
 		for {
 			select {
 			case <-startTime.C:
@@ -1016,7 +1019,7 @@ func (gdb *Gdb) calc() error {
 							select {
 							case <-ts.C:
 								if err := r.f(); err != nil {
-									_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+strconv.Itoa(int(r.id)))
+									_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(r.id)))
 								}
 							}
 						}
@@ -1046,7 +1049,7 @@ func (gdb *Gdb) calc() error {
 								select {
 								case <-ts.C:
 									if err := f(); err != nil {
-										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+strconv.Itoa(int(id)))
+										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
 									}
 								}
 							}
@@ -1070,7 +1073,7 @@ func (gdb *Gdb) calc() error {
 							select {
 							case <-ts.C:
 								if err := f(); err != nil {
-									_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+strconv.Itoa(int(id)))
+									_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
 								}
 							}
 						}
@@ -1094,7 +1097,7 @@ func (gdb *Gdb) calc() error {
 								select {
 								case <-ts.C:
 									if err := f(); err != nil {
-										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+strconv.Itoa(int(id)))
+										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
 									}
 								}
 							}
@@ -1123,7 +1126,7 @@ func (gdb *Gdb) calc() error {
 						select {
 						case <-ts.C:
 							if err := in.f(); err != nil {
-								_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+strconv.Itoa(int(id)))
+								_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
 							}
 						}
 					}
@@ -1139,12 +1142,12 @@ func (gdb *Gdb) getJsFunction(expression, id string) func() error {
 		var err error
 		loop.Run(func(vm *goja.Runtime) {
 			vm.Set("getRtData", gdb.getRtData)
-			vm.Set("getHData", gdb.GetHistoricalData)
-			vm.Set("getHDataWithTs", gdb.GetHistoricalDataWithStamp)
+			vm.Set("getHData", gdb.getHData)
+			vm.Set("getHDataWithTs", gdb.getHDataWithTs)
 			vm.Set("writeRtData", gdb.writeRtData)
 			vm.Set("getTimeStamp", gdb.getUnixTimeStamp)
 			vm.Set("getNowTime", gdb.getNowTime)
-			vm.Set("getTime", gdb.getTime)
+			vm.Set("testItemValue", gdb.testItemValue)
 			program, _ := goja.Compile(id+".js", expression, false)
 			_, err = vm.RunProgram(program)
 		})
