@@ -15,6 +15,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"golang.org/x/sync/errgroup"
+	"math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -46,6 +47,9 @@ func (gdb *Gdb) BatchWrite(infos ...ItemValue) (Rows, error) {
 					itemValues = append(itemValues, fmt.Sprintf("%.f", v.(float64)))
 					break
 				case "float64":
+					if math.IsNaN(v.(float64)) {
+						return Rows{}, fmt.Errorf("you can't write NaN to database")
+					}
 					itemValues = append(itemValues, fmt.Sprintf("%f", v.(float64)))
 					break
 				case "bool":
@@ -133,6 +137,9 @@ func (gdb *Gdb) BatchWriteHistoricalData(infos ...HistoricalItemValue) error {
 						values = append(values, fmt.Sprintf("%.f", v.(float64)))
 						break
 					case "float64":
+						if math.IsNaN(v.(float64)) {
+							return fmt.Errorf("you can't write NaN to database")
+						}
 						values = append(values, fmt.Sprintf("%f", v.(float64)))
 						break
 					case "bool":
@@ -200,8 +207,8 @@ func (gdb *Gdb) GetRealTimeData(groupNames []string, itemNames ...string) (cmap.
 		name, i := itemName, index
 		g.Go(func() error {
 			v, err := sn.Get([]byte(name+joiner+groupNames[i]), nil)
-			if err != nil {
-				//  key not exist
+			if err != nil || v == nil {
+				//  realTime data not existed
 				m.Set(name, nil)
 			} else {
 				switch dataTypes[i] {
@@ -244,7 +251,7 @@ func (gdb *Gdb) GetRealTimeData(groupNames []string, itemNames ...string) (cmap.
 
 // GetHistoricalData get historical data, timeStamp should be unix timeStamp, and units of
 // interval is seconds.All items should be existed in gdb, otherWise will fail to getting data
-func (gdb *Gdb) GetHistoricalData(groupNames, itemNames []string, startTimeStamps []int, endTimeStamps []int, intervals []int) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) GetHistoricalData(groupNames, itemNames []string, startTimeStamps, endTimeStamps, intervals []int) (cmap.ConcurrentMap, error) {
 	if len(startTimeStamps) == len(endTimeStamps) && len(endTimeStamps) == len(intervals) {
 		dataTypes := []string{}
 		for index, itemName := range itemNames {
@@ -298,6 +305,7 @@ func (gdb *Gdb) GetHistoricalData(groupNames, itemNames []string, startTimeStamp
 						count++
 					}
 				}
+				// values is nil === not historical data , and return nil
 				if v, err := convertValues(dataTypes[index], values...); err != nil {
 					return err
 				} else {
@@ -389,7 +397,12 @@ func (gdb *Gdb) GetHistoricalDataWithStamp(groupNames, itemNames []string, timeS
 			var values []string
 			for j := 0; j < len(timeStamps[i]); j++ {
 				v, _ := sn.Get([]byte(name+joiner+groupNames[i]+fmt.Sprintf("%d", timeStamps[i][j])), nil)
-				values = append(values, string(v))
+				if v != nil {
+					values = append(values, string(v))
+				} else {
+					// v is nil === not historical data with given ts
+					values = append(values, "nil")
+				}
 			}
 			if v, err := convertValues(dataTypes[i], values...); err != nil {
 				return err
@@ -668,69 +681,70 @@ func (gdb *Gdb) getHistoricalDataWithMinLength(groupNames, itemNames []string, s
 	}
 }
 
-// following method is used by calc
-// get unix timestamp of the given time,t should b yyyy-mm-dd hh:mm:ss
-func (gdb *Gdb) getUnixTimeStamp(t string) int64 {
-	t1, err := time.Parse("2006-01-02 15:04:05", t)
-	if err != nil {
-		return -1
-	}
-	return t1.Unix() + 8*3600
-}
-
 func (gdb *Gdb) getNowTime() string {
 	return time.Now().Format(timeFormatString)
 }
 
-func (gdb *Gdb) getTime(d int) string {
-	return time.Now().Add(time.Duration(d) * time.Second).Format(timeFormatString)
+func (gdb *Gdb) testItemValue(v interface{}) {
+	if r, err := json.Marshal(v); err != nil {
+		fmt.Println(v)
+		fmt.Println(err)
+	} else {
+		fmt.Println(string(r))
+	}
 }
 
-func (gdb *Gdb) getRtData(itemNames, groupNames []string) ([]string, error) {
-	v, err := gdb.GetRealTimeData(groupNames, itemNames...)
-	if err != nil {
-		return nil, err
+// following method is used by calc
+// get unix timestamp of the given time,t should b yyyy-mm-dd hh:mm:ss
+func (gdb *Gdb) getUnixTimeStamp(t string, d int) (int64, error) {
+	if st, err := time.Parse(timeFormatString, t); err != nil {
+		return -1, err
+	} else {
+		return st.Add(time.Duration(d) * time.Second).Unix(), nil
 	}
-	var result []string
-	for _, name := range itemNames {
-		rv, _ := v.Get(name)
-		if rv == nil {
-			return nil, fmt.Errorf("invalid itemName: " + name)
-		}
-		result = append(result, rv.(string))
-	}
-	return result, nil
 }
 
-func (gdb *Gdb) getHData(groupNames, itemNames []string, timeStamps []int64) ([]interface{}, error) {
-	dataTypes := []string{}
-	for index, itemName := range itemNames {
-		if t, ok := gdb.rtDbFilter.Get(itemName + joiner + groupNames[index]); !ok {
-			return nil, fmt.Errorf("item " + itemName + " not existed")
+func (gdb *Gdb) getRtData(itemNames, groupNames []string) (string, error) {
+	if v, err := gdb.GetRealTimeData(groupNames, itemNames...); err != nil {
+		return "", err
+	} else {
+		if r, err := json.Marshal(v); err != nil {
+			return "", err
 		} else {
-			dataTypes = append(dataTypes, t.(string))
+			return string(r), err
 		}
 	}
-	r, err := gdb.getHistoricalDataWithStringTimeStamp(groupNames, itemNames, timeStamps, dataTypes...)
-	var result []interface{}
-	if err != nil {
-		return nil, err
-	}
-	for _, itemName := range itemNames {
-		rv, _ := r.Get(itemName)
-		if rv == nil {
-			return nil, fmt.Errorf("invalid itemName: " + itemName)
+}
+
+func (gdb *Gdb) getHData(groupNames, itemNames []string, startTimeStamps, endTimeStamps, intervals []int) (string, error) {
+	if result, err := gdb.GetHistoricalData(groupNames, itemNames, startTimeStamps, endTimeStamps, intervals); err != nil {
+		return "", err
+	} else {
+		if r, err := json.Marshal(result); err != nil {
+			return "", err
+		} else {
+			return string(r), nil
 		}
-		result = append(result, rv)
 	}
-	return result, nil
+}
+
+func (gdb *Gdb) getHDataWithTs(groupNames, itemNames []string, timeStamps ...[]int) (string, error) {
+	if result, err := gdb.GetHistoricalDataWithStamp(groupNames, itemNames, timeStamps...); err != nil {
+		return "", err
+	} else {
+		if r, err := json.Marshal(result); err != nil {
+			return "", err
+		} else {
+			return string(r), nil
+		}
+	}
 }
 
 func (gdb *Gdb) writeRtData(infos []map[string]interface{}) (Rows, error) {
 	items := []ItemValue{}
 	for _, info := range infos {
 		items = append(items, ItemValue{
-			GroupName: "calc",
+			GroupName: info["groupName"].(string),
 			ItemName:  info["itemName"].(string),
 			Value:     info["value"],
 		})
@@ -810,39 +824,46 @@ func (gdb *Gdb) getDbInfoHistory(itemName string, startTimeStamps []int, endTime
 }
 
 func convertValues(t string, values ...string) ([]interface{}, error) {
+	if values == nil {
+		return nil, nil
+	}
 	r := make([]interface{}, len(values))
 	g := errgroup.Group{}
 	for i := 0; i < len(values); i++ {
 		index := i
-		g.Go(func() error {
-			switch t {
-			case "int64":
-				if result, err := strconv.ParseInt(values[index], 10, 64); err != nil {
-					return err
-				} else {
-					r[index] = result
+		if values[index] == "nil" {
+			r[index] = nil
+		} else {
+			g.Go(func() error {
+				switch t {
+				case "int64":
+					if result, err := strconv.ParseInt(values[index], 10, 64); err != nil {
+						return err
+					} else {
+						r[index] = result
+					}
+					break
+				case "float64":
+					if result, err := strconv.ParseFloat(values[index], 64); err != nil {
+						return err
+					} else {
+						r[index] = result
+					}
+					break
+				case "bool":
+					if result, err := strconv.ParseBool(values[index]); err != nil {
+						return err
+					} else {
+						r[index] = result
+					}
+					break
+				default:
+					r[index] = values[index]
+					break
 				}
-				break
-			case "float64":
-				if result, err := strconv.ParseFloat(values[index], 64); err != nil {
-					return err
-				} else {
-					r[index] = result
-				}
-				break
-			case "bool":
-				if result, err := strconv.ParseBool(values[index]); err != nil {
-					return err
-				} else {
-					r[index] = result
-				}
-				break
-			default:
-				r[index] = values[index]
-				break
-			}
-			return nil
-		})
+				return nil
+			})
+		}
 	}
 	if err := g.Wait(); err != nil {
 		return r, err
