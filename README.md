@@ -6,7 +6,7 @@ allows you to generate your own data based on existing data by coding js on desk
 you will love GDB.
 
 [![GoDoc](https://pkg.go.dev/badge/github.com/gin-gonic/gin?status.svg)](https://pkg.go.dev/github.com/JustKeepSilence/gdb)
-[![Go Report Card](https://goreportcard.com/badge/github.com/gin-gonic/gin)](https://goreportcard.com/report/github.com/JustKeepSilence/gdb)
+[![Go Report Card](https://goreportcard.com/badge/github.com/JustKeepSilence/gdb)](https://goreportcard.com/report/github.com/JustKeepSilence/gdb)
 [![Release](https://img.shields.io/github/v/release/JustKeepSilence/gdb)](https://github.com/JustKeepSilence/gdb/releases)
 [![go-version](https://img.shields.io/github/go-mod/go-version/JustKeepSilence/gdb)]()
 [![count](https://img.shields.io/github/languages/count/JustKeepSilence/gdb)]()
