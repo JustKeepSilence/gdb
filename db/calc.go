@@ -25,12 +25,12 @@ func (gdb *Gdb) testCalculation(expression string) (calculationResult, error) {
 	var p *goja.Program
 	loop.Run(func(vm *goja.Runtime) {
 		vm.Set("getRtData", gdb.getRtData)
-		vm.Set("getHData", gdb.GetHistoricalData)
-		vm.Set("getHDataWithTs", gdb.GetHistoricalDataWithStamp)
+		vm.Set("getHData", gdb.getHData)
+		vm.Set("getHDataWithTs", gdb.getHDataWithTs)
 		vm.Set("writeRtData", gdb.writeRtData)
 		vm.Set("getTimeStamp", gdb.getUnixTimeStamp)
-		vm.Set("etNowTime", gdb.getNowTime)
-		vm.Set("getTime", gdb.getTime)
+		vm.Set("getNowTime", gdb.getNowTime)
+		vm.Set("testItemValue", gdb.testItemValue)
 		p, runError = goja.Compile("main.js", expression, false)
 		if p == nil {
 			return
@@ -53,7 +53,7 @@ func (gdb *Gdb) getCalculationItem(condition string) (calcItemsInfo, error) {
 
 func (gdb *Gdb) updateCalculationItem(info updatedCalcInfo) (Rows, error) {
 	info.UpdatedTime = time.Now().Format(timeFormatString)
-	sqlTemplate := template.Must(template.New("updatedCalcTemplate").Parse(`update calc_cfg set description='{{.Description}}', expression='{{.Expression}}', duration='{{.Duration}}', updatedTime='{{.UpdatedTime}}' where id={{.Id}}`))
+	sqlTemplate := template.Must(template.New("updatedCalcTemplate").Parse(`update calc_cfg set description='{{.Description}}', expression='{{.Expression}}', duration='{{.Duration}}', updatedTime='{{.UpdatedTime}}', errorMessage='' where id={{.Id}}`))
 	var b bytes.Buffer
 	if err := sqlTemplate.Execute(&b, info); err != nil {
 		return Rows{}, err
