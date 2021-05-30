@@ -147,6 +147,12 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 		pageRequest.POST("/downloadFile", g.downloadFileHandler)
 		pageRequest.POST("/getDbInfo", g.getDbInfoHandler)
 		pageRequest.POST("/getDbInfoHistory", g.getDbInfoHistoryHandler)
+		pageRequest.POST("/getRoutes", g.getRoutesHandler)
+		pageRequest.POST("/deleteRoutes", g.deleteRoutesHandler)
+		pageRequest.POST("/addRoutes", g.addRoutesHandler)
+		pageRequest.POST("/addUserRoutes", g.addUserRoutesHandler)
+		pageRequest.POST("/deleteUserRoutes", g.deleteUserRoutesHandler)
+		pageRequest.POST("/getAllRoutes", g.getAllRoutesHandler)
 	}
 	calcRequest := router.Group("/calculation")
 	{
@@ -194,7 +200,7 @@ func StartDbServer(configs Config) error {
 	}
 	gin.SetMode(gin.ReleaseMode)                  // production
 	address := ip + ":" + fmt.Sprintf("%d", port) // base url of web server
-	gdb, err := NewGdb(dbPath, itemDbPath)
+	gdb, err := innerNewGdb(dbPath, itemDbPath)
 	if err != nil {
 		return err
 	}

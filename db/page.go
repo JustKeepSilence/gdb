@@ -62,7 +62,7 @@ func (gdb *Gdb) getUserInfo(n string) (userInfo, error) {
 
 func (gdb *Gdb) addUsers(info addedUserInfo) (Rows, error) {
 	if !strings.Contains(roles, info.Role) {
-		return Rows{}, fmt.Errorf("role must be developer or common_user or super_user")
+		return Rows{}, fmt.Errorf("role must be visitor or common_user or super_user")
 	}
 	sqlTemplate := template.Must(template.New("addUserTemplate").Parse(`insert into user_cfg (userName, passWord, role) 
 								values ('{{.Name}}', '{{.PassWord}}', '{{.Role}}')`))
@@ -70,20 +70,56 @@ func (gdb *Gdb) addUsers(info addedUserInfo) (Rows, error) {
 	if err := sqlTemplate.Execute(&b, info); err != nil {
 		return Rows{}, err
 	} else {
-		sqlString := b.String()
-		if _, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
+		sqlString := b.String() // addUsers
+		var routeSqlString string
+		var routeRoles []string
+		switch info.Role {
+		case "super_user":
+			routeRole := strings.Replace(superUserRoutes, "userName", info.Name, -1)
+			routeSqlString = "insert into route_cfg (userName, routeRoles) values ('" + info.Name + "', '" + routeRole + "')"
+			routeRoles = append(routeRoles, routeRole)
+			break
+		case "common_user":
+			for _, route := range commonUserRoutes {
+				routeRole := "p," + info.Name + "," + toTitle(route) + "," + "POST"
+				routeRoles = append(routeRoles, routeRole)
+			}
+			break
+		default:
+			// visitor
+			for _, route := range visitorUserRoutes {
+				routeRole := "p," + info.Name + "," + toTitle(route) + "," + "POST"
+				routeRoles = append(routeRoles, routeRole)
+			}
+			break
+		}
+		r, _ := json.Marshal(routeRoles)
+		routeSqlString = "insert into route_cfg (userName, routeRoles) values ('" + info.Name + "', '" + string(r) + "')"
+		if err := updateItems(gdb.ItemDbPath, sqlString, routeSqlString); err != nil {
 			return Rows{}, err
 		} else {
+			// add policy to model
+			m := gdb.gdbAdapter.e.GetModel()
+			for _, ast := range m["p"] {
+				for _, role := range routeRoles {
+					ast.Policy = append(ast.Policy, strings.Split(role, ",")[1:])
+				}
+			}
 			return Rows{1}, nil
 		}
 	}
 }
 
 func (gdb *Gdb) deleteUsers(name userName) (Rows, error) {
-	if _, err := updateItem(gdb.ItemDbPath, "delete from user_cfg where userName='"+name.Name+"'"); err != nil {
+	if err := updateItems(gdb.ItemDbPath, "delete from user_cfg where userName='"+name.Name+"'", "delete from route_cfg where userName='"+name.Name+"'"); err != nil {
 		return Rows{}, err
 	} else {
-		return Rows{1}, nil
+		// remove policy from model
+		if err := gdb.gdbAdapter.e.LoadPolicy(); err != nil {
+			return Rows{}, err
+		} else {
+			return Rows{1}, nil
+		}
 	}
 }
 
@@ -283,6 +319,69 @@ func (gdb *Gdb) deleteLogs(info deletedLogInfo) (Rows, error) {
 		return Rows{}, err
 	} else {
 		return Rows{EffectedRows: int(row)}, nil
+	}
+}
+
+func (gdb *Gdb) getRoutes() ([]map[string]string, error) {
+	if rows, err := query(gdb.ItemDbPath, "select id, userName, routeRoles from route_cfg where 1=1"); err != nil {
+		return nil, err
+	} else {
+		for _, row := range rows {
+			name := row["userName"]
+			if r, err := query(gdb.ItemDbPath, "select role from user_cfg where userName='"+name+"'"); err != nil {
+				return nil, err
+			} else {
+				if len(r) == 0 {
+					row["role"] = ""
+				} else {
+					row["role"] = r[0]["role"]
+				}
+			}
+
+		}
+		return rows, nil
+	}
+}
+
+func (gdb *Gdb) deleteRoutes(name string, routes ...string) error {
+	for _, route := range routes {
+		if _, err := gdb.e.RemovePolicy(name, route, "POST"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// add routes to existed user
+func (gdb *Gdb) addRoutes(name string, routes ...string) error {
+	for _, route := range routes {
+		if _, err := gdb.e.AddPolicy(name, route, "POST"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// add routes to new user
+func (gdb *Gdb) addUserRoutes(name string, routes ...string) error {
+	routeRoles := []string{}
+	for _, route := range routes {
+		routeRole := "p," + name + "," + toTitle(route) + "," + "POST"
+		routeRoles = append(routeRoles, routeRole)
+	}
+	r, _ := json.Marshal(routeRoles)
+	routeSqlString := "insert into route_cfg (userName, routeRoles) values ('" + name + "', '" + string(r) + "')"
+	if _, err := updateItem(gdb.ItemDbPath, routeSqlString); err != nil {
+		return err
+	} else {
+		// add policy to model
+		m := gdb.gdbAdapter.e.GetModel()
+		for _, ast := range m["p"] {
+			for _, role := range routeRoles {
+				ast.Policy = append(ast.Policy, strings.Split(role, ",")[1:])
+			}
+		}
+		return nil
 	}
 }
 

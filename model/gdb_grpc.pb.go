@@ -1118,6 +1118,12 @@ type PageClient interface {
 	DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error)
 	GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error)
 	GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetRoutes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Routes, error)
+	DeleteRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error)
+	AddRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error)
+	AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error)
+	DeleteUserRoutes(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error)
+	GetAllRoutes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Routes, error)
 }
 
 type pageClient struct {
@@ -1297,6 +1303,60 @@ func (c *pageClient) GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistory
 	return out, nil
 }
 
+func (c *pageClient) GetRoutes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Routes, error) {
+	out := new(Routes)
+	err := c.cc.Invoke(ctx, "/model.Page/GetRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) DeleteRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/DeleteRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) AddRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/AddRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/AddUserRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) DeleteUserRoutes(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error) {
+	out := new(Rows)
+	err := c.cc.Invoke(ctx, "/model.Page/DeleteUserRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) GetAllRoutes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Routes, error) {
+	out := new(Routes)
+	err := c.cc.Invoke(ctx, "/model.Page/GetAllRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PageServer is the server API for Page service.
 // All implementations must embed UnimplementedPageServer
 // for forward compatibility
@@ -1317,6 +1377,12 @@ type PageServer interface {
 	DownloadFile(context.Context, *FileInfo) (*FileContents, error)
 	GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error)
 	GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error)
+	GetRoutes(context.Context, *emptypb.Empty) (*Routes, error)
+	DeleteRoutes(context.Context, *RoutesInfo) (*Rows, error)
+	AddRoutes(context.Context, *RoutesInfo) (*Rows, error)
+	AddUserRoutes(context.Context, *RoutesInfo) (*Rows, error)
+	DeleteUserRoutes(context.Context, *UserName) (*Rows, error)
+	GetAllRoutes(context.Context, *emptypb.Empty) (*Routes, error)
 	mustEmbedUnimplementedPageServer()
 }
 
@@ -1371,6 +1437,24 @@ func (UnimplementedPageServer) GetDbInfo(context.Context, *emptypb.Empty) (*GdbI
 }
 func (UnimplementedPageServer) GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfoHistory not implemented")
+}
+func (UnimplementedPageServer) GetRoutes(context.Context, *emptypb.Empty) (*Routes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRoutes not implemented")
+}
+func (UnimplementedPageServer) DeleteRoutes(context.Context, *RoutesInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteRoutes not implemented")
+}
+func (UnimplementedPageServer) AddRoutes(context.Context, *RoutesInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddRoutes not implemented")
+}
+func (UnimplementedPageServer) AddUserRoutes(context.Context, *RoutesInfo) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddUserRoutes not implemented")
+}
+func (UnimplementedPageServer) DeleteUserRoutes(context.Context, *UserName) (*Rows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserRoutes not implemented")
+}
+func (UnimplementedPageServer) GetAllRoutes(context.Context, *emptypb.Empty) (*Routes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAllRoutes not implemented")
 }
 func (UnimplementedPageServer) mustEmbedUnimplementedPageServer() {}
 
@@ -1681,6 +1765,114 @@ func _Page_GetDbInfoHistory_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Page_GetRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetRoutes(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_DeleteRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutesInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).DeleteRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/DeleteRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).DeleteRoutes(ctx, req.(*RoutesInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_AddRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutesInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).AddRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/AddRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).AddRoutes(ctx, req.(*RoutesInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_AddUserRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutesInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).AddUserRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/AddUserRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).AddUserRoutes(ctx, req.(*RoutesInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_DeleteUserRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserName)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).DeleteUserRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/DeleteUserRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).DeleteUserRoutes(ctx, req.(*UserName))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_GetAllRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetAllRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetAllRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetAllRoutes(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Page_ServiceDesc is the grpc.ServiceDesc for Page service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1747,6 +1939,30 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetDbInfoHistory",
 			Handler:    _Page_GetDbInfoHistory_Handler,
+		},
+		{
+			MethodName: "GetRoutes",
+			Handler:    _Page_GetRoutes_Handler,
+		},
+		{
+			MethodName: "DeleteRoutes",
+			Handler:    _Page_DeleteRoutes_Handler,
+		},
+		{
+			MethodName: "AddRoutes",
+			Handler:    _Page_AddRoutes_Handler,
+		},
+		{
+			MethodName: "AddUserRoutes",
+			Handler:    _Page_AddUserRoutes_Handler,
+		},
+		{
+			MethodName: "DeleteUserRoutes",
+			Handler:    _Page_DeleteUserRoutes_Handler,
+		},
+		{
+			MethodName: "GetAllRoutes",
+			Handler:    _Page_GetAllRoutes_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

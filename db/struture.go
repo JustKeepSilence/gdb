@@ -364,6 +364,11 @@ type deletedLogInfo struct {
 	UserNameCondition string `json:"userNameCondition"`
 }
 
+type routesInfo struct {
+	Name   string   `json:"name" binding:"required"`
+	Routes []string `json:"routes" binding:"required"`
+}
+
 // errors, some errors imported , some not
 
 type conditionError struct {

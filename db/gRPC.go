@@ -46,7 +46,7 @@ func (s *server) AddGroups(_ context.Context, r *pb.AddedGroupInfos) (*pb.Rows, 
 		infos = append(infos, AddedGroupInfo{GroupName: groupInfo.GroupName, ColumnNames: groupInfo.ColumnNames})
 	}
 	if result, err := s.gdb.AddGroups(infos...); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
@@ -55,7 +55,7 @@ func (s *server) AddGroups(_ context.Context, r *pb.AddedGroupInfos) (*pb.Rows, 
 func (s *server) DeleteGroups(_ context.Context, r *pb.GroupNamesInfo) (*pb.Rows, error) {
 	info := GroupNamesInfo{GroupNames: r.GroupNames}
 	if result, err := s.gdb.DeleteGroups(info); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
@@ -63,7 +63,7 @@ func (s *server) DeleteGroups(_ context.Context, r *pb.GroupNamesInfo) (*pb.Rows
 
 func (s *server) GetGroups(_ context.Context, _ *emptypb.Empty) (*pb.GroupNamesInfo, error) {
 	if result, err := s.gdb.GetGroups(); err != nil {
-		return nil, err
+		return &pb.GroupNamesInfo{}, err
 	} else {
 		return &pb.GroupNamesInfo{GroupNames: result.GroupNames}, nil
 	}
@@ -71,7 +71,7 @@ func (s *server) GetGroups(_ context.Context, _ *emptypb.Empty) (*pb.GroupNamesI
 
 func (s *server) GetGroupProperty(_ context.Context, r *pb.QueryGroupPropertyInfo) (*pb.GroupPropertyInfo, error) {
 	if result, err := s.gdb.GetGroupProperty(r.GetGroupName(), r.GetCondition()); err != nil {
-		return nil, err
+		return &pb.GroupPropertyInfo{}, err
 	} else {
 		return &pb.GroupPropertyInfo{ItemCount: result.ItemCount, ItemColumnNames: result.ItemColumnNames}, nil
 	}
@@ -83,7 +83,7 @@ func (s *server) UpdateGroupNames(_ context.Context, r *pb.UpdatedGroupNamesInfo
 		g = append(g, UpdatedGroupNameInfo{NewGroupName: info.GetNewGroupName(), OldGroupName: info.GetOldGroupName()})
 	}
 	if result, err := s.gdb.UpdateGroupNames(g...); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
@@ -92,7 +92,7 @@ func (s *server) UpdateGroupNames(_ context.Context, r *pb.UpdatedGroupNamesInfo
 func (s *server) UpdateGroupColumnNames(_ context.Context, r *pb.UpdatedGroupColumnNamesInfo) (*pb.Cols, error) {
 	g := UpdatedGroupColumnNamesInfo{GroupName: r.GetGroupName(), OldColumnNames: r.GetOldColumnNames(), NewColumnNames: r.GetNewColumnNames()}
 	if result, err := s.gdb.UpdateGroupColumnNames(g); err != nil {
-		return nil, err
+		return &pb.Cols{}, err
 	} else {
 		return &pb.Cols{EffectedCols: int32(result.EffectedCols)}, nil
 	}
@@ -101,7 +101,7 @@ func (s *server) UpdateGroupColumnNames(_ context.Context, r *pb.UpdatedGroupCol
 func (s *server) DeleteGroupColumns(_ context.Context, r *pb.DeletedGroupColumnNamesInfo) (*pb.Cols, error) {
 	g := DeletedGroupColumnNamesInfo{GroupName: r.GetGroupName(), ColumnNames: r.GetColumnNames()}
 	if result, err := s.gdb.DeleteGroupColumns(g); err != nil {
-		return nil, err
+		return &pb.Cols{}, err
 	} else {
 		return &pb.Cols{EffectedCols: int32(result.EffectedCols)}, nil
 	}
@@ -110,7 +110,7 @@ func (s *server) DeleteGroupColumns(_ context.Context, r *pb.DeletedGroupColumnN
 func (s *server) AddGroupColumns(_ context.Context, r *pb.AddedGroupColumnsInfo) (*pb.Cols, error) {
 	g := AddedGroupColumnsInfo{GroupName: r.GetGroupName(), ColumnNames: r.GetColumnNames(), DefaultValues: r.GetDefaultValues()}
 	if result, err := s.gdb.AddGroupColumns(g); err != nil {
-		return nil, err
+		return &pb.Cols{}, err
 	} else {
 		return &pb.Cols{EffectedCols: int32(result.EffectedCols)}, nil
 	}
@@ -118,7 +118,7 @@ func (s *server) AddGroupColumns(_ context.Context, r *pb.AddedGroupColumnsInfo)
 
 func (s *server) CleanGroupItems(_ context.Context, r *pb.GroupNamesInfo) (*pb.Rows, error) {
 	if result, err := s.gdb.CleanGroupItems(r.GroupNames...); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
@@ -134,7 +134,7 @@ func (s *server) AddItems(_ context.Context, r *pb.AddedItemsInfo) (*pb.Rows, er
 		ItemValues: values,
 	}
 	if result, err := s.gdb.AddItems(g); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
@@ -146,7 +146,7 @@ func (s *server) DeleteItems(_ context.Context, r *pb.DeletedItemsInfo) (*pb.Row
 		Condition: r.GetCondition(),
 	}
 	if result, err := s.gdb.DeleteItems(g); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
@@ -161,7 +161,7 @@ func (s *server) GetItems(_ context.Context, r *pb.ItemsInfo) (*pb.GdbItems, err
 		RowCount:    int(r.GetRowCount()),
 	}
 	if result, err := s.gdb.GetItems(g); err != nil {
-		return nil, err
+		return &pb.GdbItems{}, err
 	} else {
 		v := []*pb.GdbItem{}
 		for _, m := range result.ItemValues {
@@ -180,7 +180,7 @@ func (s *server) GetItemsWithCount(_ context.Context, r *pb.ItemsInfo) (*pb.GdbI
 		RowCount:    int(r.GetRowCount()),
 	}
 	if result, err := s.gdb.getItemsWithCount(g); err != nil {
-		return nil, err
+		return &pb.GdbItemsWithCount{}, err
 	} else {
 		v := []*pb.GdbItem{}
 		for _, m := range result.ItemValues {
@@ -197,7 +197,7 @@ func (s *server) UpdateItems(_ context.Context, r *pb.UpdatedItemsInfo) (*pb.Row
 		Clause:    r.GetClause(),
 	}
 	if result, err := s.gdb.UpdateItems(g); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 	}
@@ -219,7 +219,7 @@ func (s *server) BatchWrite(_ context.Context, r *pb.BatchWriteString) (*pb.Rows
 		return &pb.Rows{}, err
 	} else {
 		if result, err := s.gdb.BatchWrite(v...); err != nil {
-			return nil, err
+			return &pb.Rows{}, err
 		} else {
 			return &pb.Rows{EffectedRows: int32(result.EffectedRows)}, nil
 		}
@@ -312,7 +312,7 @@ func (s *server) BatchWriteHistoricalDataWithStream(stream pb.Data_BatchWriteHis
 
 func (s *server) GetRealTimeData(_ context.Context, r *pb.QueryRealTimeDataString) (*pb.GdbRealTimeData, error) {
 	if result, err := s.gdb.GetRealTimeData(r.GetGroupNames(), r.ItemNames...); err != nil {
-		return nil, err
+		return &pb.GdbRealTimeData{}, err
 	} else {
 		v, _ := json.Marshal(result)
 		return &pb.GdbRealTimeData{RealTimeData: fmt.Sprintf("%s", v)}, nil
@@ -321,7 +321,7 @@ func (s *server) GetRealTimeData(_ context.Context, r *pb.QueryRealTimeDataStrin
 
 func (s *server) GetHistoricalData(_ context.Context, r *pb.QueryHistoricalDataString) (*pb.GdbHistoricalData, error) {
 	if result, err := s.gdb.GetHistoricalData(r.GetGroupNames(), r.GetItemNames(), convertInt32ToInt(r.GetStartTimes()...), convertInt32ToInt(r.GetEndTimes()...), convertInt32ToInt(r.GetIntervals()...)); err != nil {
-		return nil, err
+		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result)
 		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", v)}, nil
@@ -334,7 +334,7 @@ func (s *server) GetHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistor
 		t = append(t, convertInt32ToInt(s.GetTimeStamp()...))
 	}
 	if result, err := s.gdb.GetHistoricalDataWithStamp(r.GetGroupNames(), r.GetItemNames(), t...); err != nil {
-		return nil, err
+		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result)
 		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", v)}, nil
@@ -351,7 +351,7 @@ func (s *server) GetHistoricalDataWithCondition(_ context.Context, r *pb.QueryHi
 	}
 	if result, err := s.gdb.GetHistoricalDataWithCondition(r.GetGroupNames(), r.GetItemNames(), convertInt32ToInt(r.GetStartTimes()...),
 		convertInt32ToInt(r.GetEndTimes()...), convertInt32ToInt(r.GetIntervals()...), r.GetFilterCondition(), dz...); err != nil {
-		return &pb.GdbHistoricalData{}, nil
+		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result)
 		return &pb.GdbHistoricalData{HistoricalData: string(v)}, nil
@@ -360,7 +360,7 @@ func (s *server) GetHistoricalDataWithCondition(_ context.Context, r *pb.QueryHi
 
 func (s *server) GetRawData(_ context.Context, r *pb.QueryRealTimeDataString) (*pb.GdbHistoricalData, error) {
 	if result, err := s.gdb.GetRawHistoricalData(r.GetGroupNames(), r.GetItemNames()...); err != nil {
-		return &pb.GdbHistoricalData{}, nil
+		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result)
 		return &pb.GdbHistoricalData{HistoricalData: string(v)}, nil
@@ -369,7 +369,7 @@ func (s *server) GetRawData(_ context.Context, r *pb.QueryRealTimeDataString) (*
 
 func (s *server) GetDbInfo(_ context.Context, _ *emptypb.Empty) (*pb.GdbInfoData, error) {
 	if result, err := s.gdb.getDbInfo(); err != nil {
-		return nil, err
+		return &pb.GdbInfoData{}, err
 	} else {
 		v, _ := json.Marshal(result)
 		return &pb.GdbInfoData{Info: fmt.Sprintf("%s", v)}, nil
@@ -378,11 +378,58 @@ func (s *server) GetDbInfo(_ context.Context, _ *emptypb.Empty) (*pb.GdbInfoData
 
 func (s *server) GetDbInfoHistory(_ context.Context, r *pb.QuerySpeedHistoryDataString) (*pb.GdbHistoricalData, error) {
 	if r, err := s.gdb.getDbInfoHistory(r.GetItemName(), convertInt32ToInt(r.GetStartTimes()...), convertInt32ToInt(r.GetEndTimes()...), convertInt32ToInt(r.GetIntervals()...)); err != nil {
-		return &pb.GdbHistoricalData{}, nil
+		return &pb.GdbHistoricalData{}, err
 	} else {
 		result, _ := json.Marshal(r)
 		return &pb.GdbHistoricalData{HistoricalData: fmt.Sprintf("%s", result)}, nil
 	}
+}
+
+func (s *server) GetRoutes(_ context.Context, _ *emptypb.Empty) (*pb.Routes, error) {
+	if r, err := s.gdb.getRoutes(); err != nil {
+		return &pb.Routes{}, err
+	} else {
+		result, _ := json.Marshal(r)
+		return &pb.Routes{Routes: string(result)}, nil
+	}
+}
+
+func (s *server) DeleteRoutes(_ context.Context, r *pb.RoutesInfo) (*pb.Rows, error) {
+	if err := s.gdb.deleteRoutes(r.GetName(), r.GetRoutes()...); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: int32(len(r.GetRoutes()))}, nil
+	}
+}
+
+func (s *server) AddRoutes(_ context.Context, r *pb.RoutesInfo) (*pb.Rows, error) {
+	if err := s.gdb.addRoutes(r.GetName(), r.GetRoutes()...); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: 1}, nil
+	}
+}
+
+func (s *server) AddUserRoutes(_ context.Context, r *pb.RoutesInfo) (*pb.Rows, error) {
+	if err := s.gdb.addUserRoutes(r.GetName(), r.GetRoutes()...); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		return &pb.Rows{EffectedRows: 1}, nil
+	}
+}
+
+func (s *server) DeleteUserRoutes(_ context.Context, r *pb.UserName) (*pb.Rows, error) {
+	if _, err := updateItem(s.gdb.ItemDbPath, "delete from route_cfg where userName='"+r.GetName()+"'"); err != nil {
+		return &pb.Rows{}, err
+	} else {
+		_ = s.gdb.e.LoadPolicy()
+		return &pb.Rows{EffectedRows: 1}, err
+	}
+}
+
+func (s *server) GetAllRoutes(_ context.Context, _ *emptypb.Empty) (*pb.Routes, error) {
+	r, _ := json.Marshal([][]string{allRoutes, commonUserRoutes, visitorUserRoutes})
+	return &pb.Routes{Routes: string(r)}, nil
 }
 
 // page handler
@@ -473,7 +520,7 @@ func (s *server) GetLogs(_ context.Context, r *pb.QueryLogsInfo) (*pb.LogsInfo, 
 		Name:      r.GetName(),
 	}
 	if result, err := s.gdb.getLogs(g); err != nil {
-		return nil, err
+		return &pb.LogsInfo{}, err
 	} else {
 		r, _ := json.Marshal(result.Infos)
 		return &pb.LogsInfo{Infos: string(r), Count: int32(result.Count)}, nil
@@ -576,7 +623,7 @@ func (s *server) AddCalcItem(_ context.Context, r *pb.AddedCalcItemInfo) (*pb.Ca
 	} else {
 		createTime := time.Now().Format(timeFormatString)
 		if _, err := updateItem(s.gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime, updatedTime, duration, status) values ('"+r.GetDescription()+"', '"+r.GetExpression()+"' , '"+createTime+"', '"+createTime+"', '"+r.GetDuration()+"', '"+r.GetFlag()+"')"); err != nil {
-			return nil, err
+			return &pb.CalculationResult{}, err
 		} else {
 			r, _ := json.Marshal(result.Result)
 			return &pb.CalculationResult{Result: string(r)}, nil
@@ -618,7 +665,7 @@ func (s *server) AddCalcItemWithStream(stream pb.Calc_AddCalcItemWithStreamServe
 
 func (s *server) GetCalcItems(_ context.Context, r *pb.QueryCalcItemsInfo) (*pb.CalcItemsInfo, error) {
 	if result, err := s.gdb.getCalculationItem(r.GetCondition()); err != nil {
-		return nil, err
+		return &pb.CalcItemsInfo{}, err
 	} else {
 		r, _ := json.Marshal(result.Infos)
 		return &pb.CalcItemsInfo{Infos: string(r)}, nil
@@ -635,7 +682,7 @@ func (s *server) UpdateCalcItem(_ context.Context, r *pb.UpdatedCalcInfo) (*pb.C
 			Expression:  r.GetExpression(),
 			Duration:    r.GetDuration(),
 		}); err != nil {
-			return nil, err
+			return &pb.CalculationResult{}, err
 		} else {
 			return &pb.CalculationResult{
 				Result: result.Result.(string),
@@ -650,7 +697,7 @@ func (s *server) StartCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, error
 		id = append(id, "id = '"+item+"'")
 	}
 	if _, err := updateItem(s.gdb.ItemDbPath, "update calc_cfg set status='true', updatedTime='"+time.Now().Format(timeFormatString)+"' where "+strings.Join(id, " or ")); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: 1}, nil
 	}
@@ -662,7 +709,7 @@ func (s *server) StopCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, error)
 		id = append(id, "id = '"+item+"'")
 	}
 	if _, err := updateItem(s.gdb.ItemDbPath, "update calc_cfg set status='false', updatedTime='"+time.Now().Format(timeFormatString)+"' where "+strings.Join(id, " or ")); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: 1}, nil
 	}
@@ -674,7 +721,7 @@ func (s *server) DeleteCalcItem(_ context.Context, r *pb.CalcId) (*pb.Rows, erro
 		id = append(id, "id = '"+item+"'")
 	}
 	if _, err := updateItem(s.gdb.ItemDbPath, "delete from calc_cfg where "+strings.Join(id, " or ")); err != nil {
-		return nil, err
+		return &pb.Rows{}, err
 	} else {
 		return &pb.Rows{EffectedRows: 1}, nil
 	}
@@ -714,6 +761,10 @@ func (s *server) authInterceptor(c context.Context, req interface{}, info *grpc.
 						if token != r[0]["token"] {
 							return nil, status.Errorf(codes.Unauthenticated, "invalid token")
 						} else {
+							sub, obj, act := userName, methods[len(methods)-1], "POST" // replace gRCP with POST
+							if ok, _ := s.gdb.e.Enforce(sub, obj, act); !ok {
+								return nil, status.Errorf(codes.Unauthenticated, "invalid token")
+							}
 							return handler(c, req)
 						}
 					}
@@ -748,6 +799,10 @@ func (s *server) authWithServerStreamInterceptor(srv interface{}, ss grpc.Server
 						if token != r[0]["token"] {
 							return status.Errorf(codes.Unauthenticated, "invalid token")
 						} else {
+							sub, obj, act := userName, "StreamWrite", "POST" // for stream gRPC, route permission is StreamWrite
+							if ok, _ := s.gdb.e.Enforce(sub, obj, act); !ok {
+								return status.Errorf(codes.Unauthenticated, "invalid token")
+							}
 							return handler(srv, ss)
 						}
 					}

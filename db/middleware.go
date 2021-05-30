@@ -31,8 +31,15 @@ func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 					if token != r[0]["token"] {
 						c.AbortWithStatus(401)
 					} else {
-						c.Request.Header.Add("userName", userName)
-						c.Next()
+						// route permission check
+						url := strings.Split(c.Request.URL.String(), "/")
+						sub, obj, act := userName, toTitle(url[len(url)-1]), c.Request.Method
+						if ok, _ := gdb.gdbAdapter.e.Enforce(sub, obj, act); !ok {
+							c.AbortWithStatus(401)
+						} else {
+							c.Request.Header.Add("userName", userName)
+							c.Next()
+						}
 					}
 				}
 			}
@@ -114,4 +121,10 @@ func (gdb *Gdb) writeLog(level, logMessage, requestUser string) error {
 		return err
 	}
 	return nil
+}
+
+func toTitle(s string) string {
+	r := []rune(s)
+	r[0] -= 32
+	return string(r)
 }

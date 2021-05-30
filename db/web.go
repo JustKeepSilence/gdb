@@ -443,6 +443,93 @@ func (gdb *Gdb) getDbInfoHistoryHandler(c *gin.Context) {
 	}
 }
 
+func (gdb *Gdb) getRoutesHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	if responseData, err := gdb.getRoutes(); err != nil {
+		gdb.string(c, 500, "%s", []byte(err.Error()), nil)
+	} else {
+		r, _ := json.Marshal(ResponseData{200, "", map[string][]map[string]string{"routes": responseData}})
+		gdb.string(c, 200, "%s", r, nil)
+	}
+}
+
+func (gdb *Gdb) deleteRoutesHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	g := routesInfo{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	} else {
+		if err := gdb.deleteRoutes(g.Name, g.Routes...); err != nil {
+			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+		} else {
+			responseData := Rows{EffectedRows: len(g.Routes)}
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) addRoutesHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	g := routesInfo{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	} else {
+		if err := gdb.addRoutes(g.Name, g.Routes...); err != nil {
+			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+		} else {
+			responseData := Rows{EffectedRows: len(g.Routes)}
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) addUserRoutesHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	g := routesInfo{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	} else {
+		if err := gdb.addUserRoutes(g.Name, g.Routes...); err != nil {
+			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+		} else {
+			responseData := Rows{EffectedRows: 1}
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) deleteUserRoutesHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	g := userName{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	} else {
+		if _, err := updateItem(gdb.ItemDbPath, "delete from route_cfg where userName='"+g.Name+"'"); err != nil {
+			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+		} else {
+			_ = gdb.e.LoadPolicy()
+			responseData := Rows{EffectedRows: 1}
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) getAllRoutesHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	r, _ := json.Marshal(ResponseData{200, "", map[string][][]string{"routes": {allRoutes, commonUserRoutes, visitorUserRoutes}}})
+	gdb.string(c, 200, "%s", r, nil)
+}
+
 func (gdb *Gdb) getRawDataHandler(c *gin.Context) {
 	g := queryRealTimeDataString{}
 	request := c.Request

@@ -290,6 +290,15 @@ message DeletedLogInfo {
   string userNameCondition = 4;
 }
 
+message RoutesInfo {
+  string name = 1;
+  repeated string routes = 2;
+}
+
+message Routes {
+  string routes = 1;
+}
+
 service Page {
   rpc UserLogin(AuthInfo) returns (UserToken){}
   rpc UserLogOut(UserName) returns (google.protobuf.Empty){}
@@ -307,6 +316,12 @@ service Page {
   rpc DownloadFile(FileInfo) returns (FileContents){}
   rpc GetDbInfo(google.protobuf.Empty) returns (GdbInfoData){}
   rpc GetDbInfoHistory(QuerySpeedHistoryDataString) returns (GdbHistoricalData){}
+  rpc GetRoutes(google.protobuf.Empty) returns (Routes){}
+  rpc DeleteRoutes(RoutesInfo) returns (Rows){}
+  rpc AddRoutes(RoutesInfo) returns (Rows){}
+  rpc AddUserRoutes(RoutesInfo) returns (Rows){}
+  rpc DeleteUserRoutes(UserName) returns (Rows){}
+  rpc GetAllRoutes(google.protobuf.Empty) returns (Routes){}
 }
 
 // calculation
