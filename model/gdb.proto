@@ -299,6 +299,10 @@ message Routes {
   string routes = 1;
 }
 
+message CheckResult{
+  repeated int32 result = 1;
+}
+
 service Page {
   rpc UserLogin(AuthInfo) returns (UserToken){}
   rpc UserLogOut(UserName) returns (google.protobuf.Empty){}
@@ -322,6 +326,7 @@ service Page {
   rpc AddUserRoutes(RoutesInfo) returns (Rows){}
   rpc DeleteUserRoutes(UserName) returns (Rows){}
   rpc GetAllRoutes(google.protobuf.Empty) returns (Routes){}
+  rpc CheckRoutes(RoutesInfo) returns (CheckResult){}
 }
 
 // calculation

@@ -530,6 +530,19 @@ func (gdb *Gdb) getAllRoutesHandler(c *gin.Context) {
 	gdb.string(c, 200, "%s", r, nil)
 }
 
+func (gdb *Gdb) checkRoutesHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	g := routesInfo{}
+	if err := c.ShouldBind(&g); err != nil {
+		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	} else {
+		responseData, _ := gdb.checkRoutes(g.Name, g.Routes...)
+		r, _ := json.Marshal(ResponseData{200, "", gin.H{"result": responseData}})
+		gdb.string(c, 200, "%s", r, g)
+	}
+}
+
 func (gdb *Gdb) getRawDataHandler(c *gin.Context) {
 	g := queryRealTimeDataString{}
 	request := c.Request

@@ -1124,6 +1124,7 @@ type PageClient interface {
 	AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error)
 	DeleteUserRoutes(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error)
 	GetAllRoutes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Routes, error)
+	CheckRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*CheckResult, error)
 }
 
 type pageClient struct {
@@ -1357,6 +1358,15 @@ func (c *pageClient) GetAllRoutes(ctx context.Context, in *emptypb.Empty, opts .
 	return out, nil
 }
 
+func (c *pageClient) CheckRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*CheckResult, error) {
+	out := new(CheckResult)
+	err := c.cc.Invoke(ctx, "/model.Page/CheckRoutes", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PageServer is the server API for Page service.
 // All implementations must embed UnimplementedPageServer
 // for forward compatibility
@@ -1383,6 +1393,7 @@ type PageServer interface {
 	AddUserRoutes(context.Context, *RoutesInfo) (*Rows, error)
 	DeleteUserRoutes(context.Context, *UserName) (*Rows, error)
 	GetAllRoutes(context.Context, *emptypb.Empty) (*Routes, error)
+	CheckRoutes(context.Context, *RoutesInfo) (*CheckResult, error)
 	mustEmbedUnimplementedPageServer()
 }
 
@@ -1455,6 +1466,9 @@ func (UnimplementedPageServer) DeleteUserRoutes(context.Context, *UserName) (*Ro
 }
 func (UnimplementedPageServer) GetAllRoutes(context.Context, *emptypb.Empty) (*Routes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAllRoutes not implemented")
+}
+func (UnimplementedPageServer) CheckRoutes(context.Context, *RoutesInfo) (*CheckResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckRoutes not implemented")
 }
 func (UnimplementedPageServer) mustEmbedUnimplementedPageServer() {}
 
@@ -1873,6 +1887,24 @@ func _Page_GetAllRoutes_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Page_CheckRoutes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RoutesInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).CheckRoutes(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/CheckRoutes",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).CheckRoutes(ctx, req.(*RoutesInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Page_ServiceDesc is the grpc.ServiceDesc for Page service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -1963,6 +1995,10 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAllRoutes",
 			Handler:    _Page_GetAllRoutes_Handler,
+		},
+		{
+			MethodName: "CheckRoutes",
+			Handler:    _Page_CheckRoutes_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -65,7 +65,12 @@ func (g *gdbAdapter) AddPolicy(_ string, _ string, actions []string) error {
 			} else {
 				role := row[0]["routeRoles"]
 				r := "p," + name + "," + route + "," + action
-				value := strings.Replace(role, "]", `,"`+r+`"]`, -1)
+				var value string
+				if role == "[]" {
+					value = `["` + r + `"]` // if role is []
+				} else {
+					value = strings.Replace(role, "]", `,"`+r+`"]`, -1)
+				}
 				if _, err := updateItem(g.itemDbPath, "update route_cfg set routeRoles='"+value+"' where userName ='"+name+"'"); err != nil {
 					return err
 				} else {

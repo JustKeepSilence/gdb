@@ -432,6 +432,11 @@ func (s *server) GetAllRoutes(_ context.Context, _ *emptypb.Empty) (*pb.Routes, 
 	return &pb.Routes{Routes: string(r)}, nil
 }
 
+func (s *server) CheckRoutes(_ context.Context, r *pb.RoutesInfo) (*pb.CheckResult, error) {
+	result, _ := s.gdb.checkRoutes(r.GetName(), r.GetRoutes()...)
+	return &pb.CheckResult{Result: result}, nil
+}
+
 // page handler
 
 func (s *server) UserLogin(_ context.Context, r *pb.AuthInfo) (*pb.UserToken, error) {

@@ -153,6 +153,7 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 		pageRequest.POST("/addUserRoutes", g.addUserRoutesHandler)
 		pageRequest.POST("/deleteUserRoutes", g.deleteUserRoutesHandler)
 		pageRequest.POST("/getAllRoutes", g.getAllRoutesHandler)
+		pageRequest.POST("/checkRoutes", g.checkRoutesHandler)
 	}
 	calcRequest := router.Group("/calculation")
 	{

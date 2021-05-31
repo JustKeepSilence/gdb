@@ -323,7 +323,7 @@ func (gdb *Gdb) deleteLogs(info deletedLogInfo) (Rows, error) {
 }
 
 func (gdb *Gdb) getRoutes() ([]map[string]string, error) {
-	if rows, err := query(gdb.ItemDbPath, "select id, userName, routeRoles from route_cfg where 1=1"); err != nil {
+	if rows, err := query(gdb.ItemDbPath, "select userName, routeRoles from route_cfg where 1=1"); err != nil {
 		return nil, err
 	} else {
 		for _, row := range rows {
@@ -382,6 +382,21 @@ func (gdb *Gdb) addUserRoutes(name string, routes ...string) error {
 			}
 		}
 		return nil
+	}
+}
+
+// check whether routes exist, if all routes exist, return [], true
+func (gdb *Gdb) checkRoutes(name string, routes ...string) ([]int32, bool) {
+	index := []int32{}
+	for i, route := range routes {
+		if !gdb.e.HasPolicy(name, toTitle(route), "POST") {
+			index = append(index, int32(i))
+		}
+	}
+	if len(index) == 0 {
+		return index, false
+	} else {
+		return index, true
 	}
 }
 
