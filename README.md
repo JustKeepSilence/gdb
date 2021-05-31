@@ -17,7 +17,8 @@ you will love GDB.
 - Fine control of historical data
 - Simulate data based on existing data with js
 - Token-based permission control
-- restful and gRPC api
+- Casbin-based route permission control  
+- fine restful and gRPC api
 - support https api
 - desktop client based on Electron
 - fine system documentation and interface documentation
@@ -48,9 +49,9 @@ The Base of gdb is group and item, item is the subset of group, you need to add 
 group, after that, you can write realTime Data to item and get historical Data.
 
 ### Installation
-Gdb is a cgo project, to run or build it, you need [gcc](https://gcc.gnu.org/) ,and install [Go](https://golang.org/) (**version 1.16+ is required**), then set GO111MODULE=ON
+To run or build gdb, you need install [Go](https://golang.org/) (**version 1.16+ is required**), then set GO111MODULE=ON
 ```sh
-go get github.com/JustKeepSilence/gdb
+go get github.com/JustKeepSilence/gdb@latest
 ```
 
 Then import gdb in your own code
@@ -227,7 +228,7 @@ header if you use restful, or to context if you use gRPC.For more details, you c
 If you use other language to access gdb, you can use resutful interface, before use
 you need [build gdb](#build-gdb) or [download](#download-gdb), and after running the application,you can interact with 
 gdb by the restful interface easily.Here is the examples of JS(ES6).For more details see
-[document](https://justkeepsilence.gitbook.io/gdb/)
+[document](https://github.com/JustKeepSilence/gdb/blob/master/db/templateFiles/api.pdf)
 
 ### Page
 ```jsx
@@ -266,6 +267,24 @@ axios.post("/page/getDbInfo")
 // getDbSpeedHistory
 axios.post("/page/getDbInfoHistory", {"itemName":"speed","startTimes":[1621209000],"endTimes":[1621382400],"intervals":[3600]})
 {"code":200,"message":"","data":{"historicalData":{"speed":[["1621209000","1621213881","1621218786","1621223692","1621228582","1621233489","1621238397","1621243288","1621248199","1621253118","1621258008","1621262917","1621267818","1621272727","1621277619","1621282529","1621287427","1621292329","1621297233","1621302117","1621307022","1621311938","1621316850","1621321740","1621326637","1621331533","1621336424","1621341332","1621346240","1621351149","1621356048","1621360950","1621365846","1621370744","1621375634","1621380559"],["81.0773ms","107.1021ms","71.0679ms","167.1601ms","56.0528ms","109.1051ms","72.067ms","35.033ms","60.0555ms","49.047ms","114.1066ms","136.1308ms","98.0942ms","159.1516ms","85.082ms","98.0938ms","56.0524ms","98.0942ms","79.0724ms","116.1117ms","181.1737ms","82.08ms","140.1347ms","91.0851ms","144.1385ms","84.0801ms","146.1406ms","120.113ms","52.0503ms","83.0774ms","155.1494ms","103.097ms","159.1507ms","66.0635ms","101.0969ms","49.0471ms"]]}}}
+// getRoutes
+axios.post("/page/getRoutes")
+{"code":200,"message":"","data":{"routes":[{"role":"super_user","routeRoles":"[\"p,admin,all,POST\"]","userName":"admin"},{"role":"visitor","routeRoles":"[\"p,seu1,GetGroups,POST\",\"p,seu1,GetGroupProperty,POST\",\"p,seu1,GetItemsWithCount,POST\",\"p,seu1,GetRealTimeData,POST\",\"p,seu1,GetDbInfo,POST\",\"p,seu1,GetDbInfoHistory,POST\",\"p,seu1,GetHistoricalData,POST\",\"p,seu1,GetHistoricalDataWithStamp,POST\",\"p,seu1,UserLogin,POST\",\"p,seu1,UserLogOut,POST\",\"p,seu1,GetUserInfo,POST\",\"p,seu1,GetCalcItems,POST\"]","userName":"seu1"},{"role":"common_user","routeRoles":"[\"p,seu,AddGroups,POST\",\"p,seu,GetGroups,POST\",\"p,seu,GetGroupProperty,POST\",\"p,seu,AddItems,POST\",\"p,seu,GetItemsWithCount,POST\",\"p,seu,UpdateItems,POST\",\"p,seu,CheckItems,POST\",\"p,seu,GetRealTimeData,POST\",\"p,seu,GetHistoricalData,POST\",\"p,seu,GetHistoricalDataWithStamp,POST\",\"p,seu,UserLogin,POST\",\"p,seu,UserLogOut,POST\",\"p,seu,GetUserInfo,POST\",\"p,seu,GetRoutes,POST\",\"p,seu,DeleteRoutes,POST\",\"p,seu,AddRoutes,POST\",\"p,seu,GetAllRoutes,POST\",\"p,seu,GetUsers,POST\",\"p,seu,UpdateUsers,POST\",\"p,seu,UploadFile,POST\",\"p,seu,HttpsUploadFile,POST\",\"p,seu,AddItemsByExcel,POST\",\"p,seu,ImportHistoryByExcel,POST\",\"p,seu,GetJsCode,POST\",\"p,seu,GetLogs,POST\",\"p,seu,DeleteLogs,POST\",\"p,seu,DownloadFile,POST\",\"p,seu,GetDbInfo,POST\",\"p,seu,GetDbInfoHistory,POST\",\"p,seu,TestCalcItem,POST\",\"p,seu,AddCalcItem,POST\",\"p,seu,GetCalcItems,POST\",\"p,seu,UpdateCalcItem,POST\",\"p,seu,StartCalcItem,POST\",\"p,seu,StopCalcItem,POST\",\"p,seu,DeleteCalcItem,POST\"]","userName":"seu"},{"role":"","routeRoles":"[\"p,seu2,AddGroups,POST\",\"p,seu2,DeleteGroups,POST\"]","userName":"seu2"}]}}
+// deleteRoutes
+axios.post("/page/deleteRoutes", {"name":"seu2","routes":["addGroups","deleteGroups"]})
+{"code":200,"message":"","data":{"effectedRows":2}}
+// addRoutes
+axios.post("/page/addRoutes", {"name":"seu2","routes":["addGroups","deleteGroups"]})
+{"code":200,"message":"","data":{"effectedRows":2}}
+// addUserRoutes
+axios.post("/page/addUserRoutes", {"name":"seu2","routes":["addGroups","deleteGroups"]})
+{"code":200,"message":"","data":{"effectedRows":1}}
+// deleteUserRoutes
+axios.post("/page/deleteUserRoutes", {"name": "seu2"})
+{"code":200,"message":"","data":{"effectedRows":1}}
+// checkRoutes
+axios.post("/page/checkRoutes", {"name": "seu2", "routes": ["getGroups", "addGroups"]})
+{"code":200,"message":"","data":{"result":[0]}}
 ```
 
 ### Group
@@ -326,7 +345,6 @@ axios.post("/data/batchWrite", {"itemValues": [{"itemName": "x", "value": 1.0, "
 // batchWriteHistoricalData
 'use strict';
 const axios = require('axios')
-const ip = "192.168.0.199:8082"
 const count = 3600 // one hour
 const now = new Date(2021,4,24,19,44,0)
 const st = now.getTime() / 1000 + 8 * 3600
@@ -340,30 +358,29 @@ for (var i = 0; i < count; i++) {
   yData.push(y)
   ts.push(st + i)
 }
-axios.post(`http://${ip}/data/batchWriteHistoricalData`, { "historicalItemValues": [{ "groupName": "5DCS", "itemName": "x", "values": xData, "timeStamps": ts }, { "groupName": "5DCS", "itemName": "y", "values": yData, "timeStamps": ts }] }).then((data) => {
+axios.post(`/data/batchWriteHistoricalData`, { "historicalItemValues": [{ "groupName": "5DCS", "itemName": "x", "values": xData, "timeStamps": ts }, { "groupName": "5DCS", "itemName": "y", "values": yData, "timeStamps": ts }] }).then((data) => {
   console.log(data)
 }).catch((err) => {
   console.log(err)
 })
 // getRealTimeData
-axios.post(`http://${ip}/data/getRealTimeData`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"] })
+axios.post(`/data/getRealTimeData`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"] })
 { code: 200, message: '', data: { realTimeData: { x: 1, y: 2 } } }
-axios.post(`http://${ip}/data/getRealTimeData`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"] })
+axios.post(`/data/getRealTimeData`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"] })
 {"code":200,"message":"","data":{"realTimeData":{"x":1,"y":2,"z":null}}}  // z is in calc group, but does not have realTimeData, so the result is null
 // getHistoricalData
 // normal 
 'use strict';
 const axios = require('axios')
-const ip = "192.168.0.199:8082"
 const now = new Date(2021, 4, 24, 19, 44, 0)
 const st = now.getTime() / 1000 + 8 * 3600
-axios.post(`http://${ip}/data/getHistoricalData`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "startTimes": [st], "endTimes": [st + 3600], "intervals": [60] }).then(({ data }) => {
+axios.post(`/data/getHistoricalData`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "startTimes": [st], "endTimes": [st + 3600], "intervals": [60] }).then(({ data }) => {
   console.log(JSON.stringify(data))
 }).catch((err) => {
   console.log(err)
 })
 // some items does not have history in the given st and et
-axios.post(`http://${ip}/data/getHistoricalData`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "startTimes": [st], "endTimes": [st + 3600], "intervals": [60] }).then(({ data }) => {
+axios.post(`/data/getHistoricalData`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "startTimes": [st], "endTimes": [st + 3600], "intervals": [60] }).then(({ data }) => {
   console.log(JSON.stringify(data))
 }).catch((err) => {
   console.log(err)
@@ -379,7 +396,7 @@ let ts = []
 for (var i = 0; i < 60; i++) {
   ts.push(st + i)
 }
-axios.post(`http://${ip}/data/getHistoricalDataWithStamp`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "timeStamps": [ts,ts]}).then(({ data }) => {
+axios.post(`/data/getHistoricalDataWithStamp`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "timeStamps": [ts,ts]}).then(({ data }) => {
   console.log(JSON.stringify(data))
 }).catch((err) => {
   console.log(err)
@@ -387,7 +404,6 @@ axios.post(`http://${ip}/data/getHistoricalDataWithStamp`, { "groupNames": ["5DC
 // item does not have history in the given timeStamps
 'use strict';
 const axios = require('axios')
-const ip = "192.168.0.199:8082"
 const now = new Date(2021, 4, 24, 19, 44, 0)
 const st = now.getTime() / 1000 + 8 * 3600
 let ts = []
@@ -395,7 +411,7 @@ for (var i = 0; i < 60; i++) {
   ts.push(st + i)
 }
 ts.push(st + 360000)  // not have history
-axios.post(`http://${ip}/data/getHistoricalDataWithStamp`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "timeStamps": [ts, ts, ts] }).then(({ data }) => {
+axios.post(`/data/getHistoricalDataWithStamp`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "timeStamps": [ts, ts, ts] }).then(({ data }) => {
   console.log(JSON.stringify(data))
 }).catch((err) => {
   console.log(err)
@@ -407,10 +423,9 @@ axios.post(`http://${ip}/data/getHistoricalDataWithStamp`, { "groupNames": ["5DC
 const axios = require('axios')
 const fs = require('fs')
 const path = require('path')
-const ip = "192.168.0.199:8082"
 const now = new Date(2021, 4, 24, 19, 44, 0)
 const st = now.getTime() / 1000 + 8 * 3600
-axios.post(`http://${ip}/data/getHistoricalDataWithCondition`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "startTimes": [st], "endTimes": [st + 3600], intervals: [10], "filterCondition": `item["x"] > 2000 && item["y"] > 1000` }).then(({ data }) => {
+axios.post(`/data/getHistoricalDataWithCondition`, { "groupNames": ["5DCS", "5DCS"], "itemNames": ["x", "y"], "startTimes": [st], "endTimes": [st + 3600], intervals: [10], "filterCondition": `item["x"] > 2000 && item["y"] > 1000` }).then(({ data }) => {
   fs.writeFile(path.resolve(__dirname, './fX.txt'), JSON.stringify(data), err => { })
   console.log(JSON.stringify(data))
 }).catch((err) => {
@@ -421,10 +436,9 @@ axios.post(`http://${ip}/data/getHistoricalDataWithCondition`, { "groupNames": [
 const axios = require('axios')
 const fs = require('fs')
 const path = require('path')
-const ip = "192.168.0.199:8082"
 const now = new Date(2021, 6, 24, 19, 44, 0)
 const st = now.getTime() / 1000 + 8 * 3600
-axios.post(`http://${ip}/data/getHistoricalDataWithCondition`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "startTimes": [st], "endTimes": [st + 3600], intervals: [10], "filterCondition": `item["x"] > 2000 && item["y"] > 1000` }).then(({ data }) => {
+axios.post(`/data/getHistoricalDataWithCondition`, { "groupNames": ["5DCS", "5DCS", "calc"], "itemNames": ["x", "y", "z"], "startTimes": [st], "endTimes": [st + 3600], intervals: [10], "filterCondition": `item["x"] > 2000 && item["y"] > 1000` }).then(({ data }) => {
   fs.writeFile(path.resolve(__dirname, './fX.txt'), JSON.stringify(data), err => { })
   console.log(JSON.stringify(data))
 }).catch((err) => {
@@ -459,7 +473,7 @@ or about how to connect gdb in gRPC mode in NodeJs, you can see [gdbUI](https://
 ```
 
 ## Desktop Application
-see [gdbUI](https://github.com/JustKeepSilence/gdbUI) for more details 
+see [gdbUI](https://github.com/JustKeepSilence/gdbUI) for more details or see [document](https://github.com/JustKeepSilence/gdb/blob/master/db/templateFiles/document.pdf)
 
 ## FAQ
 1. How to obtain the timeStamp consistent with gdb
