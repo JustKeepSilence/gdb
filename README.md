@@ -236,7 +236,7 @@ gdb by the restful interface easily.Here is the examples of JS(ES6).For more det
 axios.post("/page/userLogin", {userName: "admin", passWord: "685a6b21dc732a9702a96e6731811ec9"})
 {"code":200,"message":"","data":{"token":"bc947ca95872df7993fb277072eaa12d"}}
 // userLogOut
-axios.post("/page/userLogOut", {userName: "admin"})
+axios.post("/page/userLogOut", {name: "admin"})
 {"code":200,"message":"","data":{"effectedRows":1}}
 // getUserInfo
 axios.post("/page/getUserInfo", {"name": "admin"})
