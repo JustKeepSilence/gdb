@@ -32,13 +32,12 @@ type Gdb struct {
 }
 
 const (
-	timeKey         = "currentTimeStamp"
-	ram             = "ram"
-	writtenItems    = "writtenItems"
-	speed           = "speed"
-	joiner          = "__"
-	roles           = "visitor, super_user, common_user"
-	superUserRoutes = `'["p,userName,all,POST"]'`
+	timeKey      = "currentTimeStamp"
+	ram          = "ram"
+	writtenItems = "writtenItems"
+	speed        = "speed"
+	joiner       = "__"
+	roles        = "visitor, super_user, common_user"
 )
 
 var (

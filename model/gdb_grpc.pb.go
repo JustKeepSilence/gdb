@@ -1114,6 +1114,7 @@ type PageClient interface {
 	AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error)
 	ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grpc.CallOption) (*LogsInfo, error)
+	GetJsCode(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Code, error)
 	DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*Rows, error)
 	DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error)
 	GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error)
@@ -1268,6 +1269,15 @@ func (c *pageClient) GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grp
 	return out, nil
 }
 
+func (c *pageClient) GetJsCode(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Code, error) {
+	out := new(Code)
+	err := c.cc.Invoke(ctx, "/model.Page/GetJsCode", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *pageClient) DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*Rows, error) {
 	out := new(Rows)
 	err := c.cc.Invoke(ctx, "/model.Page/DeleteLogs", in, out, opts...)
@@ -1383,6 +1393,7 @@ type PageServer interface {
 	AddItemsByExcel(context.Context, *FileInfo) (*Rows, error)
 	ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error)
 	GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error)
+	GetJsCode(context.Context, *FileInfo) (*Code, error)
 	DeleteLogs(context.Context, *DeletedLogInfo) (*Rows, error)
 	DownloadFile(context.Context, *FileInfo) (*FileContents, error)
 	GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error)
@@ -1436,6 +1447,9 @@ func (UnimplementedPageServer) ImportHistoryByExcel(context.Context, *HistoryFil
 }
 func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLogs not implemented")
+}
+func (UnimplementedPageServer) GetJsCode(context.Context, *FileInfo) (*Code, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetJsCode not implemented")
 }
 func (UnimplementedPageServer) DeleteLogs(context.Context, *DeletedLogInfo) (*Rows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteLogs not implemented")
@@ -1707,6 +1721,24 @@ func _Page_GetLogs_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Page_GetJsCode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FileInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetJsCode(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetJsCode",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetJsCode(ctx, req.(*FileInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Page_DeleteLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeletedLogInfo)
 	if err := dec(in); err != nil {
@@ -1955,6 +1987,10 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLogs",
 			Handler:    _Page_GetLogs_Handler,
+		},
+		{
+			MethodName: "GetJsCode",
+			Handler:    _Page_GetJsCode_Handler,
 		},
 		{
 			MethodName: "DeleteLogs",

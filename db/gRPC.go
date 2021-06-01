@@ -532,6 +532,14 @@ func (s *server) GetLogs(_ context.Context, r *pb.QueryLogsInfo) (*pb.LogsInfo, 
 	}
 }
 
+func (s *server) GetJsCode(_ context.Context, r *pb.FileInfo) (*pb.Code, error) {
+	if result, err := getJsCode(r.GetFileName()); err != nil {
+		return &pb.Code{}, err
+	} else {
+		return &pb.Code{Code: result}, nil
+	}
+}
+
 func (s *server) DeleteLogs(_ context.Context, r *pb.DeletedLogInfo) (*pb.Rows, error) {
 	g := deletedLogInfo{
 		Id:                r.GetId(),

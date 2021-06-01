@@ -75,9 +75,7 @@ func (gdb *Gdb) addUsers(info addedUserInfo) (Rows, error) {
 		var routeRoles []string
 		switch info.Role {
 		case "super_user":
-			routeRole := strings.Replace(superUserRoutes, "userName", info.Name, -1)
-			routeSqlString = "insert into route_cfg (userName, routeRoles) values ('" + info.Name + "', '" + routeRole + "')"
-			routeRoles = append(routeRoles, routeRole)
+			routeRoles = append(routeRoles, "p,"+info.Name+",all, POST")
 			break
 		case "common_user":
 			for _, route := range commonUserRoutes {
@@ -137,14 +135,40 @@ func (gdb *Gdb) updateUsers(info updatedUserInfo) (Rows, error) {
 	}
 	sqlTemplate := template.Must(template.New("updateUserTemplate").Parse(`update user_cfg set role='{{.NewRole}}', userName='{{.NewUserName}}',
 								 passWord='{{.NewPassWord}}' where userName='{{.UserName}}'`))
+	var routeSqlString string
+	var routeRoles []string
+	switch info.NewRole {
+	case "super_user":
+		routeRoles = append(routeRoles, "p,"+info.NewUserName+",all,POST")
+		break
+	case "common_user":
+		for _, route := range commonUserRoutes {
+			routeRole := "p," + info.NewUserName + "," + toTitle(route) + "," + "POST"
+			routeRoles = append(routeRoles, routeRole)
+		}
+		break
+	default:
+		// visitor
+		for _, route := range visitorUserRoutes {
+			routeRole := "p," + info.NewUserName + "," + toTitle(route) + "," + "POST"
+			routeRoles = append(routeRoles, routeRole)
+		}
+		break
+	}
+	r, _ := json.Marshal(routeRoles)
+	routeSqlString = "update route_cfg set userName='" + info.NewUserName + "', routeRoles='" + string(r) + "' where userName='" + info.UserName + "'"
 	var b bytes.Buffer
 	if err := sqlTemplate.Execute(&b, info); err != nil {
 		return Rows{}, err
 	} else {
 		sqlString := b.String()
-		if _, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
+		if err := updateItems(gdb.ItemDbPath, sqlString, routeSqlString); err != nil {
 			return Rows{}, err
 		} else {
+			// update policy
+			if err := gdb.e.LoadPolicy(); err != nil {
+				return Rows{}, err
+			}
 			return Rows{1}, nil
 		}
 	}

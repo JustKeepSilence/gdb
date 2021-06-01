@@ -63,7 +63,6 @@ func (gdb *Gdb) deleteGroupsHandler(c *gin.Context) {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
-
 	}
 }
 
@@ -585,7 +584,7 @@ func (gdb *Gdb) handleUserLogout(c *gin.Context) {
 	if err := c.ShouldBind(&g); err != nil {
 		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
 	} else {
-		userName := g["userName"].(string)
+		userName := g["name"].(string)
 		if responseData, err := gdb.userLogout(userName); err != nil {
 			gdb.string(c, 500, "%s", []byte(err.Error()), gin.H{})
 		} else {
@@ -752,7 +751,7 @@ func (gdb *Gdb) getJsCodeHandler(c *gin.Context) {
 		if err != nil {
 			gdb.string(c, 500, "%s", []byte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			r, _ := json.Marshal(ResponseData{200, "", map[string]string{"code": responseData}})
 			gdb.string(c, 200, "%s", r, g)
 		}
 	}
