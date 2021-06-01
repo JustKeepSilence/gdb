@@ -689,8 +689,9 @@ func (s *server) UpdateCalcItem(_ context.Context, r *pb.UpdatedCalcInfo) (*pb.C
 		}); err != nil {
 			return &pb.CalculationResult{}, err
 		} else {
+			r, _ := json.Marshal(result.Result)
 			return &pb.CalculationResult{
-				Result: result.Result.(string),
+				Result: string(r),
 			}, nil
 		}
 	}

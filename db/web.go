@@ -1001,8 +1001,10 @@ func (gdb *Gdb) calc() error {
 	// updated goroutine
 	go func() {
 		c := map[string]calcConfig{}
+		//c := map[string]calcConfig{}
 		flag := true // record whether it is the first time to run
 		startTime := time.NewTicker(5 * time.Second)
+		expressions := map[string]string{} // record expressions
 		for {
 			select {
 			case <-startTime.C:
@@ -1014,15 +1016,25 @@ func (gdb *Gdb) calc() error {
 						status, _ := strconv.ParseBool(row["status"]) // if calc
 						f := gdb.getJsFunction(row["expression"], row["id"])
 						c[row["id"]] = calcConfig{
-							id:       id,
-							f:        f,
-							status:   status,
-							duration: duration,
+							id:         id,
+							f:          f,
+							status:     status,
+							expression: row["expression"],
+							duration:   duration,
 						}
 					}
 					ch <- c
 					flag = false
 				} else {
+					for k, e := range expressions {
+						c[k] = calcConfig{
+							id:         c[k].id,
+							f:          c[k].f,
+							expression: e,
+							status:     c[k].status,
+							duration:   c[k].duration,
+						}
+					}
 					rows, _ := query(gdb.ItemDbPath, "select id, expression, status, duration from calc_cfg where 1=1")
 					m := messageCalcConfig{}
 					index := []interface{}{}  // id in calc_cfg
@@ -1036,48 +1048,55 @@ func (gdb *Gdb) calc() error {
 						status, _ := strconv.ParseBool(row["status"])
 						expression := row["expression"]
 						if r, ok := c[row["id"]]; ok {
-							// updated
+							// calculate which parameters have been updated
+							// dse : duration, status, expression
+							// ds : duration, status
+							// de : duration, expression
+							// se : status, expression
+							// d : duration
+							// s: status
+							// e: expression
+							// del : delete item
 							index = append(index, row["id"])
 							temp := updatedInfo{}
 							temp.id = row["id"]
-							if r.status != status && r.duration != duration {
-								temp.newStatus = status
-								temp.newDuration = duration
+							temp.newStatus = status
+							temp.newDuration = duration
+							f := gdb.getJsFunction(expression, row["id"])
+							temp.f = f
+							if r.status != status && r.duration != duration && r.expression != expression {
+								// dse
+								temp.updatedFiled = "dse"
+							} else if r.status != status && r.duration != duration && r.expression == expression {
+								// ds
 								temp.updatedFiled = "ds"
-								f := gdb.getJsFunction(expression, row["id"])
-								temp.f = f
-								m.updatedInfos = append(m.updatedInfos, temp)
-								c[row["id"]] = calcConfig{
-									id:       c[row["id"]].id,
-									f:        f,
-									status:   status,
-									duration: duration,
-								}
-							} else if r.status != status && r.duration == duration {
-								temp.newStatus = status
+							} else if r.status != status && r.duration == duration && r.expression != expression {
+								// s
+								temp.updatedFiled = "se"
+							} else if r.status == status && r.duration != duration && r.expression != expression {
+								// de
+								temp.updatedFiled = "de"
+							} else if r.status != status && r.duration == duration && r.expression == expression {
+								// s
 								temp.updatedFiled = "s"
-								f := gdb.getJsFunction(expression, row["id"])
-								temp.f = f
-								m.updatedInfos = append(m.updatedInfos, temp)
-								c[row["id"]] = calcConfig{
-									id:       c[row["id"]].id,
-									f:        f,
-									status:   status,
-									duration: c[row["id"]].duration,
-								}
-							} else if r.status == r.status && r.duration != duration {
-								temp.newDuration = duration
+							} else if r.status == status && r.duration != duration && r.expression == expression {
+								// d
 								temp.updatedFiled = "d"
-								f := gdb.getJsFunction(expression, row["id"])
-								temp.f = f
-								m.updatedInfos = append(m.updatedInfos, temp)
-								c[row["id"]] = calcConfig{
-									id:       c[row["id"]].id,
-									f:        f,
-									status:   c[row["id"]].status,
-									duration: duration,
-								}
+							} else if r.status == status && r.duration == r.duration && r.expression != expression {
+								// e
+								temp.updatedFiled = "e"
+							} else {
+								// not update
+								continue
 							}
+							c[row["id"]] = calcConfig{
+								id:       c[row["id"]].id,
+								f:        f,
+								status:   status,
+								duration: duration,
+							} // update c
+							expressions[row["id"]] = expression
+							m.updatedInfos = append(m.updatedInfos, temp) // update m
 						} else {
 							// added infos
 							info := calcConfig{
@@ -1104,6 +1123,7 @@ func (gdb *Gdb) calc() error {
 		}
 	}()
 	// calc goroutine
+	//rows := map[string]calcConfig{}
 	rows := map[string]calcConfig{}
 	configs := map[string]*time.Ticker{}
 	for {
@@ -1130,83 +1150,48 @@ func (gdb *Gdb) calc() error {
 			for _, info := range ms.updatedInfos {
 				in := info
 				configs[in.id].Stop() // stop ticker
-				switch in.updatedFiled {
-				case "s":
-					// update status
-					if in.newStatus {
-						t := time.NewTicker(time.Duration(rows[in.id].duration) * time.Second)
-						f := in.f
-						id := rows[in.id].id
-						configs[in.id] = t
-						rows[in.id] = calcConfig{
-							id:       rows[in.id].id,
-							f:        f,
-							status:   in.newStatus,
-							duration: rows[in.id].duration,
-						}
-						go func(ts *time.Ticker) {
-							for {
-								select {
-								case <-ts.C:
-									if err := f(); err != nil {
-										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
+				u := in.updatedFiled
+				f := in.f
+				id := in.id
+				rows[in.id] = calcConfig{
+					id:       rows[in.id].id,
+					f:        in.f,
+					status:   in.newStatus,
+					duration: in.newDuration,
+				}
+				if u != "del" {
+					// not del
+					if strings.Contains(u, "s") {
+						// update status
+						if in.newStatus {
+							t := time.NewTicker(time.Duration(in.newDuration) * time.Second)
+							configs[in.id] = t
+							go func(ts *time.Ticker) {
+								for {
+									select {
+									case <-ts.C:
+										if err := f(); err != nil {
+											_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+id)
+										}
 									}
 								}
-							}
-						}(t)
-					}
-					break
-				case "d":
-					// update duration
-					t := time.NewTicker(time.Duration(in.newDuration) * time.Second)
-					f := in.f
-					configs[in.id] = t
-					id := rows[in.id].id
-					rows[in.id] = calcConfig{
-						id:       rows[in.id].id,
-						f:        f,
-						status:   rows[in.id].status,
-						duration: in.newDuration,
-					}
-					go func(ts *time.Ticker) {
-						for {
-							select {
-							case <-ts.C:
-								if err := f(); err != nil {
-									_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
-								}
-							}
+							}(t)
 						}
-					}(t)
-					break
-				case "ds":
-					// update duration and status
-					if in.newStatus {
+					} else {
+						// not update status
 						t := time.NewTicker(time.Duration(in.newDuration) * time.Second)
-						f := in.f
 						configs[in.id] = t
-						id := rows[in.id].id
-						rows[in.id] = calcConfig{
-							id:       rows[in.id].id,
-							f:        f,
-							status:   in.newStatus,
-							duration: in.newDuration,
-						}
 						go func(ts *time.Ticker) {
 							for {
 								select {
 								case <-ts.C:
 									if err := f(); err != nil {
-										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
+										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+id)
 									}
 								}
 							}
 						}(t)
 					}
-					break
-				default:
-					// delete item
-					break
 				}
 			}
 			for _, info := range ms.addedInfos {

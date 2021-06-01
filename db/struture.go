@@ -326,10 +326,11 @@ type calcId struct {
 }
 
 type calcConfig struct {
-	id       int64        // calc item id
-	f        func() error // function to invoke js code
-	status   bool         // whether to calc
-	duration int64
+	id         int64        // calc item id
+	f          func() error // function to invoke js code
+	expression string
+	status     bool // whether to calc
+	duration   int64
 }
 
 type messageCalcConfig struct {
