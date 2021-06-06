@@ -1,5 +1,3 @@
-// +build gdbClient
-
 /*
 createTime: 2021/5/29
 creator: JustKeepSilence
