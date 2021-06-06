@@ -11,6 +11,7 @@ import (
 	"github.com/JustKeepSilence/gdb/cmap"
 	"github.com/JustKeepSilence/gdb/compare"
 	"github.com/casbin/casbin/v2"
+	jsonIter "github.com/json-iterator/go"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/filter"
@@ -39,6 +40,8 @@ const (
 	joiner       = "__"
 	roles        = "visitor, super_user, common_user"
 )
+
+var json = jsonIter.ConfigCompatibleWithStandardLibrary // see: https://github.com/json-iterator/go
 
 var (
 	allRoutes = []string{"addGroups", "deleteGroups", "getGroups", "getGroupProperty", "updateGroupNames", "updateGroupColumnNames", "deleteGroupColumns", "addGroupColumns",
