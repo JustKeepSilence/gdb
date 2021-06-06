@@ -112,3 +112,10 @@ func (g *gdbAdapter) RemovePolicy(_ string, _ string, actions []string) error {
 func (g *gdbAdapter) RemoveFilteredPolicy(_ string, _ string, _ int, _ ...string) error {
 	return nil
 }
+
+
+func toTitle(s string) string {
+	r := []rune(s)
+	r[0] -= 32
+	return string(r)
+}
