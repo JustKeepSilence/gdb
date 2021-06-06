@@ -122,9 +122,3 @@ func (gdb *Gdb) writeLog(level, logMessage, requestUser string) error {
 	}
 	return nil
 }
-
-func toTitle(s string) string {
-	r := []rune(s)
-	r[0] -= 32
-	return string(r)
-}
