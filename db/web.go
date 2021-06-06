@@ -16,7 +16,6 @@ import (
 	"github.com/dop251/goja"
 	"github.com/dop251/goja_nodejs/eventloop"
 	"github.com/gin-gonic/gin"
-	jsonIter "github.com/json-iterator/go"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/process"
 	"io/ioutil"
@@ -24,9 +23,6 @@ import (
 	"strings"
 	"time"
 )
-
-var json = jsonIter.ConfigCompatibleWithStandardLibrary // see: https://github.com/json-iterator/go
-
 //go:embed templateFiles
 var dFiles embed.FS
 
