@@ -1,9 +1,7 @@
 ## GDB
-GDB is a real-time database encapsulated based on [goleveldb](https://pkg.go.dev/github.com/syndtr/goleveldb/leveldb)
-it can be used to obtain and store large amount of historical data in various ways(including gettting raw data, filtered data
-with given condition, etc...),it provides rest, gRPC interface and desktop client , and it 
-allows you to generate your own data based on existing data by coding js on desktop client.If you need deal with big data,
-you will love GDB.
+GDB is a historical database  based on [goleveldb](https://pkg.go.dev/github.com/syndtr/goleveldb/leveldb) with high performance.
+It uses goLevelDb to store historical Data, use memory or Redis to store realTime Data and part history data.
+It supports resutful and gRPC protocol.If you want to need to store large amount of history data, you will love it. 
 
 [![GoDoc](https://pkg.go.dev/badge/github.com/gin-gonic/gin?status.svg)](https://pkg.go.dev/github.com/JustKeepSilence/gdb)
 [![Go Report Card](https://goreportcard.com/badge/github.com/JustKeepSilence/gdb)](https://goreportcard.com/report/github.com/JustKeepSilence/gdb)
@@ -13,19 +11,19 @@ you will love GDB.
 
 
 ## Features
-- High writing performance
-- Fine control of historical data
-- Simulate data based on existing data with js
-- Token-based permission control
-- Casbin-based route permission control  
-- fine restful and gRPC api
-- support https api
-- desktop client based on Electron
-- fine system documentation and interface documentation
+- High writing and reading performance
+- Multiple ways to access history data
+- Simulate data based on existing data with js code.
+- Support restful ,gRPC, https protocol.
+- Fine permission control(tokenBased permission control + casbinBased route permission control)
+- Fine desktop client ensure you can use it even you don't have any programming knowledge
+- Fine document
 
 ## Contents
+- [Design Ideas](#Design-ideas)
+    - [ItemDb](#itemDb)
+    - [DataDb](#dataDb)
 - [Quick Start](#quick-start)
-    - [Installation](#installation)
 - [GdbServer](#GdbServer)
     - [Build GDB](#build-gdb)
     - [Download GDB](#download-gdb)
@@ -41,23 +39,37 @@ you will love GDB.
 - [GdbUI](#desktop-application)
 - [FAQ](#faq)
 
-## Quick Start
-If you are familiar with go language, you call [install](#installation) gdb and then use it in your
-project to customize your own behavior,For more details,you can see [document](https://pkg.go.dev/github.com/JustKeepSilence/gdb) or 
-[examples](https://github.com/JustKeepSilence/gdb/tree/master/examples)
-The Base of gdb is group and item, item is the subset of group, you need to add group to gdb, then add item to
-group, after that, you can write realTime Data to item and get historical Data.
+## Design Ideas
+<img src="https://github.com/JustKeepSilence/gdb/blob/master/db/templateFiles/desginIdeas.png">
+As shown about, whole gdb database can be divided in two parts, that is itemDb and dataDb
 
-### Installation
-To run or build gdb, you need install [Go](https://golang.org/) (**version 1.16+ is required**), then set GO111MODULE=ON
+### ItemDb
+ItemDb is used to store items in gdb.The root store unit in gdb is group, in one group, you can 
+add many items, every item has its own realTime and history data in DataDb.Items in different group
+is isolated.In group, we use itemName as the unique identifier.So the first step to use gdb is to 
+add your own groups and items!
+
+### DataDb
+DataDb is used to store data of items, data in gdb can be divided into realTimeData and history Data.
+when you write data to database, on the one hand, we will write data to realTime
+database, for realTimeDataBase, we provide memory dataBase and redis to store realTimeData, 
+if you use gdb in your own Go project, you can also implement RtGdb interface to custom your own 
+way to store realTimeData.On the other hand, we will write data to history dataBase in memory, 
+and we will batchSync these data to disk period.
+
+
+## Quick Start
+To use gdb in your own Go project, you need install [Go](https://golang.org/) (**version 1.16+ is required**), then set GO111MODULE=ON
+for these users, we only provide core functions of gdb,that is read and write data.But you can customer any functions you want by this way.
 ```sh
 go get github.com/JustKeepSilence/gdb@latest
 ```
-
 Then import gdb in your own code
 ```go
 import "github.com/JustKeepSilence/gdb/db"
 ```
+
+
 ```go
 import (
 	"encoding/json"
@@ -71,89 +83,182 @@ import (
 )
 
 func main()  {
-    // initial gdb
-	if gdb, err := db.NewGdb("./leveldb", "./itemDb");err!=nil{
-	    log.Fatal(err)	
-    }else{
-    	// add groups
-        if _, err := gdb.AddGroups(db.AddedGroupInfo{
-            GroupName:   "1DCS",
-            ColumnNames: []string{"Column1", "Column2", "Column3"},  // column name can't be itemName
-            });err!=nil{
-            log.Fatal(err)
-        }
-        // add items
-        if _, err := gdb.AddItems(AddedItemsInfo{
-            GroupName: "1DCS",
-            ItemValues: []map[string]string{{"itemName": "x", "description": "x", "dataType": "float64"},
-                {"itemName": "y", "description": "y", "dataType": "float64"}, {"itemName": "z", "description": "z", "dataType": "float64"},
-                {"itemName": "item1", "description": "item1", "dataType": "float64"}, {"itemName": "item2", "description": "item2", "dataType": "float64"}},
-        }); err != nil {
-            log.Fatal(err)
-        }
-        // batch write, y = 2 * x
-        if _, err := gdb.BatchWrite([]db.ItemValue{{ItemName: "x", Value: 1.0, GroupName: "1DCS"}, {ItemName: "y", Value: 2.0, GroupName: "1DCS"}}...);err!=nil{
-            log.Fatal(err)
-        }else{
-        // get latest updated value of given items
-            if r, err := gdb.GetRealTimeData([]string{"1DCS", "1DCS"}, "x", "y");err!=nil{
-            log.Fatal(err)
-        }else{
-            d, _ := json.Marshal(r)
-            fmt.Println(string(d))
-        }
-        }
-        // write historical data
-        // mock one hour historical data
-        var xData, yData, ts []interface{}
-        now := time.Now()
-        fmt.Println("now: ", now.Format("2006-01-02 15:04:05"))
-        r := rand.New(rand.NewSource(99))
-        for i := 0; i < 3600; i++ {
-            x := float64(r.Intn(3600)) * math.Pi
-            y := 2 * x
-            t := now.Add(time.Second * time.Duration(i)).Unix() + 8 * 3600
-            xData = append(xData,x)
-            yData = append(yData, y)
-            ts = append(ts, int(t))
-        }
-        if err := gdb.BatchWriteHistoricalData([]db.HistoricalItemValue{{ItemName: "x", Values: xData, TimeStamps: ts, GroupName: "1DCS"}, {ItemName: "y", Values: yData, TimeStamps: ts, GroupName: "1DCS"}}...);err!=nil{
-            log.Fatal(err)
-        }else{
-            // get raw historical data for debugging
-            if r, err := gdb.GetRawHistoricalData([]string{"1DCS"}, "x");err!=nil{
-            log.Fatal(err)
-        }else{
-            d, _ := json.Marshal(r)
-            _ = ioutil.WriteFile("./rawX.txt", d, 0644)
-        }
-        // get historical data with given itemName, startTime, endTime and intervals
-        stX := int(now.Add(time.Minute * 5).Unix() + 8 * 3600)
-        etX := int(now.Add(time.Minute * 25).Unix() + 8 * 3600)
-        stY := int(now.Add(time.Minute * 35).Unix() + 8 * 3600)
-        etY := int(now.Add(time.Minute * 55).Unix() + 8 * 3600)
-        if r, err := gdb.GetHistoricalData([]string{"1DCS", "1DCS"}, []string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10});err!=nil{
-            log.Fatal(err)
-        }else{
-            d, _ := json.Marshal(r)
-            _ = ioutil.WriteFile("./hX.txt", d, 0644)
-        }
-        // get historical data with given itemName
-        if r, err := gdb.GetHistoricalDataWithStamp([]string{"1DCS", "1DCS"},[]string{"x", "y"}, [][]int{{stX, etX}, {stY, etY}}...);err!=nil{
-            log.Fatal(err)
-        }else{
-            d, _ := json.Marshal(r)
-            fmt.Println(string(d))
-        }
-        // get historical data with condition
-        if r, err := gdb.GetHistoricalDataWithCondition([]string{"x", "y"}, []int{stX, stY}, []int{etX, etY}, []int{2, 10}, `item["x"] > 0 && item["y"] > 1000`, []db.DeadZone{}...);err!=nil{
-            log.Fatal(err)
-        }else{
-            d, _ := json.Marshal(r)
-            _ = ioutil.WriteFile("./f.txt", d, 0644)
-            }
-        }
-    }
+    //initial db with sqlite3
+	if gdb, err := NewGdb("./historyDb", time.Hour, time.Minute*5, DefaultOptions()); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(gdb.hisTimeDuration)
+	}
+	
+	// initial db with mysql
+	if gdb, err := NewGdb("./historyDb", time.Hour, time.Minute*5, &Options{
+		DriverName:   "mysql",
+		Dsn:          "root:admin@123@tcp(192.168.0.166:3306)/itemDb",
+		UseInnerStop: true,
+		RtGdb:        &FastCacheRt{RealTimePath: "./realTimeDb"},
+	}); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(gdb.hisTimeDuration)
+	}
+	
+	// initial db with mysql + redis
+	if gdb, err := NewGdb("./historyDb", time.Hour, time.Minute*5, &Options{
+		DriverName:   "mysql",
+		Dsn:          "root:admin@123@tcp(192.168.0.166:3306)/itemDb",
+		UseInnerStop: true,
+		RtGdb:        &RedisRt{
+			Ip:       "192.168.0.199",
+			Port:     6379,
+			PassWord: "",
+			DbNum:    0,
+			KeyName:  "gdbRealTime",
+		},
+	}); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(gdb.hisTimeDuration)
+	}
+	if gdb, err := NewGdb("./historyDb", time.Hour, time.Minute*5, DefaultOptions()); err != nil {
+		fmt.Println(err)
+	} else {
+		// add groups
+		if r, err := gdb.AddGroups(AddedGroupInfo{
+			GroupName:   "3DCS",
+			ColumnNames: []string{"unit", "descriptions"},
+		}, AddedGroupInfo{
+			GroupName:   "4DCS",
+			ColumnNames: nil,
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println(r.EffectedRows, r.Times)
+		}
+		
+		// add items to group
+		if r, err := gdb.AddItems(AddedItemsInfo{
+			GroupName: "3DCS",
+			ItemValues: []map[string]string{{"itemName": "X", "dataType": "float32", "description": "", "unit": ""},
+				{"itemName": "Y", "dataType": "float32", "description": "", "unit": ""}},
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println(r.Times, r.EffectedRows)
+		}
+		
+		// batchWriteFloatRealTimeData
+		if r, err := gdb.BatchWriteFloatData([]string{"3DCS", "4DCS"}, [][]string{{"X", "Y", "Z"}, {"X1", "Y1", "Z1"}}, [][]float32{{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}}); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println(r.Times, r.EffectedRows)
+		}
+		
+		// getRealTimeData
+		if r, err := gdb.GetRealTimeData([]string{"3DCS", "4DCS", "3DCS"}, []string{"X", "X1", "Y"});err!=nil{
+			log.Fatal(err)
+		}else{
+			r1,_ := json.Marshal(r.RealTimeData)
+			fmt.Println(string(r1))
+		}
+		
+		// writeFloatHistoryData 
+		//generate history data of month
+		seconds := 24 * 3600 * 30
+		now := time.Now()
+		groupNames := []string{"3DCS", "4DCS"}
+		itemNames := []string{"X", "X1"}
+		var timeStamp []int32
+		var xItemValue []float32
+		var x1ItemValue []float32
+		for i := 0; i < seconds; i++ {
+			timeStamp = append(timeStamp, int32(now.Add(time.Duration(i) * time.Second).Unix() + 8 * 3600))
+			xItemValue = append(xItemValue, rand.Float32()*math.Pi)
+			x1ItemValue = append(x1ItemValue, rand.Float32()*math.E)
+		}
+		if r, err := gdb.BatchWriteFloatHistoricalData(groupNames, itemNames, [][]int32{timeStamp, timeStamp}, [][]float32{xItemValue, x1ItemValue});err!=nil{
+			log.Fatal(err)
+		}else{
+			fmt.Println(r.Times, r.EffectedRows)
+		}
+		
+		// getFloatHistoryData
+		st := int32(time.Now().Add( time.Hour * 9 * 24).Unix() + 8 * 3600)
+		et := int32(time.Now().Add(time.Hour * 10 * 24).Unix() + 8 * 3600)
+		if r, err := gdb.GetFloatHistoricalData([]string{"3DCS", "4DCS"}, []string{"Y", "X1"}, []int32{st, st}, []int32{et, et}, []int32{6 * 3600, 6 * 3600});err!=nil{
+			log.Fatal(err)
+		}else{
+			r1, _ := json.Marshal(r.HistoricalData)
+			fmt.Println(string(r1))
+		}
+		
+		// getFloatRawHistoryData==>all history data
+		if r, err := gdb.GetFloatRawHistoricalData([]string{"4DCS"}, []string{"X1"});err!=nil{
+			log.Fatal(err)
+		}else{
+			v, _ := r.HistoricalData.Get("X1")
+			r1, _ := json.Marshal(r)
+			_ = ioutil.WriteFile("./h.txt", r1, 0766)
+			fmt.Println(len(v.([]interface{})[0].([]int32)))
+		}
+		
+		// getFloatHistory data with given timeStamps
+		now := time.Now()
+		ts := []int32{int32(now.Add(time.Hour * 24 * -30).Unix() + 8 * 3600)}
+		for i := 0; i < 5; i++ {
+			ts = append(ts, int32(now.Add(time.Hour * 24 * time.Duration(i)).Unix() + 8 * 3600))
+		}
+		ts = append(ts, int32(now.Add(time.Hour * 24 * 60).Unix() + 8 * 3600))  // history of ts[0] and ts[len(ts) - 1] not exist, so we will not
+		// return value of this two timeStamp
+		if r, err := gdb.GetFloatHistoricalDataWithStamp([]string{"4DCS", "3DCS"}, []string{"X1", "Y"}, [][]int32{ts, ts});err!=nil{
+			log.Fatal(err)
+		}else{
+			r1, _ := json.Marshal(r.HistoricalData)
+			fmt.Println(string(r1))
+		}
+		
+		// getFloatHistoryData with given condition
+		st, et := int32(1626201902), int32(1626288302)
+		// without deadZone condition
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `item["xFloat"]>= 1 && item["yFloat"]<= 4` ,nil);err!=nil{
+			log.Fatal(err)
+		}else{
+			fmt.Println(r.Times)
+			r1, _ := json.Marshal(r.HistoricalData)
+			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
+		}
+		// with deadZone condition
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `item["xFloat"]>= 1 && item["yFloat"]<= 4` ,[]DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}});err!=nil{
+			log.Fatal(err)
+		}else{
+			fmt.Println(r.Times)
+			r1, _ := json.Marshal(r.HistoricalData)
+			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
+		}
+		// withOut filterCondition
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `true` ,[]DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}});err!=nil{
+			log.Fatal(err)
+		}else{
+			fmt.Println(r.Times)
+			r1, _ := json.Marshal(r.HistoricalData)
+			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
+		}
+		// withOut filterCondition and deadZone condition == GetFloatHistoricalData
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `true` ,nil);err!=nil{
+			log.Fatal(err)
+		}else{
+			fmt.Println(r.Times)
+			r1, _ := json.Marshal(r.HistoricalData)
+			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
+		}
+		
+		// deleteFloatHistoryData
+		st, et := int32(1626201902), int32(1626288302)
+		if r, err := gdb.DeleteFloatHistoricalData([]string{"4DCS", "4DCS"}, []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et});err!=nil{
+			log.Fatal(err)
+		}else{
+			fmt.Println(r.Times, r.EffectedRows)
+		}
+	}
 }
 ```
 Notes: In order to reduce the size of the entire project, in this case only the core functions of gdb are included, 
@@ -167,8 +272,12 @@ token-control for every api we provided.For more details you can see [restful-ex
 
 
 ### Build GDB
-you need to [install](#installation)Gdb firstly, then change to gdb/main directory and run the following command
-```sh
+First, you need to clone gdb using the following command:
+```shell
+git clone https://github.com/JustKeepSilence/gdb.git
+```
+Then change to gdb/main directory, run the following command:
+```shell
 go build -tags=jsoniter -tags=gdbClient -o ../gdb
 ```
 Notes: you must add gdbClient tags when building gdb Client, otherWise only core function without client will be compiled.
@@ -176,30 +285,79 @@ After that, you can customize your own config in config.json.For more details ab
 ```json
 // Notes: you can use // single line comments in json file
 {
-  "gdbConfigs": {
+  // base configs of gdb
+  "baseConfigs": {
+    // ip address of gdb service, if empty, we will use local ip of machine
     "ip": "",
+    // port of gdb service
     "port": 8082,
-    "dbPath": "./leveldb",
-    "itemDbPath": "./itemDb",
+    // path of gdb service to store historical, info data
+    "dbPath": "./historyData",
+    // name of gdb service to get runTime info of gdb, should be the same
+    // as the name of the compiled executable file
     "applicationName": "gdb",
+    // whether to open authorization mode, if true, when use restful or rpc
+    // user need to token authorization authentication
     "authorization": true,
+    // Specify the operating mode of gdb, currently supports http and https modes, default mode is http
+    // if it is http mode, there is no tls verification, if it is https mode, tls verification is required
+    // if mode is "", mode is http
     "mode": "http",
-    "httpsConfigs": {
-      "ca": false,
-      "selfSignedCa": false,
-      "caCertificateName": "",
-      "serverCertificateName": "gdbServer"
-    }
+    // whether use redis as realTime database, default is false, which will use fast cache as realTime database
+    "useRedis": false,
+    // time durations to sync RealTime data in memory to other database or file system,unit is second
+    "rtTimeDuration": 3600,
+    //time durations to sync history data in memory to leveldb, unit is second
+    // Note:You can only increase this value after the database is started, otherwise the historical data may not be get
+    "hisTimeDuration": 300
+  },
+  // configs of item database, you can use sqlite or mysql to store item data of gdb,default is sqlite
+  "itemDbConfigs": {
+    // sql driver name, can be sqlite3 of mysql
+    "driverName": "sqlite3",
+    // dsn to connect to database
+    // mysql:"root:admin@123@tcp(192.168.0.166:3306)/itemDb"
+    // sqlite3: "./leveldb/item.db"
+    "dsn": "./item.db"
+  },
+  // configs of https mode
+  "httpsConfigs": {
+    // Whether to use CA root certificate authentication,default is false,
+    // if CA root certificate authentication is adopted, you need to place the CA root certificate file in the ssl
+    // folder and specify its name in the configuration file. and, self-signed CA root certificate is not supported
+    // on windows
+    "ca": false,
+    // whether self-signed ca
+    "selfSignedCa": false,
+    // fileName of ca root certificate
+    "caCertificateName": "",
+    // fileName of ca server certificate
+    "serverCertificateName": "gdbServer.crt",
+    // key file of server
+    "serverKeyName": "gdbServer.key"
   },
   "logConfigs": {
+    // whether write log for gdb
     "logWriting": true,
-    "Level" : "Error",
-    "expiredTime": 86400
+    // loglevel of gdb, Info or Error
+    "Level": "Error",
+    // expiredTime of gdb, unit is seconds
+    "expiredTime": 3600
+  },
+  // if you use redis as realTime database, you need configs this filed
+  "redisConfigs": {
+    // ip of redis server
+    "redisIp": "192.168.0.199",
+    // port of redis server
+    "redisPort": 6379,
+    // passWord of redis
+    "redisPassWord": "",
+    "redisDb": 0,
+    // key name of hash in redis
+    "keyName": "gdbRealTime"
   }
 }
-
 ```
-
 Notes: you need set gdb,config.json, and ssl folder in the same path to sure gdb work normally.
 
 ### Download Gdb
@@ -223,11 +381,10 @@ you need to set authorization field to true.Then you need to add Authorization f
 header if you use restful, or to context if you use gRPC.For more details, you can see
 [document](https://blog.csdn.net/qq_39778055/article/details/114844756)
 
-
 ## Restful API Examples
-If you use other language to access gdb, you can use resutful interface, before use
+If you use other language to access gdb, you can use restful interface, before use
 you need [build gdb](#build-gdb) or [download](#download-gdb), and after running the application,you can interact with 
-gdb by the restful interface easily.Here is the examples of JS(ES6).For more details see
+gdb by the restful interface easily.Here is examples of JS(ES6).For more details see
 [document](https://github.com/JustKeepSilence/gdb/blob/master/db/templateFiles/api.pdf)
 
 ### Page
