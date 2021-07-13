@@ -18,11 +18,3 @@ func fnv32(key string) uint32 {
 	}
 	return hash
 }
-
-func fnvInt32(key int32) uint32 {
-	hash := uint32(2166136261)
-	const prime32 = uint32(16777619)
-	hash *= prime32
-	hash ^= uint32(key)
-	return hash
-}
