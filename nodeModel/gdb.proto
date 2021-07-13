@@ -1,10 +1,3 @@
-/*
-creatTime: 2021/2/8
-creator: JustKeepSilence
-github: https://github.com/JustKeepSilence
-goVersion: 1.16
-*/
-
 syntax = "proto3";
 package model;
 option go_package="model";
@@ -154,10 +147,6 @@ message BoolItemValue {
   repeated bool itemValue = 1;
 }
 
-message TimeStamp {
-  repeated int32 timeStamps = 1;
-}
-
 message FloatItemValues {
   repeated string groupNames = 1;
   repeated ItemName itemNames = 2;
@@ -183,31 +172,47 @@ message StringItemValues {
 }
 
 message FloatHItemValues {
-  repeated string groupNames = 1;
-  repeated string itemNames = 2;
-  repeated FloatItemValue itemValues = 3;
-  repeated TimeStamp timeStamps = 4;
+  repeated FloatHItemValue values=3;
+}
+
+message FloatHItemValue{
+  string groupName = 1;
+  repeated string itemName = 2;
+  repeated float itemValues = 3;
+  repeated int32 timeStamps = 4;
 }
 
 message IntHItemValues {
-  repeated string groupNames = 1;
-  repeated string itemNames = 2;
-  repeated IntItemValue itemValues = 3;
-  repeated TimeStamp timeStamps = 4;
+  repeated IntHItemValue values=3;
+}
+
+message IntHItemValue{
+  string groupName = 1;
+  repeated string itemName = 2;
+  repeated int32 itemValues = 3;
+  repeated int32 timeStamps = 4;
 }
 
 message StringHItemValues {
-  repeated string groupNames = 1;
-  repeated string itemNames = 2;
-  repeated StringItemValue itemValues = 3;
-  repeated TimeStamp timeStamps = 4;
+  repeated StringHItemValue values=3;
+}
+
+message StringHItemValue{
+  string groupName = 1;
+  repeated string itemName = 2;
+  repeated string itemValues = 3;
+  repeated int32 timeStamps = 4;
 }
 
 message BoolHItemValues {
-  repeated string groupNames = 1;
-  repeated string itemNames = 2;
-  repeated BoolItemValue itemValues = 3;
-  repeated TimeStamp timeStamps = 4;
+  repeated BoolHItemValue values=3;
+}
+
+message BoolHItemValue{
+  string groupName = 1;
+  repeated string itemName = 2;
+  repeated bool itemValues = 3;
+  repeated int32 timeStamps = 4;
 }
 
 message QueryRealTimeDataString{

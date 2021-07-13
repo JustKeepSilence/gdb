@@ -10,6 +10,7 @@ goVersion: 1.16
 package db
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -23,7 +24,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
+	"os/signal"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -80,10 +83,6 @@ func checkConfigs(mode, level string) (string, bool) {
 	}
 }
 
-var (
-	g errgroup.Group
-)
-
 // web app router
 func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handler {
 	router := gin.New()
@@ -120,50 +119,79 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 	}
 	data := router.Group("/data") // data handler
 	{
-		data.POST("/batchWrite", g.batchWriteHandler)
-		data.POST("/batchWriteHistoricalData", g.batchWriteHistoricalDataHandler)
+		data.POST("/batchWriteFloatData", g.batchWriteFloatDataHandler)
+		data.POST("/batchWriteIntData", g.batchWriteIntDataHandler)
+		data.POST("/batchWriteBoolData", g.batchWriteBoolDataHandler)
+		data.POST("/batchWriteStringData", g.batchWriteStringDataHandler)
+		data.POST("/batchWriteFloatHistoricalData", g.batchWriteFloatHistoricalDataHandler)
+		data.POST("/batchWriteIntHistoricalData", g.batchWriteIntHistoricalDataHandler)
+		data.POST("/batchWriteStringHistoricalData", g.batchWriteStringHistoricalDataHandler)
+		data.POST("/batchWriteBoolHistoricalData", g.batchWriteBoolHistoricalDataHandler)
 		data.POST("/getRealTimeData", g.getRealTimeDataHandler)
-		data.POST("/getHistoricalData", g.getHistoricalDataHandler)
-		data.POST("/getHistoricalDataWithStamp", g.getHistoricalDataWithStampHandler)
-		data.POST("/getHistoricalDataWithCondition", g.getHistoricalDataWithConditionHandler)
-		data.POST("/getRawData", g.getRawDataHandler)
+		data.POST("/getFloatHistoricalData", g.getFloatHistoricalDataHandler)
+		data.POST("/getIntHistoricalData", g.getIntHistoricalDataHandler)
+		data.POST("/getStringHistoricalData", g.getStringHistoricalDataHandler)
+		data.POST("/getBoolHistoricalData", g.getBoolHistoricalDataHandler)
+		data.POST("/getFloatRawHistoricalData", g.getFloatRawHistoricalDataHandler)
+		data.POST("/getIntRawHistoricalData", g.getIntRawHistoricalDataHandler)
+		data.POST("/getStringRawHistoricalData", g.getStringRawHistoricalDataHandler)
+		data.POST("/getBoolRawHistoricalData", g.getBoolRawHistoricalDataHandler)
+		data.POST("/getFloatHistoricalDataWithStamp", g.getFloatHistoricalDataWithStampHandler)
+		data.POST("/getIntHistoricalDataWithStamp", g.getIntHistoricalDataWithStampHandler)
+		data.POST("/getStringHistoricalDataWithStamp", g.getStringHistoricalDataWithStampHandler)
+		data.POST("/getBoolHistoricalDataWithStamp", g.getBoolHistoricalDataWithStampHandler)
+		data.POST("/getFloatHistoricalDataWithCondition", g.getFloatHistoricalDataWithConditionHandler)
+		data.POST("/getIntHistoricalDataWithCondition", g.getIntHistoricalDataWithConditionHandler)
+		data.POST("/getStringHistoricalDataWithCondition", g.getStringHistoricalDataWithConditionHandler)
+		data.POST("/getBoolHistoricalDataWithCondition", g.getBoolHistoricalDataWithConditionHandler)
+		data.POST("/deleteFloatHistoricalData", g.deleteFloatHistoricalDataHandler)
+		data.POST("/deleteIntHistoricalData", g.deleteIntHistoricalDataHandler)
+		data.POST("/deleteStringHistoricalData", g.deleteStringHistoricalDataHandler)
+		data.POST("/deleteBoolHistoricalData", g.deleteBoolHistoricalDataHandler)
+		data.POST("/cleanItemData", g.cleanItemDataHandler)
+		data.POST("/reLoadDb", g.reLoadDbHandler)
 	}
-	pageRequest := router.Group("/page") // page request handler
+	page := router.Group("/page") // page request handler
 	{
-		pageRequest.POST("/userLogin", g.handleUserLogin) // user login
-		pageRequest.POST("/userLogOut", g.handleUserLogout)
-		pageRequest.POST("/getUserInfo", g.getUerInfoHandler) // get user info
-		pageRequest.POST("/getUsers", g.getUsersHandler)
-		pageRequest.POST("/addUsers", g.addUsersHandler)
-		pageRequest.POST("/deleteUsers", g.deleteUsersHandler)
-		pageRequest.POST("/updateUsers", g.updateUsersHandler)
-		pageRequest.POST("/uploadFile", g.handleUploadFile)                  // upload file
-		pageRequest.POST("/httpsUploadFile", g.handleHttpsUploadFile)        // https upload file
-		pageRequest.POST("/addItemsByExcel", g.handleAddItemsByExcelHandler) // add item by excel
-		pageRequest.POST("/importHistoryByExcel", g.importHistoryByExcelHandler)
-		pageRequest.POST("/getJsCode", g.getJsCodeHandler) // get js code
-		pageRequest.POST("/getLogs", g.getLogsHandler)     // get logs
-		pageRequest.POST("/deleteLogs", g.deleteLogsHandler)
-		pageRequest.POST("/downloadFile", g.downloadFileHandler)
-		pageRequest.POST("/getDbInfo", g.getDbInfoHandler)
-		pageRequest.POST("/getDbInfoHistory", g.getDbInfoHistoryHandler)
-		pageRequest.POST("/getRoutes", g.getRoutesHandler)
-		pageRequest.POST("/deleteRoutes", g.deleteRoutesHandler)
-		pageRequest.POST("/addRoutes", g.addRoutesHandler)
-		pageRequest.POST("/addUserRoutes", g.addUserRoutesHandler)
-		pageRequest.POST("/deleteUserRoutes", g.deleteUserRoutesHandler)
-		pageRequest.POST("/getAllRoutes", g.getAllRoutesHandler)
-		pageRequest.POST("/checkRoutes", g.checkRoutesHandler)
+		page.POST("/userLogin", g.handleUserLogin) // user login
+		page.POST("/userLogOut", g.handleUserLogout)
+		page.POST("/getUserInfo", g.getUerInfoHandler) // get user info
+		page.POST("/getUsers", g.getUsersHandler)
+		page.POST("/addUsers", g.addUsersHandler)
+		page.POST("/deleteUsers", g.deleteUsersHandler)
+		page.POST("/updateUsers", g.updateUsersHandler)
+		page.POST("/uploadFile", g.handleUploadFile)                  // upload file
+		page.POST("/httpsUploadFile", g.handleHttpsUploadFile)        // https upload file
+		page.POST("/addItemsByExcel", g.handleAddItemsByExcelHandler) // add item by excel
+		page.POST("/importHistoryByExcel", g.importHistoryByExcelHandler)
+		page.POST("/getJsCode", g.getJsCodeHandler) // get js code
+		page.POST("/getLogs", g.getLogsHandler)     // get logs
+		page.POST("/deleteLogs", g.deleteLogsHandler)
+		page.POST("/downloadFile", g.downloadFileHandler)
+		page.POST("/getDbSize", g.getDbSizeHandler)
+		page.POST("/getDbInfo", g.getDbInfoHandler)
+		page.POST("/getDbInfoHistory", g.getDbInfoHistoryHandler)
+		page.POST("/getRoutes", g.getRoutesHandler)
+		page.POST("/deleteRoutes", g.deleteRoutesHandler)
+		page.POST("/addRoutes", g.addRoutesHandler)
+		page.POST("/addUserRoutes", g.addUserRoutesHandler)
+		page.POST("/deleteUserRoutes", g.deleteUserRoutesHandler)
+		page.POST("/getAllRoutes", g.getAllRoutesHandler)
+		page.POST("/checkRoutes", g.checkRoutesHandler)
 	}
-	calcRequest := router.Group("/calculation")
+	calc := router.Group("/calculation")
 	{
-		calcRequest.POST("/testCalcItem", g.testCalcItemHandler)
-		calcRequest.POST("/addCalcItem", g.addCalcItemHandler) // add calc item
-		calcRequest.POST("/getCalcItems", g.getCalcItemsHandler)
-		calcRequest.POST("/updateCalcItem", g.updateCalcItemHandler)
-		calcRequest.POST("/startCalcItem", g.startCalculationItemHandler)
-		calcRequest.POST("/stopCalcItem", g.stopCalculationItemHandler)
-		calcRequest.POST("/deleteCalcItem", g.deleteCalculationItemHandler)
+		calc.POST("/testCalcItem", g.testCalcItemHandler)
+		calc.POST("/addCalcItem", g.addCalcItemHandler) // add calc item
+		calc.POST("/getCalcItems", g.getCalcItemsHandler)
+		calc.POST("/updateCalcItem", g.updateCalcItemHandler)
+		calc.POST("/startCalcItem", g.startCalculationItemHandler)
+		calc.POST("/stopCalcItem", g.stopCalculationItemHandler)
+		calc.POST("/deleteCalcItem", g.deleteCalculationItemHandler)
+	}
+	cmd := router.Group("/cmd")
+	{
+		cmd.GET("/getCmdInfo/:name", g.getCmdInfoHandler)
 	}
 	// web page handler
 	return router
@@ -174,9 +202,10 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 //it supports gRPC mode with CA certificate and without CA certificate enabled.
 //Self-visa certificates are only useful on linux and mac
 func StartDbServer(configs Config) error {
-	dbPath, itemDbPath, port, ip, mode, ca, caCertificateName, serverCertificateName, serverKeyName, selfSignedCa :=
-		configs.DbPath, configs.ItemDbPath, configs.Port, configs.IP, configs.Mode,
-		configs.Ca, configs.CaCertificateName, configs.ServerCertificateName, configs.ServerKeyName, configs.SelfSignedCa
+	g := errgroup.Group{}
+	dbPath, port, ip, mode, ca, caCertificateName, serverCertificateName, serverKeyName, selfSignedCa, userRedis, redisIP, redisPort, redisPassWord, redisDb, keyName, driverName, dsn, rtTimeDuration, hisTimeDuration :=
+		configs.DbPath, configs.Port, configs.IP, configs.Mode, configs.Ca, configs.CaCertificateName, configs.ServerCertificateName, configs.ServerKeyName, configs.SelfSignedCa, configs.UseRedis, configs.RedisIp, configs.RedisPort,
+		configs.RedisPassWord, configs.RedisDb, configs.KeyName, configs.DriverName, configs.Dsn, configs.RtTimeDuration, configs.HisTimeDuration
 	if mode == "" {
 		mode = "http"
 	}
@@ -201,7 +230,7 @@ func StartDbServer(configs Config) error {
 	}
 	gin.SetMode(gin.ReleaseMode)                  // production
 	address := ip + ":" + fmt.Sprintf("%d", port) // base url of web server
-	gdb, err := innerNewGdb(dbPath, itemDbPath)
+	gdb, err := innerNewGdb(dbPath, userRedis, redisIP, redisPort, redisPassWord, redisDb, keyName, driverName, dsn, rtTimeDuration, hisTimeDuration)
 	if err != nil {
 		return err
 	}
@@ -259,7 +288,8 @@ func StartDbServer(configs Config) error {
 	pb.RegisterDataServer(s, se)
 	pb.RegisterPageServer(s, se)
 	pb.RegisterCalcServer(s, se)
-	fmt.Printf("%s: launch gdb service successfully!: %s, mode: %s,authorization: %s \n ", time.Now().Format(timeFormatString), address, mode, strconv.FormatBool(configs.Authorization))
+	fmt.Printf("%s: launch gdb service successfully!: %s, mode: %s,authorization: %s, you can you should use Ctrl+C to stop gdbService \n ", time.Now().Format(timeFormatString), address, mode, strconv.FormatBool(configs.Authorization))
+	var hs *http.Server
 	if mode == "http" {
 		// http mode
 		h2Handler := h2c.NewHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -269,7 +299,7 @@ func StartDbServer(configs Config) error {
 				appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level).ServeHTTP(w, r)
 			}
 		}), &http2.Server{})
-		hs := &http.Server{Addr: address, Handler: h2Handler}
+		hs = &http.Server{Addr: address, Handler: h2Handler}
 		g.Go(func() error {
 			if err := hs.ListenAndServe(); err != nil {
 				return err
@@ -279,24 +309,48 @@ func StartDbServer(configs Config) error {
 		})
 	} else {
 		// https mode
+		hs = &http.Server{Addr: address, Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
+				s.ServeHTTP(w, r)
+			} else {
+				appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level).ServeHTTP(w, r)
+			}
+		})}
 		g.Go(func() error {
-			if err := http.ListenAndServeTLS(address, "./ssl/"+serverCertificateName, "./ssl/"+serverKeyName, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.ProtoMajor == 2 && strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
-					s.ServeHTTP(w, r)
-				} else {
-					appRouter(gdb, configs.Authorization, configs.LogWriting, configs.Level).ServeHTTP(w, r)
-				}
-			})); err != nil && err != http.ErrServerClosed {
+			if err := hs.ListenAndServeTLS("./ssl/"+serverCertificateName, "./ssl/"+serverKeyName); err != nil {
 				return err
 			} else {
 				return nil
 			}
 		})
 	}
+	g.Go(func() error {
+		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+		<-ctx.Done()
+		stop()
+		fmt.Println(time.Now().Format(timeFormatString), ": system is stopping...")
+		timeoutCxt, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		// close tcp
+		if err := hs.Shutdown(timeoutCxt); err != nil {
+			return err
+		}
+		// close gRPC
+		s.GracefulStop()
+		_ = gdb.CloseGdb()
+		fmt.Println(time.Now().Format(timeFormatString), ": system stop successfully, will exit in 3 seconds...")
+		time.Sleep(3 * time.Second)
+		os.Exit(-1)
+		return nil
+	})
 	g.Go(gdb.getProcessInfo) // monitor
 	g.Go(gdb.calc)           // calc goroutine
+	g.Go(gdb.syncRtData)
+	g.Go(gdb.syncHisData)
+	g.Go(gdb.shrinkItemDb)
 	if err := g.Wait(); err != nil {
-		return fmt.Errorf("%s: runTimeError: %s", time.Now().Format(timeFormatString), err.Error())
+		fmt.Println(err)
+		return err
 	}
 	return nil
 }

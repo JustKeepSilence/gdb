@@ -19,14 +19,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GroupClient interface {
-	AddGroups(ctx context.Context, in *AddedGroupInfos, opts ...grpc.CallOption) (*Rows, error)
-	DeleteGroups(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error)
+	AddGroups(ctx context.Context, in *AddedGroupInfos, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteGroups(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*TimeRows, error)
 	GetGroups(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GroupNamesInfo, error)
 	GetGroupProperty(ctx context.Context, in *QueryGroupPropertyInfo, opts ...grpc.CallOption) (*GroupPropertyInfo, error)
-	UpdateGroupNames(ctx context.Context, in *UpdatedGroupNamesInfo, opts ...grpc.CallOption) (*Rows, error)
-	UpdateGroupColumnNames(ctx context.Context, in *UpdatedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error)
-	DeleteGroupColumns(ctx context.Context, in *DeletedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error)
-	AddGroupColumns(ctx context.Context, in *AddedGroupColumnsInfo, opts ...grpc.CallOption) (*Cols, error)
+	UpdateGroupNames(ctx context.Context, in *UpdatedGroupNamesInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	UpdateGroupColumnNames(ctx context.Context, in *UpdatedGroupColumnNamesInfo, opts ...grpc.CallOption) (*TimeCols, error)
+	DeleteGroupColumns(ctx context.Context, in *DeletedGroupColumnNamesInfo, opts ...grpc.CallOption) (*TimeCols, error)
+	AddGroupColumns(ctx context.Context, in *AddedGroupColumnsInfo, opts ...grpc.CallOption) (*TimeCols, error)
 }
 
 type groupClient struct {
@@ -37,8 +37,8 @@ func NewGroupClient(cc grpc.ClientConnInterface) GroupClient {
 	return &groupClient{cc}
 }
 
-func (c *groupClient) AddGroups(ctx context.Context, in *AddedGroupInfos, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *groupClient) AddGroups(ctx context.Context, in *AddedGroupInfos, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Group/AddGroups", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -46,8 +46,8 @@ func (c *groupClient) AddGroups(ctx context.Context, in *AddedGroupInfos, opts .
 	return out, nil
 }
 
-func (c *groupClient) DeleteGroups(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *groupClient) DeleteGroups(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Group/DeleteGroups", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -73,8 +73,8 @@ func (c *groupClient) GetGroupProperty(ctx context.Context, in *QueryGroupProper
 	return out, nil
 }
 
-func (c *groupClient) UpdateGroupNames(ctx context.Context, in *UpdatedGroupNamesInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *groupClient) UpdateGroupNames(ctx context.Context, in *UpdatedGroupNamesInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Group/UpdateGroupNames", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -82,8 +82,8 @@ func (c *groupClient) UpdateGroupNames(ctx context.Context, in *UpdatedGroupName
 	return out, nil
 }
 
-func (c *groupClient) UpdateGroupColumnNames(ctx context.Context, in *UpdatedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error) {
-	out := new(Cols)
+func (c *groupClient) UpdateGroupColumnNames(ctx context.Context, in *UpdatedGroupColumnNamesInfo, opts ...grpc.CallOption) (*TimeCols, error) {
+	out := new(TimeCols)
 	err := c.cc.Invoke(ctx, "/model.Group/UpdateGroupColumnNames", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -91,8 +91,8 @@ func (c *groupClient) UpdateGroupColumnNames(ctx context.Context, in *UpdatedGro
 	return out, nil
 }
 
-func (c *groupClient) DeleteGroupColumns(ctx context.Context, in *DeletedGroupColumnNamesInfo, opts ...grpc.CallOption) (*Cols, error) {
-	out := new(Cols)
+func (c *groupClient) DeleteGroupColumns(ctx context.Context, in *DeletedGroupColumnNamesInfo, opts ...grpc.CallOption) (*TimeCols, error) {
+	out := new(TimeCols)
 	err := c.cc.Invoke(ctx, "/model.Group/DeleteGroupColumns", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -100,8 +100,8 @@ func (c *groupClient) DeleteGroupColumns(ctx context.Context, in *DeletedGroupCo
 	return out, nil
 }
 
-func (c *groupClient) AddGroupColumns(ctx context.Context, in *AddedGroupColumnsInfo, opts ...grpc.CallOption) (*Cols, error) {
-	out := new(Cols)
+func (c *groupClient) AddGroupColumns(ctx context.Context, in *AddedGroupColumnsInfo, opts ...grpc.CallOption) (*TimeCols, error) {
+	out := new(TimeCols)
 	err := c.cc.Invoke(ctx, "/model.Group/AddGroupColumns", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -113,14 +113,14 @@ func (c *groupClient) AddGroupColumns(ctx context.Context, in *AddedGroupColumns
 // All implementations must embed UnimplementedGroupServer
 // for forward compatibility
 type GroupServer interface {
-	AddGroups(context.Context, *AddedGroupInfos) (*Rows, error)
-	DeleteGroups(context.Context, *GroupNamesInfo) (*Rows, error)
+	AddGroups(context.Context, *AddedGroupInfos) (*TimeRows, error)
+	DeleteGroups(context.Context, *GroupNamesInfo) (*TimeRows, error)
 	GetGroups(context.Context, *emptypb.Empty) (*GroupNamesInfo, error)
 	GetGroupProperty(context.Context, *QueryGroupPropertyInfo) (*GroupPropertyInfo, error)
-	UpdateGroupNames(context.Context, *UpdatedGroupNamesInfo) (*Rows, error)
-	UpdateGroupColumnNames(context.Context, *UpdatedGroupColumnNamesInfo) (*Cols, error)
-	DeleteGroupColumns(context.Context, *DeletedGroupColumnNamesInfo) (*Cols, error)
-	AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*Cols, error)
+	UpdateGroupNames(context.Context, *UpdatedGroupNamesInfo) (*TimeRows, error)
+	UpdateGroupColumnNames(context.Context, *UpdatedGroupColumnNamesInfo) (*TimeCols, error)
+	DeleteGroupColumns(context.Context, *DeletedGroupColumnNamesInfo) (*TimeCols, error)
+	AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*TimeCols, error)
 	mustEmbedUnimplementedGroupServer()
 }
 
@@ -128,10 +128,10 @@ type GroupServer interface {
 type UnimplementedGroupServer struct {
 }
 
-func (UnimplementedGroupServer) AddGroups(context.Context, *AddedGroupInfos) (*Rows, error) {
+func (UnimplementedGroupServer) AddGroups(context.Context, *AddedGroupInfos) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddGroups not implemented")
 }
-func (UnimplementedGroupServer) DeleteGroups(context.Context, *GroupNamesInfo) (*Rows, error) {
+func (UnimplementedGroupServer) DeleteGroups(context.Context, *GroupNamesInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteGroups not implemented")
 }
 func (UnimplementedGroupServer) GetGroups(context.Context, *emptypb.Empty) (*GroupNamesInfo, error) {
@@ -140,16 +140,16 @@ func (UnimplementedGroupServer) GetGroups(context.Context, *emptypb.Empty) (*Gro
 func (UnimplementedGroupServer) GetGroupProperty(context.Context, *QueryGroupPropertyInfo) (*GroupPropertyInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGroupProperty not implemented")
 }
-func (UnimplementedGroupServer) UpdateGroupNames(context.Context, *UpdatedGroupNamesInfo) (*Rows, error) {
+func (UnimplementedGroupServer) UpdateGroupNames(context.Context, *UpdatedGroupNamesInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateGroupNames not implemented")
 }
-func (UnimplementedGroupServer) UpdateGroupColumnNames(context.Context, *UpdatedGroupColumnNamesInfo) (*Cols, error) {
+func (UnimplementedGroupServer) UpdateGroupColumnNames(context.Context, *UpdatedGroupColumnNamesInfo) (*TimeCols, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateGroupColumnNames not implemented")
 }
-func (UnimplementedGroupServer) DeleteGroupColumns(context.Context, *DeletedGroupColumnNamesInfo) (*Cols, error) {
+func (UnimplementedGroupServer) DeleteGroupColumns(context.Context, *DeletedGroupColumnNamesInfo) (*TimeCols, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteGroupColumns not implemented")
 }
-func (UnimplementedGroupServer) AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*Cols, error) {
+func (UnimplementedGroupServer) AddGroupColumns(context.Context, *AddedGroupColumnsInfo) (*TimeCols, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddGroupColumns not implemented")
 }
 func (UnimplementedGroupServer) mustEmbedUnimplementedGroupServer() {}
@@ -357,13 +357,12 @@ var Group_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ItemClient interface {
-	AddItems(ctx context.Context, in *AddedItemsInfo, opts ...grpc.CallOption) (*Rows, error)
-	DeleteItems(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*Rows, error)
-	GetItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItems, error)
+	AddItems(ctx context.Context, in *AddedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteItems(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error)
 	GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItemsWithCount, error)
-	UpdateItems(ctx context.Context, in *UpdatedItemsInfo, opts ...grpc.CallOption) (*Rows, error)
+	UpdateItems(ctx context.Context, in *UpdatedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error)
 	CheckItems(ctx context.Context, in *CheckItemsInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error)
+	CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*TimeRows, error)
 }
 
 type itemClient struct {
@@ -374,8 +373,8 @@ func NewItemClient(cc grpc.ClientConnInterface) ItemClient {
 	return &itemClient{cc}
 }
 
-func (c *itemClient) AddItems(ctx context.Context, in *AddedItemsInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *itemClient) AddItems(ctx context.Context, in *AddedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Item/AddItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -383,18 +382,9 @@ func (c *itemClient) AddItems(ctx context.Context, in *AddedItemsInfo, opts ...g
 	return out, nil
 }
 
-func (c *itemClient) DeleteItems(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *itemClient) DeleteItems(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Item/DeleteItems", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *itemClient) GetItems(ctx context.Context, in *ItemsInfo, opts ...grpc.CallOption) (*GdbItems, error) {
-	out := new(GdbItems)
-	err := c.cc.Invoke(ctx, "/model.Item/GetItems", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -410,8 +400,8 @@ func (c *itemClient) GetItemsWithCount(ctx context.Context, in *ItemsInfo, opts 
 	return out, nil
 }
 
-func (c *itemClient) UpdateItems(ctx context.Context, in *UpdatedItemsInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *itemClient) UpdateItems(ctx context.Context, in *UpdatedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Item/UpdateItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -428,8 +418,8 @@ func (c *itemClient) CheckItems(ctx context.Context, in *CheckItemsInfo, opts ..
 	return out, nil
 }
 
-func (c *itemClient) CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *itemClient) CleanGroupItems(ctx context.Context, in *GroupNamesInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Item/CleanGroupItems", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -441,13 +431,12 @@ func (c *itemClient) CleanGroupItems(ctx context.Context, in *GroupNamesInfo, op
 // All implementations must embed UnimplementedItemServer
 // for forward compatibility
 type ItemServer interface {
-	AddItems(context.Context, *AddedItemsInfo) (*Rows, error)
-	DeleteItems(context.Context, *DeletedItemsInfo) (*Rows, error)
-	GetItems(context.Context, *ItemsInfo) (*GdbItems, error)
+	AddItems(context.Context, *AddedItemsInfo) (*TimeRows, error)
+	DeleteItems(context.Context, *DeletedItemsInfo) (*TimeRows, error)
 	GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error)
-	UpdateItems(context.Context, *UpdatedItemsInfo) (*Rows, error)
+	UpdateItems(context.Context, *UpdatedItemsInfo) (*TimeRows, error)
 	CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error)
-	CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error)
+	CleanGroupItems(context.Context, *GroupNamesInfo) (*TimeRows, error)
 	mustEmbedUnimplementedItemServer()
 }
 
@@ -455,25 +444,22 @@ type ItemServer interface {
 type UnimplementedItemServer struct {
 }
 
-func (UnimplementedItemServer) AddItems(context.Context, *AddedItemsInfo) (*Rows, error) {
+func (UnimplementedItemServer) AddItems(context.Context, *AddedItemsInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddItems not implemented")
 }
-func (UnimplementedItemServer) DeleteItems(context.Context, *DeletedItemsInfo) (*Rows, error) {
+func (UnimplementedItemServer) DeleteItems(context.Context, *DeletedItemsInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteItems not implemented")
-}
-func (UnimplementedItemServer) GetItems(context.Context, *ItemsInfo) (*GdbItems, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetItems not implemented")
 }
 func (UnimplementedItemServer) GetItemsWithCount(context.Context, *ItemsInfo) (*GdbItemsWithCount, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetItemsWithCount not implemented")
 }
-func (UnimplementedItemServer) UpdateItems(context.Context, *UpdatedItemsInfo) (*Rows, error) {
+func (UnimplementedItemServer) UpdateItems(context.Context, *UpdatedItemsInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateItems not implemented")
 }
 func (UnimplementedItemServer) CheckItems(context.Context, *CheckItemsInfo) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CheckItems not implemented")
 }
-func (UnimplementedItemServer) CleanGroupItems(context.Context, *GroupNamesInfo) (*Rows, error) {
+func (UnimplementedItemServer) CleanGroupItems(context.Context, *GroupNamesInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CleanGroupItems not implemented")
 }
 func (UnimplementedItemServer) mustEmbedUnimplementedItemServer() {}
@@ -521,24 +507,6 @@ func _Item_DeleteItems_Handler(srv interface{}, ctx context.Context, dec func(in
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ItemServer).DeleteItems(ctx, req.(*DeletedItemsInfo))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Item_GetItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ItemsInfo)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ItemServer).GetItems(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/model.Item/GetItems",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ItemServer).GetItems(ctx, req.(*ItemsInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -631,10 +599,6 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Item_DeleteItems_Handler,
 		},
 		{
-			MethodName: "GetItems",
-			Handler:    _Item_GetItems_Handler,
-		},
-		{
 			MethodName: "GetItemsWithCount",
 			Handler:    _Item_GetItemsWithCount_Handler,
 		},
@@ -659,15 +623,45 @@ var Item_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DataClient interface {
-	BatchWrite(ctx context.Context, in *BatchWriteString, opts ...grpc.CallOption) (*Rows, error)
-	BatchWriteWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteWithStreamClient, error)
-	BatchWriteHistoricalData(ctx context.Context, in *BatchWriteHistoricalString, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	BatchWriteHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteHistoricalDataWithStreamClient, error)
+	BatchWriteFloatData(ctx context.Context, in *FloatItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteFloatDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteFloatDataWithStreamClient, error)
+	BatchWriteIntData(ctx context.Context, in *IntItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteIntDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteIntDataWithStreamClient, error)
+	BatchWriteStringData(ctx context.Context, in *StringItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteStringDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteStringDataWithStreamClient, error)
+	BatchWriteBoolData(ctx context.Context, in *BoolItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteBoolDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteBoolDataWithStreamClient, error)
+	BatchWriteFloatHistoricalData(ctx context.Context, in *FloatHItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteFloatHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteFloatHistoricalDataWithStreamClient, error)
+	BatchWriteIntHistoricalData(ctx context.Context, in *IntHItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteIntHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteIntHistoricalDataWithStreamClient, error)
+	BatchWriteStringHistoricalData(ctx context.Context, in *StringHItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteStringHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteStringHistoricalDataWithStreamClient, error)
+	BatchWriteBoolHistoricalData(ctx context.Context, in *BoolHItemValues, opts ...grpc.CallOption) (*TimeRows, error)
+	BatchWriteBoolHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteBoolHistoricalDataWithStreamClient, error)
 	GetRealTimeData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbRealTimeData, error)
-	GetHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
-	GetHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithTimeStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
-	GetHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
-	GetRawData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetFloatHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetIntHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetStringHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetBoolHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetFloatRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetIntRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetStringRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetBoolRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetFloatHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetIntHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetStringHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetBoolHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetFloatHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetIntHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetStringHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	GetBoolHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
+	DeleteFloatHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteIntHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteStringHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteBoolHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error)
+	CleanItemData(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	ReLoadDb(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TimeRows, error)
 }
 
 type dataClient struct {
@@ -678,86 +672,344 @@ func NewDataClient(cc grpc.ClientConnInterface) DataClient {
 	return &dataClient{cc}
 }
 
-func (c *dataClient) BatchWrite(ctx context.Context, in *BatchWriteString, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
-	err := c.cc.Invoke(ctx, "/model.Data/BatchWrite", in, out, opts...)
+func (c *dataClient) BatchWriteFloatData(ctx context.Context, in *FloatItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteFloatData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dataClient) BatchWriteWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteWithStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[0], "/model.Data/BatchWriteWithStream", opts...)
+func (c *dataClient) BatchWriteFloatDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteFloatDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[0], "/model.Data/BatchWriteFloatDataWithStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &dataBatchWriteWithStreamClient{stream}
+	x := &dataBatchWriteFloatDataWithStreamClient{stream}
 	return x, nil
 }
 
-type Data_BatchWriteWithStreamClient interface {
-	Send(*BatchWriteString) error
-	CloseAndRecv() (*Rows, error)
+type Data_BatchWriteFloatDataWithStreamClient interface {
+	Send(*FloatItemValues) error
+	CloseAndRecv() (*TimeRows, error)
 	grpc.ClientStream
 }
 
-type dataBatchWriteWithStreamClient struct {
+type dataBatchWriteFloatDataWithStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *dataBatchWriteWithStreamClient) Send(m *BatchWriteString) error {
+func (x *dataBatchWriteFloatDataWithStreamClient) Send(m *FloatItemValues) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *dataBatchWriteWithStreamClient) CloseAndRecv() (*Rows, error) {
+func (x *dataBatchWriteFloatDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(Rows)
+	m := new(TimeRows)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *dataClient) BatchWriteHistoricalData(ctx context.Context, in *BatchWriteHistoricalString, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteHistoricalData", in, out, opts...)
+func (c *dataClient) BatchWriteIntData(ctx context.Context, in *IntItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteIntData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dataClient) BatchWriteHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteHistoricalDataWithStreamClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[1], "/model.Data/BatchWriteHistoricalDataWithStream", opts...)
+func (c *dataClient) BatchWriteIntDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteIntDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[1], "/model.Data/BatchWriteIntDataWithStream", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &dataBatchWriteHistoricalDataWithStreamClient{stream}
+	x := &dataBatchWriteIntDataWithStreamClient{stream}
 	return x, nil
 }
 
-type Data_BatchWriteHistoricalDataWithStreamClient interface {
-	Send(*BatchWriteHistoricalString) error
-	CloseAndRecv() (*emptypb.Empty, error)
+type Data_BatchWriteIntDataWithStreamClient interface {
+	Send(*IntItemValues) error
+	CloseAndRecv() (*TimeRows, error)
 	grpc.ClientStream
 }
 
-type dataBatchWriteHistoricalDataWithStreamClient struct {
+type dataBatchWriteIntDataWithStreamClient struct {
 	grpc.ClientStream
 }
 
-func (x *dataBatchWriteHistoricalDataWithStreamClient) Send(m *BatchWriteHistoricalString) error {
+func (x *dataBatchWriteIntDataWithStreamClient) Send(m *IntItemValues) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *dataBatchWriteHistoricalDataWithStreamClient) CloseAndRecv() (*emptypb.Empty, error) {
+func (x *dataBatchWriteIntDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(emptypb.Empty)
+	m := new(TimeRows)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *dataClient) BatchWriteStringData(ctx context.Context, in *StringItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteStringData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) BatchWriteStringDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteStringDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[2], "/model.Data/BatchWriteStringDataWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteStringDataWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteStringDataWithStreamClient interface {
+	Send(*StringItemValues) error
+	CloseAndRecv() (*TimeRows, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteStringDataWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteStringDataWithStreamClient) Send(m *StringItemValues) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteStringDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(TimeRows)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *dataClient) BatchWriteBoolData(ctx context.Context, in *BoolItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteBoolData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) BatchWriteBoolDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteBoolDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[3], "/model.Data/BatchWriteBoolDataWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteBoolDataWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteBoolDataWithStreamClient interface {
+	Send(*BoolItemValues) error
+	CloseAndRecv() (*TimeRows, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteBoolDataWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteBoolDataWithStreamClient) Send(m *BoolItemValues) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteBoolDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(TimeRows)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *dataClient) BatchWriteFloatHistoricalData(ctx context.Context, in *FloatHItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteFloatHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) BatchWriteFloatHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteFloatHistoricalDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[4], "/model.Data/BatchWriteFloatHistoricalDataWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteFloatHistoricalDataWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteFloatHistoricalDataWithStreamClient interface {
+	Send(*FloatHItemValues) error
+	CloseAndRecv() (*TimeRows, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteFloatHistoricalDataWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteFloatHistoricalDataWithStreamClient) Send(m *FloatHItemValues) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteFloatHistoricalDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(TimeRows)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *dataClient) BatchWriteIntHistoricalData(ctx context.Context, in *IntHItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteIntHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) BatchWriteIntHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteIntHistoricalDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[5], "/model.Data/BatchWriteIntHistoricalDataWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteIntHistoricalDataWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteIntHistoricalDataWithStreamClient interface {
+	Send(*IntHItemValues) error
+	CloseAndRecv() (*TimeRows, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteIntHistoricalDataWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteIntHistoricalDataWithStreamClient) Send(m *IntHItemValues) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteIntHistoricalDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(TimeRows)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *dataClient) BatchWriteStringHistoricalData(ctx context.Context, in *StringHItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteStringHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) BatchWriteStringHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteStringHistoricalDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[6], "/model.Data/BatchWriteStringHistoricalDataWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteStringHistoricalDataWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteStringHistoricalDataWithStreamClient interface {
+	Send(*StringHItemValues) error
+	CloseAndRecv() (*TimeRows, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteStringHistoricalDataWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteStringHistoricalDataWithStreamClient) Send(m *StringHItemValues) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteStringHistoricalDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(TimeRows)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *dataClient) BatchWriteBoolHistoricalData(ctx context.Context, in *BoolHItemValues, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/BatchWriteBoolHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) BatchWriteBoolHistoricalDataWithStream(ctx context.Context, opts ...grpc.CallOption) (Data_BatchWriteBoolHistoricalDataWithStreamClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Data_ServiceDesc.Streams[7], "/model.Data/BatchWriteBoolHistoricalDataWithStream", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &dataBatchWriteBoolHistoricalDataWithStreamClient{stream}
+	return x, nil
+}
+
+type Data_BatchWriteBoolHistoricalDataWithStreamClient interface {
+	Send(*BoolHItemValues) error
+	CloseAndRecv() (*TimeRows, error)
+	grpc.ClientStream
+}
+
+type dataBatchWriteBoolHistoricalDataWithStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *dataBatchWriteBoolHistoricalDataWithStreamClient) Send(m *BoolHItemValues) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteBoolHistoricalDataWithStreamClient) CloseAndRecv() (*TimeRows, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(TimeRows)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -773,36 +1025,198 @@ func (c *dataClient) GetRealTimeData(ctx context.Context, in *QueryRealTimeDataS
 	return out, nil
 }
 
-func (c *dataClient) GetHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+func (c *dataClient) GetFloatHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
 	out := new(GdbHistoricalData)
-	err := c.cc.Invoke(ctx, "/model.Data/GetHistoricalData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Data/GetFloatHistoricalData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dataClient) GetHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithTimeStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+func (c *dataClient) GetIntHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
 	out := new(GdbHistoricalData)
-	err := c.cc.Invoke(ctx, "/model.Data/GetHistoricalDataWithStamp", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Data/GetIntHistoricalData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dataClient) GetHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+func (c *dataClient) GetStringHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
 	out := new(GdbHistoricalData)
-	err := c.cc.Invoke(ctx, "/model.Data/GetHistoricalDataWithCondition", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Data/GetStringHistoricalData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *dataClient) GetRawData(ctx context.Context, in *QueryRealTimeDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+func (c *dataClient) GetBoolHistoricalData(ctx context.Context, in *QueryHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
 	out := new(GdbHistoricalData)
-	err := c.cc.Invoke(ctx, "/model.Data/GetRawData", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/model.Data/GetBoolHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetFloatRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetFloatRawHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetIntRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetIntRawHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetStringRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetStringRawHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetBoolRawHistoricalData(ctx context.Context, in *QueryRawHistoricalDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetBoolRawHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetFloatHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetFloatHistoricalDataWithStamp", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetIntHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetIntHistoricalDataWithStamp", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetStringHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetStringHistoricalDataWithStamp", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetBoolHistoricalDataWithStamp(ctx context.Context, in *QueryHistoricalDataWithStampString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetBoolHistoricalDataWithStamp", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetFloatHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetFloatHistoricalDataWithCondition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetIntHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetIntHistoricalDataWithCondition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetStringHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetStringHistoricalDataWithCondition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) GetBoolHistoricalDataWithCondition(ctx context.Context, in *QueryHistoricalDataWithConditionString, opts ...grpc.CallOption) (*GdbHistoricalData, error) {
+	out := new(GdbHistoricalData)
+	err := c.cc.Invoke(ctx, "/model.Data/GetBoolHistoricalDataWithCondition", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) DeleteFloatHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/DeleteFloatHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) DeleteIntHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/DeleteIntHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) DeleteStringHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/DeleteStringHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) DeleteBoolHistoricalData(ctx context.Context, in *DeleteHistoricalDataString, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/DeleteBoolHistoricalData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) CleanItemData(ctx context.Context, in *DeletedItemsInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/CleanItemData", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataClient) ReLoadDb(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
+	err := c.cc.Invoke(ctx, "/model.Data/ReLoadDb", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -813,15 +1227,45 @@ func (c *dataClient) GetRawData(ctx context.Context, in *QueryRealTimeDataString
 // All implementations must embed UnimplementedDataServer
 // for forward compatibility
 type DataServer interface {
-	BatchWrite(context.Context, *BatchWriteString) (*Rows, error)
-	BatchWriteWithStream(Data_BatchWriteWithStreamServer) error
-	BatchWriteHistoricalData(context.Context, *BatchWriteHistoricalString) (*emptypb.Empty, error)
-	BatchWriteHistoricalDataWithStream(Data_BatchWriteHistoricalDataWithStreamServer) error
+	BatchWriteFloatData(context.Context, *FloatItemValues) (*TimeRows, error)
+	BatchWriteFloatDataWithStream(Data_BatchWriteFloatDataWithStreamServer) error
+	BatchWriteIntData(context.Context, *IntItemValues) (*TimeRows, error)
+	BatchWriteIntDataWithStream(Data_BatchWriteIntDataWithStreamServer) error
+	BatchWriteStringData(context.Context, *StringItemValues) (*TimeRows, error)
+	BatchWriteStringDataWithStream(Data_BatchWriteStringDataWithStreamServer) error
+	BatchWriteBoolData(context.Context, *BoolItemValues) (*TimeRows, error)
+	BatchWriteBoolDataWithStream(Data_BatchWriteBoolDataWithStreamServer) error
+	BatchWriteFloatHistoricalData(context.Context, *FloatHItemValues) (*TimeRows, error)
+	BatchWriteFloatHistoricalDataWithStream(Data_BatchWriteFloatHistoricalDataWithStreamServer) error
+	BatchWriteIntHistoricalData(context.Context, *IntHItemValues) (*TimeRows, error)
+	BatchWriteIntHistoricalDataWithStream(Data_BatchWriteIntHistoricalDataWithStreamServer) error
+	BatchWriteStringHistoricalData(context.Context, *StringHItemValues) (*TimeRows, error)
+	BatchWriteStringHistoricalDataWithStream(Data_BatchWriteStringHistoricalDataWithStreamServer) error
+	BatchWriteBoolHistoricalData(context.Context, *BoolHItemValues) (*TimeRows, error)
+	BatchWriteBoolHistoricalDataWithStream(Data_BatchWriteBoolHistoricalDataWithStreamServer) error
 	GetRealTimeData(context.Context, *QueryRealTimeDataString) (*GdbRealTimeData, error)
-	GetHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
-	GetHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithTimeStampString) (*GdbHistoricalData, error)
-	GetHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error)
-	GetRawData(context.Context, *QueryRealTimeDataString) (*GdbHistoricalData, error)
+	GetFloatHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
+	GetIntHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
+	GetStringHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
+	GetBoolHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error)
+	GetFloatRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error)
+	GetIntRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error)
+	GetStringRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error)
+	GetBoolRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error)
+	GetFloatHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error)
+	GetIntHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error)
+	GetStringHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error)
+	GetBoolHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error)
+	GetFloatHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error)
+	GetIntHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error)
+	GetStringHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error)
+	GetBoolHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error)
+	DeleteFloatHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error)
+	DeleteIntHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error)
+	DeleteStringHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error)
+	DeleteBoolHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error)
+	CleanItemData(context.Context, *DeletedItemsInfo) (*TimeRows, error)
+	ReLoadDb(context.Context, *emptypb.Empty) (*TimeRows, error)
 	mustEmbedUnimplementedDataServer()
 }
 
@@ -829,32 +1273,122 @@ type DataServer interface {
 type UnimplementedDataServer struct {
 }
 
-func (UnimplementedDataServer) BatchWrite(context.Context, *BatchWriteString) (*Rows, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchWrite not implemented")
+func (UnimplementedDataServer) BatchWriteFloatData(context.Context, *FloatItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteFloatData not implemented")
 }
-func (UnimplementedDataServer) BatchWriteWithStream(Data_BatchWriteWithStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method BatchWriteWithStream not implemented")
+func (UnimplementedDataServer) BatchWriteFloatDataWithStream(Data_BatchWriteFloatDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteFloatDataWithStream not implemented")
 }
-func (UnimplementedDataServer) BatchWriteHistoricalData(context.Context, *BatchWriteHistoricalString) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteHistoricalData not implemented")
+func (UnimplementedDataServer) BatchWriteIntData(context.Context, *IntItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteIntData not implemented")
 }
-func (UnimplementedDataServer) BatchWriteHistoricalDataWithStream(Data_BatchWriteHistoricalDataWithStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method BatchWriteHistoricalDataWithStream not implemented")
+func (UnimplementedDataServer) BatchWriteIntDataWithStream(Data_BatchWriteIntDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteIntDataWithStream not implemented")
+}
+func (UnimplementedDataServer) BatchWriteStringData(context.Context, *StringItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteStringData not implemented")
+}
+func (UnimplementedDataServer) BatchWriteStringDataWithStream(Data_BatchWriteStringDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteStringDataWithStream not implemented")
+}
+func (UnimplementedDataServer) BatchWriteBoolData(context.Context, *BoolItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteBoolData not implemented")
+}
+func (UnimplementedDataServer) BatchWriteBoolDataWithStream(Data_BatchWriteBoolDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteBoolDataWithStream not implemented")
+}
+func (UnimplementedDataServer) BatchWriteFloatHistoricalData(context.Context, *FloatHItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteFloatHistoricalData not implemented")
+}
+func (UnimplementedDataServer) BatchWriteFloatHistoricalDataWithStream(Data_BatchWriteFloatHistoricalDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteFloatHistoricalDataWithStream not implemented")
+}
+func (UnimplementedDataServer) BatchWriteIntHistoricalData(context.Context, *IntHItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteIntHistoricalData not implemented")
+}
+func (UnimplementedDataServer) BatchWriteIntHistoricalDataWithStream(Data_BatchWriteIntHistoricalDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteIntHistoricalDataWithStream not implemented")
+}
+func (UnimplementedDataServer) BatchWriteStringHistoricalData(context.Context, *StringHItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteStringHistoricalData not implemented")
+}
+func (UnimplementedDataServer) BatchWriteStringHistoricalDataWithStream(Data_BatchWriteStringHistoricalDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteStringHistoricalDataWithStream not implemented")
+}
+func (UnimplementedDataServer) BatchWriteBoolHistoricalData(context.Context, *BoolHItemValues) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchWriteBoolHistoricalData not implemented")
+}
+func (UnimplementedDataServer) BatchWriteBoolHistoricalDataWithStream(Data_BatchWriteBoolHistoricalDataWithStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method BatchWriteBoolHistoricalDataWithStream not implemented")
 }
 func (UnimplementedDataServer) GetRealTimeData(context.Context, *QueryRealTimeDataString) (*GdbRealTimeData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRealTimeData not implemented")
 }
-func (UnimplementedDataServer) GetHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetHistoricalData not implemented")
+func (UnimplementedDataServer) GetFloatHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFloatHistoricalData not implemented")
 }
-func (UnimplementedDataServer) GetHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithTimeStampString) (*GdbHistoricalData, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetHistoricalDataWithStamp not implemented")
+func (UnimplementedDataServer) GetIntHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntHistoricalData not implemented")
 }
-func (UnimplementedDataServer) GetHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetHistoricalDataWithCondition not implemented")
+func (UnimplementedDataServer) GetStringHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStringHistoricalData not implemented")
 }
-func (UnimplementedDataServer) GetRawData(context.Context, *QueryRealTimeDataString) (*GdbHistoricalData, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetRawData not implemented")
+func (UnimplementedDataServer) GetBoolHistoricalData(context.Context, *QueryHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBoolHistoricalData not implemented")
+}
+func (UnimplementedDataServer) GetFloatRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFloatRawHistoricalData not implemented")
+}
+func (UnimplementedDataServer) GetIntRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntRawHistoricalData not implemented")
+}
+func (UnimplementedDataServer) GetStringRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStringRawHistoricalData not implemented")
+}
+func (UnimplementedDataServer) GetBoolRawHistoricalData(context.Context, *QueryRawHistoricalDataString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBoolRawHistoricalData not implemented")
+}
+func (UnimplementedDataServer) GetFloatHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFloatHistoricalDataWithStamp not implemented")
+}
+func (UnimplementedDataServer) GetIntHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntHistoricalDataWithStamp not implemented")
+}
+func (UnimplementedDataServer) GetStringHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStringHistoricalDataWithStamp not implemented")
+}
+func (UnimplementedDataServer) GetBoolHistoricalDataWithStamp(context.Context, *QueryHistoricalDataWithStampString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBoolHistoricalDataWithStamp not implemented")
+}
+func (UnimplementedDataServer) GetFloatHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFloatHistoricalDataWithCondition not implemented")
+}
+func (UnimplementedDataServer) GetIntHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetIntHistoricalDataWithCondition not implemented")
+}
+func (UnimplementedDataServer) GetStringHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStringHistoricalDataWithCondition not implemented")
+}
+func (UnimplementedDataServer) GetBoolHistoricalDataWithCondition(context.Context, *QueryHistoricalDataWithConditionString) (*GdbHistoricalData, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBoolHistoricalDataWithCondition not implemented")
+}
+func (UnimplementedDataServer) DeleteFloatHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteFloatHistoricalData not implemented")
+}
+func (UnimplementedDataServer) DeleteIntHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteIntHistoricalData not implemented")
+}
+func (UnimplementedDataServer) DeleteStringHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteStringHistoricalData not implemented")
+}
+func (UnimplementedDataServer) DeleteBoolHistoricalData(context.Context, *DeleteHistoricalDataString) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteBoolHistoricalData not implemented")
+}
+func (UnimplementedDataServer) CleanItemData(context.Context, *DeletedItemsInfo) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CleanItemData not implemented")
+}
+func (UnimplementedDataServer) ReLoadDb(context.Context, *emptypb.Empty) (*TimeRows, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReLoadDb not implemented")
 }
 func (UnimplementedDataServer) mustEmbedUnimplementedDataServer() {}
 
@@ -869,88 +1403,352 @@ func RegisterDataServer(s grpc.ServiceRegistrar, srv DataServer) {
 	s.RegisterService(&Data_ServiceDesc, srv)
 }
 
-func _Data_BatchWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchWriteString)
+func _Data_BatchWriteFloatData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FloatItemValues)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).BatchWrite(ctx, in)
+		return srv.(DataServer).BatchWriteFloatData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/BatchWrite",
+		FullMethod: "/model.Data/BatchWriteFloatData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).BatchWrite(ctx, req.(*BatchWriteString))
+		return srv.(DataServer).BatchWriteFloatData(ctx, req.(*FloatItemValues))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_BatchWriteWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(DataServer).BatchWriteWithStream(&dataBatchWriteWithStreamServer{stream})
+func _Data_BatchWriteFloatDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteFloatDataWithStream(&dataBatchWriteFloatDataWithStreamServer{stream})
 }
 
-type Data_BatchWriteWithStreamServer interface {
-	SendAndClose(*Rows) error
-	Recv() (*BatchWriteString, error)
+type Data_BatchWriteFloatDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*FloatItemValues, error)
 	grpc.ServerStream
 }
 
-type dataBatchWriteWithStreamServer struct {
+type dataBatchWriteFloatDataWithStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *dataBatchWriteWithStreamServer) SendAndClose(m *Rows) error {
+func (x *dataBatchWriteFloatDataWithStreamServer) SendAndClose(m *TimeRows) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *dataBatchWriteWithStreamServer) Recv() (*BatchWriteString, error) {
-	m := new(BatchWriteString)
+func (x *dataBatchWriteFloatDataWithStreamServer) Recv() (*FloatItemValues, error) {
+	m := new(FloatItemValues)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func _Data_BatchWriteHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchWriteHistoricalString)
+func _Data_BatchWriteIntData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IntItemValues)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).BatchWriteHistoricalData(ctx, in)
+		return srv.(DataServer).BatchWriteIntData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/BatchWriteHistoricalData",
+		FullMethod: "/model.Data/BatchWriteIntData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).BatchWriteHistoricalData(ctx, req.(*BatchWriteHistoricalString))
+		return srv.(DataServer).BatchWriteIntData(ctx, req.(*IntItemValues))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_BatchWriteHistoricalDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(DataServer).BatchWriteHistoricalDataWithStream(&dataBatchWriteHistoricalDataWithStreamServer{stream})
+func _Data_BatchWriteIntDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteIntDataWithStream(&dataBatchWriteIntDataWithStreamServer{stream})
 }
 
-type Data_BatchWriteHistoricalDataWithStreamServer interface {
-	SendAndClose(*emptypb.Empty) error
-	Recv() (*BatchWriteHistoricalString, error)
+type Data_BatchWriteIntDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*IntItemValues, error)
 	grpc.ServerStream
 }
 
-type dataBatchWriteHistoricalDataWithStreamServer struct {
+type dataBatchWriteIntDataWithStreamServer struct {
 	grpc.ServerStream
 }
 
-func (x *dataBatchWriteHistoricalDataWithStreamServer) SendAndClose(m *emptypb.Empty) error {
+func (x *dataBatchWriteIntDataWithStreamServer) SendAndClose(m *TimeRows) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *dataBatchWriteHistoricalDataWithStreamServer) Recv() (*BatchWriteHistoricalString, error) {
-	m := new(BatchWriteHistoricalString)
+func (x *dataBatchWriteIntDataWithStreamServer) Recv() (*IntItemValues, error) {
+	m := new(IntItemValues)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Data_BatchWriteStringData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StringItemValues)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).BatchWriteStringData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/BatchWriteStringData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).BatchWriteStringData(ctx, req.(*StringItemValues))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteStringDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteStringDataWithStream(&dataBatchWriteStringDataWithStreamServer{stream})
+}
+
+type Data_BatchWriteStringDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*StringItemValues, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteStringDataWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteStringDataWithStreamServer) SendAndClose(m *TimeRows) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteStringDataWithStreamServer) Recv() (*StringItemValues, error) {
+	m := new(StringItemValues)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Data_BatchWriteBoolData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BoolItemValues)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).BatchWriteBoolData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/BatchWriteBoolData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).BatchWriteBoolData(ctx, req.(*BoolItemValues))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteBoolDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteBoolDataWithStream(&dataBatchWriteBoolDataWithStreamServer{stream})
+}
+
+type Data_BatchWriteBoolDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*BoolItemValues, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteBoolDataWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteBoolDataWithStreamServer) SendAndClose(m *TimeRows) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteBoolDataWithStreamServer) Recv() (*BoolItemValues, error) {
+	m := new(BoolItemValues)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Data_BatchWriteFloatHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FloatHItemValues)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).BatchWriteFloatHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/BatchWriteFloatHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).BatchWriteFloatHistoricalData(ctx, req.(*FloatHItemValues))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteFloatHistoricalDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteFloatHistoricalDataWithStream(&dataBatchWriteFloatHistoricalDataWithStreamServer{stream})
+}
+
+type Data_BatchWriteFloatHistoricalDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*FloatHItemValues, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteFloatHistoricalDataWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteFloatHistoricalDataWithStreamServer) SendAndClose(m *TimeRows) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteFloatHistoricalDataWithStreamServer) Recv() (*FloatHItemValues, error) {
+	m := new(FloatHItemValues)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Data_BatchWriteIntHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(IntHItemValues)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).BatchWriteIntHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/BatchWriteIntHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).BatchWriteIntHistoricalData(ctx, req.(*IntHItemValues))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteIntHistoricalDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteIntHistoricalDataWithStream(&dataBatchWriteIntHistoricalDataWithStreamServer{stream})
+}
+
+type Data_BatchWriteIntHistoricalDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*IntHItemValues, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteIntHistoricalDataWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteIntHistoricalDataWithStreamServer) SendAndClose(m *TimeRows) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteIntHistoricalDataWithStreamServer) Recv() (*IntHItemValues, error) {
+	m := new(IntHItemValues)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Data_BatchWriteStringHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StringHItemValues)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).BatchWriteStringHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/BatchWriteStringHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).BatchWriteStringHistoricalData(ctx, req.(*StringHItemValues))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteStringHistoricalDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteStringHistoricalDataWithStream(&dataBatchWriteStringHistoricalDataWithStreamServer{stream})
+}
+
+type Data_BatchWriteStringHistoricalDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*StringHItemValues, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteStringHistoricalDataWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteStringHistoricalDataWithStreamServer) SendAndClose(m *TimeRows) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteStringHistoricalDataWithStreamServer) Recv() (*StringHItemValues, error) {
+	m := new(StringHItemValues)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Data_BatchWriteBoolHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BoolHItemValues)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).BatchWriteBoolHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/BatchWriteBoolHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).BatchWriteBoolHistoricalData(ctx, req.(*BoolHItemValues))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_BatchWriteBoolHistoricalDataWithStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DataServer).BatchWriteBoolHistoricalDataWithStream(&dataBatchWriteBoolHistoricalDataWithStreamServer{stream})
+}
+
+type Data_BatchWriteBoolHistoricalDataWithStreamServer interface {
+	SendAndClose(*TimeRows) error
+	Recv() (*BoolHItemValues, error)
+	grpc.ServerStream
+}
+
+type dataBatchWriteBoolHistoricalDataWithStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *dataBatchWriteBoolHistoricalDataWithStreamServer) SendAndClose(m *TimeRows) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *dataBatchWriteBoolHistoricalDataWithStreamServer) Recv() (*BoolHItemValues, error) {
+	m := new(BoolHItemValues)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -975,74 +1773,398 @@ func _Data_GetRealTimeData_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_GetHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Data_GetFloatHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryHistoricalDataString)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).GetHistoricalData(ctx, in)
+		return srv.(DataServer).GetFloatHistoricalData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/GetHistoricalData",
+		FullMethod: "/model.Data/GetFloatHistoricalData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).GetHistoricalData(ctx, req.(*QueryHistoricalDataString))
+		return srv.(DataServer).GetFloatHistoricalData(ctx, req.(*QueryHistoricalDataString))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_GetHistoricalDataWithStamp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryHistoricalDataWithTimeStampString)
+func _Data_GetIntHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataString)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).GetHistoricalDataWithStamp(ctx, in)
+		return srv.(DataServer).GetIntHistoricalData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/GetHistoricalDataWithStamp",
+		FullMethod: "/model.Data/GetIntHistoricalData",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).GetHistoricalDataWithStamp(ctx, req.(*QueryHistoricalDataWithTimeStampString))
+		return srv.(DataServer).GetIntHistoricalData(ctx, req.(*QueryHistoricalDataString))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_GetHistoricalDataWithCondition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Data_GetStringHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetStringHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetStringHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetStringHistoricalData(ctx, req.(*QueryHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetBoolHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetBoolHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetBoolHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetBoolHistoricalData(ctx, req.(*QueryHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetFloatRawHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRawHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetFloatRawHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetFloatRawHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetFloatRawHistoricalData(ctx, req.(*QueryRawHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetIntRawHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRawHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetIntRawHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetIntRawHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetIntRawHistoricalData(ctx, req.(*QueryRawHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetStringRawHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRawHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetStringRawHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetStringRawHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetStringRawHistoricalData(ctx, req.(*QueryRawHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetBoolRawHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRawHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetBoolRawHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetBoolRawHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetBoolRawHistoricalData(ctx, req.(*QueryRawHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetFloatHistoricalDataWithStamp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithStampString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetFloatHistoricalDataWithStamp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetFloatHistoricalDataWithStamp",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetFloatHistoricalDataWithStamp(ctx, req.(*QueryHistoricalDataWithStampString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetIntHistoricalDataWithStamp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithStampString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetIntHistoricalDataWithStamp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetIntHistoricalDataWithStamp",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetIntHistoricalDataWithStamp(ctx, req.(*QueryHistoricalDataWithStampString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetStringHistoricalDataWithStamp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithStampString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetStringHistoricalDataWithStamp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetStringHistoricalDataWithStamp",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetStringHistoricalDataWithStamp(ctx, req.(*QueryHistoricalDataWithStampString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetBoolHistoricalDataWithStamp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithStampString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetBoolHistoricalDataWithStamp(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetBoolHistoricalDataWithStamp",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetBoolHistoricalDataWithStamp(ctx, req.(*QueryHistoricalDataWithStampString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetFloatHistoricalDataWithCondition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryHistoricalDataWithConditionString)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).GetHistoricalDataWithCondition(ctx, in)
+		return srv.(DataServer).GetFloatHistoricalDataWithCondition(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/GetHistoricalDataWithCondition",
+		FullMethod: "/model.Data/GetFloatHistoricalDataWithCondition",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).GetHistoricalDataWithCondition(ctx, req.(*QueryHistoricalDataWithConditionString))
+		return srv.(DataServer).GetFloatHistoricalDataWithCondition(ctx, req.(*QueryHistoricalDataWithConditionString))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Data_GetRawData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryRealTimeDataString)
+func _Data_GetIntHistoricalDataWithCondition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithConditionString)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataServer).GetRawData(ctx, in)
+		return srv.(DataServer).GetIntHistoricalDataWithCondition(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/model.Data/GetRawData",
+		FullMethod: "/model.Data/GetIntHistoricalDataWithCondition",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataServer).GetRawData(ctx, req.(*QueryRealTimeDataString))
+		return srv.(DataServer).GetIntHistoricalDataWithCondition(ctx, req.(*QueryHistoricalDataWithConditionString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetStringHistoricalDataWithCondition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithConditionString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetStringHistoricalDataWithCondition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetStringHistoricalDataWithCondition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetStringHistoricalDataWithCondition(ctx, req.(*QueryHistoricalDataWithConditionString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_GetBoolHistoricalDataWithCondition_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHistoricalDataWithConditionString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).GetBoolHistoricalDataWithCondition(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/GetBoolHistoricalDataWithCondition",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).GetBoolHistoricalDataWithCondition(ctx, req.(*QueryHistoricalDataWithConditionString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_DeleteFloatHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).DeleteFloatHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/DeleteFloatHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).DeleteFloatHistoricalData(ctx, req.(*DeleteHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_DeleteIntHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).DeleteIntHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/DeleteIntHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).DeleteIntHistoricalData(ctx, req.(*DeleteHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_DeleteStringHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).DeleteStringHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/DeleteStringHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).DeleteStringHistoricalData(ctx, req.(*DeleteHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_DeleteBoolHistoricalData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteHistoricalDataString)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).DeleteBoolHistoricalData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/DeleteBoolHistoricalData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).DeleteBoolHistoricalData(ctx, req.(*DeleteHistoricalDataString))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_CleanItemData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletedItemsInfo)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).CleanItemData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/CleanItemData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).CleanItemData(ctx, req.(*DeletedItemsInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Data_ReLoadDb_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataServer).ReLoadDb(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Data/ReLoadDb",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataServer).ReLoadDb(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1055,43 +2177,169 @@ var Data_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*DataServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "BatchWrite",
-			Handler:    _Data_BatchWrite_Handler,
+			MethodName: "BatchWriteFloatData",
+			Handler:    _Data_BatchWriteFloatData_Handler,
 		},
 		{
-			MethodName: "BatchWriteHistoricalData",
-			Handler:    _Data_BatchWriteHistoricalData_Handler,
+			MethodName: "BatchWriteIntData",
+			Handler:    _Data_BatchWriteIntData_Handler,
+		},
+		{
+			MethodName: "BatchWriteStringData",
+			Handler:    _Data_BatchWriteStringData_Handler,
+		},
+		{
+			MethodName: "BatchWriteBoolData",
+			Handler:    _Data_BatchWriteBoolData_Handler,
+		},
+		{
+			MethodName: "BatchWriteFloatHistoricalData",
+			Handler:    _Data_BatchWriteFloatHistoricalData_Handler,
+		},
+		{
+			MethodName: "BatchWriteIntHistoricalData",
+			Handler:    _Data_BatchWriteIntHistoricalData_Handler,
+		},
+		{
+			MethodName: "BatchWriteStringHistoricalData",
+			Handler:    _Data_BatchWriteStringHistoricalData_Handler,
+		},
+		{
+			MethodName: "BatchWriteBoolHistoricalData",
+			Handler:    _Data_BatchWriteBoolHistoricalData_Handler,
 		},
 		{
 			MethodName: "GetRealTimeData",
 			Handler:    _Data_GetRealTimeData_Handler,
 		},
 		{
-			MethodName: "GetHistoricalData",
-			Handler:    _Data_GetHistoricalData_Handler,
+			MethodName: "GetFloatHistoricalData",
+			Handler:    _Data_GetFloatHistoricalData_Handler,
 		},
 		{
-			MethodName: "GetHistoricalDataWithStamp",
-			Handler:    _Data_GetHistoricalDataWithStamp_Handler,
+			MethodName: "GetIntHistoricalData",
+			Handler:    _Data_GetIntHistoricalData_Handler,
 		},
 		{
-			MethodName: "GetHistoricalDataWithCondition",
-			Handler:    _Data_GetHistoricalDataWithCondition_Handler,
+			MethodName: "GetStringHistoricalData",
+			Handler:    _Data_GetStringHistoricalData_Handler,
 		},
 		{
-			MethodName: "GetRawData",
-			Handler:    _Data_GetRawData_Handler,
+			MethodName: "GetBoolHistoricalData",
+			Handler:    _Data_GetBoolHistoricalData_Handler,
+		},
+		{
+			MethodName: "GetFloatRawHistoricalData",
+			Handler:    _Data_GetFloatRawHistoricalData_Handler,
+		},
+		{
+			MethodName: "GetIntRawHistoricalData",
+			Handler:    _Data_GetIntRawHistoricalData_Handler,
+		},
+		{
+			MethodName: "GetStringRawHistoricalData",
+			Handler:    _Data_GetStringRawHistoricalData_Handler,
+		},
+		{
+			MethodName: "GetBoolRawHistoricalData",
+			Handler:    _Data_GetBoolRawHistoricalData_Handler,
+		},
+		{
+			MethodName: "GetFloatHistoricalDataWithStamp",
+			Handler:    _Data_GetFloatHistoricalDataWithStamp_Handler,
+		},
+		{
+			MethodName: "GetIntHistoricalDataWithStamp",
+			Handler:    _Data_GetIntHistoricalDataWithStamp_Handler,
+		},
+		{
+			MethodName: "GetStringHistoricalDataWithStamp",
+			Handler:    _Data_GetStringHistoricalDataWithStamp_Handler,
+		},
+		{
+			MethodName: "GetBoolHistoricalDataWithStamp",
+			Handler:    _Data_GetBoolHistoricalDataWithStamp_Handler,
+		},
+		{
+			MethodName: "GetFloatHistoricalDataWithCondition",
+			Handler:    _Data_GetFloatHistoricalDataWithCondition_Handler,
+		},
+		{
+			MethodName: "GetIntHistoricalDataWithCondition",
+			Handler:    _Data_GetIntHistoricalDataWithCondition_Handler,
+		},
+		{
+			MethodName: "GetStringHistoricalDataWithCondition",
+			Handler:    _Data_GetStringHistoricalDataWithCondition_Handler,
+		},
+		{
+			MethodName: "GetBoolHistoricalDataWithCondition",
+			Handler:    _Data_GetBoolHistoricalDataWithCondition_Handler,
+		},
+		{
+			MethodName: "DeleteFloatHistoricalData",
+			Handler:    _Data_DeleteFloatHistoricalData_Handler,
+		},
+		{
+			MethodName: "DeleteIntHistoricalData",
+			Handler:    _Data_DeleteIntHistoricalData_Handler,
+		},
+		{
+			MethodName: "DeleteStringHistoricalData",
+			Handler:    _Data_DeleteStringHistoricalData_Handler,
+		},
+		{
+			MethodName: "DeleteBoolHistoricalData",
+			Handler:    _Data_DeleteBoolHistoricalData_Handler,
+		},
+		{
+			MethodName: "CleanItemData",
+			Handler:    _Data_CleanItemData_Handler,
+		},
+		{
+			MethodName: "ReLoadDb",
+			Handler:    _Data_ReLoadDb_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "BatchWriteWithStream",
-			Handler:       _Data_BatchWriteWithStream_Handler,
+			StreamName:    "BatchWriteFloatDataWithStream",
+			Handler:       _Data_BatchWriteFloatDataWithStream_Handler,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "BatchWriteHistoricalDataWithStream",
-			Handler:       _Data_BatchWriteHistoricalDataWithStream_Handler,
+			StreamName:    "BatchWriteIntDataWithStream",
+			Handler:       _Data_BatchWriteIntDataWithStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BatchWriteStringDataWithStream",
+			Handler:       _Data_BatchWriteStringDataWithStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BatchWriteBoolDataWithStream",
+			Handler:       _Data_BatchWriteBoolDataWithStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BatchWriteFloatHistoricalDataWithStream",
+			Handler:       _Data_BatchWriteFloatHistoricalDataWithStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BatchWriteIntHistoricalDataWithStream",
+			Handler:       _Data_BatchWriteIntHistoricalDataWithStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BatchWriteStringHistoricalDataWithStream",
+			Handler:       _Data_BatchWriteStringHistoricalDataWithStream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BatchWriteBoolHistoricalDataWithStream",
+			Handler:       _Data_BatchWriteBoolHistoricalDataWithStream_Handler,
 			ClientStreams: true,
 		},
 	},
@@ -1106,24 +2354,25 @@ type PageClient interface {
 	UserLogOut(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	GetUserInfo(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*UserInfo, error)
 	GetUsers(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*UserInfos, error)
-	AddUsers(ctx context.Context, in *AddUserInfo, opts ...grpc.CallOption) (*Rows, error)
-	DeleteUsers(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error)
-	UpdateUsers(ctx context.Context, in *UpdatedUserInfo, opts ...grpc.CallOption) (*Rows, error)
+	AddUsers(ctx context.Context, in *AddedUserInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteUsers(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*TimeRows, error)
+	UpdateUsers(ctx context.Context, in *UpdatedUserInfo, opts ...grpc.CallOption) (*TimeRows, error)
 	UploadFile(ctx context.Context, in *UploadedFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	UploadFileWithStream(ctx context.Context, opts ...grpc.CallOption) (Page_UploadFileWithStreamClient, error)
-	AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error)
-	ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*TimeRows, error)
 	GetLogs(ctx context.Context, in *QueryLogsInfo, opts ...grpc.CallOption) (*LogsInfo, error)
 	GetJsCode(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Code, error)
-	DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*Rows, error)
+	DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*TimeRows, error)
 	DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error)
+	GetDbSize(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*FileSize, error)
 	GetDbInfo(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GdbInfoData, error)
 	GetDbInfoHistory(ctx context.Context, in *QuerySpeedHistoryDataString, opts ...grpc.CallOption) (*GdbHistoricalData, error)
 	GetRoutes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Routes, error)
-	DeleteRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error)
-	AddRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error)
-	AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error)
-	DeleteUserRoutes(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error)
+	DeleteRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	AddRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteUserRoutes(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*TimeRows, error)
 	GetAllRoutes(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Routes, error)
 	CheckRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*CheckResult, error)
 }
@@ -1172,8 +2421,8 @@ func (c *pageClient) GetUsers(ctx context.Context, in *emptypb.Empty, opts ...gr
 	return out, nil
 }
 
-func (c *pageClient) AddUsers(ctx context.Context, in *AddUserInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) AddUsers(ctx context.Context, in *AddedUserInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/AddUsers", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1181,8 +2430,8 @@ func (c *pageClient) AddUsers(ctx context.Context, in *AddUserInfo, opts ...grpc
 	return out, nil
 }
 
-func (c *pageClient) DeleteUsers(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) DeleteUsers(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/DeleteUsers", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1190,8 +2439,8 @@ func (c *pageClient) DeleteUsers(ctx context.Context, in *UserName, opts ...grpc
 	return out, nil
 }
 
-func (c *pageClient) UpdateUsers(ctx context.Context, in *UpdatedUserInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) UpdateUsers(ctx context.Context, in *UpdatedUserInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/UpdateUsers", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1242,8 +2491,8 @@ func (x *pageUploadFileWithStreamClient) CloseAndRecv() (*emptypb.Empty, error) 
 	return m, nil
 }
 
-func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/AddItemsByExcel", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1251,8 +2500,8 @@ func (c *pageClient) AddItemsByExcel(ctx context.Context, in *FileInfo, opts ...
 	return out, nil
 }
 
-func (c *pageClient) ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *pageClient) ImportHistoryByExcel(ctx context.Context, in *HistoryFileInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/ImportHistoryByExcel", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1278,8 +2527,8 @@ func (c *pageClient) GetJsCode(ctx context.Context, in *FileInfo, opts ...grpc.C
 	return out, nil
 }
 
-func (c *pageClient) DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/DeleteLogs", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1290,6 +2539,15 @@ func (c *pageClient) DeleteLogs(ctx context.Context, in *DeletedLogInfo, opts ..
 func (c *pageClient) DownloadFile(ctx context.Context, in *FileInfo, opts ...grpc.CallOption) (*FileContents, error) {
 	out := new(FileContents)
 	err := c.cc.Invoke(ctx, "/model.Page/DownloadFile", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pageClient) GetDbSize(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*FileSize, error) {
+	out := new(FileSize)
+	err := c.cc.Invoke(ctx, "/model.Page/GetDbSize", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1323,8 +2581,8 @@ func (c *pageClient) GetRoutes(ctx context.Context, in *emptypb.Empty, opts ...g
 	return out, nil
 }
 
-func (c *pageClient) DeleteRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) DeleteRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/DeleteRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1332,8 +2590,8 @@ func (c *pageClient) DeleteRoutes(ctx context.Context, in *RoutesInfo, opts ...g
 	return out, nil
 }
 
-func (c *pageClient) AddRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) AddRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/AddRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1341,8 +2599,8 @@ func (c *pageClient) AddRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc
 	return out, nil
 }
 
-func (c *pageClient) AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/AddUserRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1350,8 +2608,8 @@ func (c *pageClient) AddUserRoutes(ctx context.Context, in *RoutesInfo, opts ...
 	return out, nil
 }
 
-func (c *pageClient) DeleteUserRoutes(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *pageClient) DeleteUserRoutes(ctx context.Context, in *UserName, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Page/DeleteUserRoutes", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1385,24 +2643,25 @@ type PageServer interface {
 	UserLogOut(context.Context, *UserName) (*emptypb.Empty, error)
 	GetUserInfo(context.Context, *UserName) (*UserInfo, error)
 	GetUsers(context.Context, *emptypb.Empty) (*UserInfos, error)
-	AddUsers(context.Context, *AddUserInfo) (*Rows, error)
-	DeleteUsers(context.Context, *UserName) (*Rows, error)
-	UpdateUsers(context.Context, *UpdatedUserInfo) (*Rows, error)
+	AddUsers(context.Context, *AddedUserInfo) (*TimeRows, error)
+	DeleteUsers(context.Context, *UserName) (*TimeRows, error)
+	UpdateUsers(context.Context, *UpdatedUserInfo) (*TimeRows, error)
 	UploadFile(context.Context, *UploadedFileInfo) (*emptypb.Empty, error)
 	UploadFileWithStream(Page_UploadFileWithStreamServer) error
-	AddItemsByExcel(context.Context, *FileInfo) (*Rows, error)
-	ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error)
+	AddItemsByExcel(context.Context, *FileInfo) (*TimeRows, error)
+	ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*TimeRows, error)
 	GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error)
 	GetJsCode(context.Context, *FileInfo) (*Code, error)
-	DeleteLogs(context.Context, *DeletedLogInfo) (*Rows, error)
+	DeleteLogs(context.Context, *DeletedLogInfo) (*TimeRows, error)
 	DownloadFile(context.Context, *FileInfo) (*FileContents, error)
+	GetDbSize(context.Context, *emptypb.Empty) (*FileSize, error)
 	GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error)
 	GetDbInfoHistory(context.Context, *QuerySpeedHistoryDataString) (*GdbHistoricalData, error)
 	GetRoutes(context.Context, *emptypb.Empty) (*Routes, error)
-	DeleteRoutes(context.Context, *RoutesInfo) (*Rows, error)
-	AddRoutes(context.Context, *RoutesInfo) (*Rows, error)
-	AddUserRoutes(context.Context, *RoutesInfo) (*Rows, error)
-	DeleteUserRoutes(context.Context, *UserName) (*Rows, error)
+	DeleteRoutes(context.Context, *RoutesInfo) (*TimeRows, error)
+	AddRoutes(context.Context, *RoutesInfo) (*TimeRows, error)
+	AddUserRoutes(context.Context, *RoutesInfo) (*TimeRows, error)
+	DeleteUserRoutes(context.Context, *UserName) (*TimeRows, error)
 	GetAllRoutes(context.Context, *emptypb.Empty) (*Routes, error)
 	CheckRoutes(context.Context, *RoutesInfo) (*CheckResult, error)
 	mustEmbedUnimplementedPageServer()
@@ -1424,13 +2683,13 @@ func (UnimplementedPageServer) GetUserInfo(context.Context, *UserName) (*UserInf
 func (UnimplementedPageServer) GetUsers(context.Context, *emptypb.Empty) (*UserInfos, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUsers not implemented")
 }
-func (UnimplementedPageServer) AddUsers(context.Context, *AddUserInfo) (*Rows, error) {
+func (UnimplementedPageServer) AddUsers(context.Context, *AddedUserInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUsers not implemented")
 }
-func (UnimplementedPageServer) DeleteUsers(context.Context, *UserName) (*Rows, error) {
+func (UnimplementedPageServer) DeleteUsers(context.Context, *UserName) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUsers not implemented")
 }
-func (UnimplementedPageServer) UpdateUsers(context.Context, *UpdatedUserInfo) (*Rows, error) {
+func (UnimplementedPageServer) UpdateUsers(context.Context, *UpdatedUserInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUsers not implemented")
 }
 func (UnimplementedPageServer) UploadFile(context.Context, *UploadedFileInfo) (*emptypb.Empty, error) {
@@ -1439,10 +2698,10 @@ func (UnimplementedPageServer) UploadFile(context.Context, *UploadedFileInfo) (*
 func (UnimplementedPageServer) UploadFileWithStream(Page_UploadFileWithStreamServer) error {
 	return status.Errorf(codes.Unimplemented, "method UploadFileWithStream not implemented")
 }
-func (UnimplementedPageServer) AddItemsByExcel(context.Context, *FileInfo) (*Rows, error) {
+func (UnimplementedPageServer) AddItemsByExcel(context.Context, *FileInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddItemsByExcel not implemented")
 }
-func (UnimplementedPageServer) ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*emptypb.Empty, error) {
+func (UnimplementedPageServer) ImportHistoryByExcel(context.Context, *HistoryFileInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ImportHistoryByExcel not implemented")
 }
 func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsInfo, error) {
@@ -1451,11 +2710,14 @@ func (UnimplementedPageServer) GetLogs(context.Context, *QueryLogsInfo) (*LogsIn
 func (UnimplementedPageServer) GetJsCode(context.Context, *FileInfo) (*Code, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetJsCode not implemented")
 }
-func (UnimplementedPageServer) DeleteLogs(context.Context, *DeletedLogInfo) (*Rows, error) {
+func (UnimplementedPageServer) DeleteLogs(context.Context, *DeletedLogInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteLogs not implemented")
 }
 func (UnimplementedPageServer) DownloadFile(context.Context, *FileInfo) (*FileContents, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadFile not implemented")
+}
+func (UnimplementedPageServer) GetDbSize(context.Context, *emptypb.Empty) (*FileSize, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDbSize not implemented")
 }
 func (UnimplementedPageServer) GetDbInfo(context.Context, *emptypb.Empty) (*GdbInfoData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDbInfo not implemented")
@@ -1466,16 +2728,16 @@ func (UnimplementedPageServer) GetDbInfoHistory(context.Context, *QuerySpeedHist
 func (UnimplementedPageServer) GetRoutes(context.Context, *emptypb.Empty) (*Routes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetRoutes not implemented")
 }
-func (UnimplementedPageServer) DeleteRoutes(context.Context, *RoutesInfo) (*Rows, error) {
+func (UnimplementedPageServer) DeleteRoutes(context.Context, *RoutesInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRoutes not implemented")
 }
-func (UnimplementedPageServer) AddRoutes(context.Context, *RoutesInfo) (*Rows, error) {
+func (UnimplementedPageServer) AddRoutes(context.Context, *RoutesInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddRoutes not implemented")
 }
-func (UnimplementedPageServer) AddUserRoutes(context.Context, *RoutesInfo) (*Rows, error) {
+func (UnimplementedPageServer) AddUserRoutes(context.Context, *RoutesInfo) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddUserRoutes not implemented")
 }
-func (UnimplementedPageServer) DeleteUserRoutes(context.Context, *UserName) (*Rows, error) {
+func (UnimplementedPageServer) DeleteUserRoutes(context.Context, *UserName) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserRoutes not implemented")
 }
 func (UnimplementedPageServer) GetAllRoutes(context.Context, *emptypb.Empty) (*Routes, error) {
@@ -1570,7 +2832,7 @@ func _Page_GetUsers_Handler(srv interface{}, ctx context.Context, dec func(inter
 }
 
 func _Page_AddUsers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddUserInfo)
+	in := new(AddedUserInfo)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1582,7 +2844,7 @@ func _Page_AddUsers_Handler(srv interface{}, ctx context.Context, dec func(inter
 		FullMethod: "/model.Page/AddUsers",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PageServer).AddUsers(ctx, req.(*AddUserInfo))
+		return srv.(PageServer).AddUsers(ctx, req.(*AddedUserInfo))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1771,6 +3033,24 @@ func _Page_DownloadFile_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(PageServer).DownloadFile(ctx, req.(*FileInfo))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Page_GetDbSize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PageServer).GetDbSize(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/model.Page/GetDbSize",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PageServer).GetDbSize(ctx, req.(*emptypb.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2001,6 +3281,10 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Page_DownloadFile_Handler,
 		},
 		{
+			MethodName: "GetDbSize",
+			Handler:    _Page_GetDbSize_Handler,
+		},
+		{
 			MethodName: "GetDbInfo",
 			Handler:    _Page_GetDbInfo_Handler,
 		},
@@ -2051,14 +3335,14 @@ var Page_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type CalcClient interface {
-	TestCalcItem(ctx context.Context, in *TestCalcItemInfo, opts ...grpc.CallOption) (*TestResult, error)
+	TestCalcItem(ctx context.Context, in *TestCalcItemInfo, opts ...grpc.CallOption) (*CalculationResult, error)
 	AddCalcItem(ctx context.Context, in *AddedCalcItemInfo, opts ...grpc.CallOption) (*CalculationResult, error)
 	AddCalcItemWithStream(ctx context.Context, opts ...grpc.CallOption) (Calc_AddCalcItemWithStreamClient, error)
 	GetCalcItems(ctx context.Context, in *QueryCalcItemsInfo, opts ...grpc.CallOption) (*CalcItemsInfo, error)
 	UpdateCalcItem(ctx context.Context, in *UpdatedCalcInfo, opts ...grpc.CallOption) (*CalculationResult, error)
-	StartCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error)
-	StopCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error)
-	DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error)
+	StartCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*TimeRows, error)
+	StopCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*TimeRows, error)
+	DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*TimeRows, error)
 }
 
 type calcClient struct {
@@ -2069,8 +3353,8 @@ func NewCalcClient(cc grpc.ClientConnInterface) CalcClient {
 	return &calcClient{cc}
 }
 
-func (c *calcClient) TestCalcItem(ctx context.Context, in *TestCalcItemInfo, opts ...grpc.CallOption) (*TestResult, error) {
-	out := new(TestResult)
+func (c *calcClient) TestCalcItem(ctx context.Context, in *TestCalcItemInfo, opts ...grpc.CallOption) (*CalculationResult, error) {
+	out := new(CalculationResult)
 	err := c.cc.Invoke(ctx, "/model.Calc/TestCalcItem", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -2139,8 +3423,8 @@ func (c *calcClient) UpdateCalcItem(ctx context.Context, in *UpdatedCalcInfo, op
 	return out, nil
 }
 
-func (c *calcClient) StartCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *calcClient) StartCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Calc/StartCalcItem", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -2148,8 +3432,8 @@ func (c *calcClient) StartCalcItem(ctx context.Context, in *CalcId, opts ...grpc
 	return out, nil
 }
 
-func (c *calcClient) StopCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *calcClient) StopCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Calc/StopCalcItem", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -2157,8 +3441,8 @@ func (c *calcClient) StopCalcItem(ctx context.Context, in *CalcId, opts ...grpc.
 	return out, nil
 }
 
-func (c *calcClient) DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*Rows, error) {
-	out := new(Rows)
+func (c *calcClient) DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grpc.CallOption) (*TimeRows, error) {
+	out := new(TimeRows)
 	err := c.cc.Invoke(ctx, "/model.Calc/DeleteCalcItem", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -2170,14 +3454,14 @@ func (c *calcClient) DeleteCalcItem(ctx context.Context, in *CalcId, opts ...grp
 // All implementations must embed UnimplementedCalcServer
 // for forward compatibility
 type CalcServer interface {
-	TestCalcItem(context.Context, *TestCalcItemInfo) (*TestResult, error)
+	TestCalcItem(context.Context, *TestCalcItemInfo) (*CalculationResult, error)
 	AddCalcItem(context.Context, *AddedCalcItemInfo) (*CalculationResult, error)
 	AddCalcItemWithStream(Calc_AddCalcItemWithStreamServer) error
 	GetCalcItems(context.Context, *QueryCalcItemsInfo) (*CalcItemsInfo, error)
 	UpdateCalcItem(context.Context, *UpdatedCalcInfo) (*CalculationResult, error)
-	StartCalcItem(context.Context, *CalcId) (*Rows, error)
-	StopCalcItem(context.Context, *CalcId) (*Rows, error)
-	DeleteCalcItem(context.Context, *CalcId) (*Rows, error)
+	StartCalcItem(context.Context, *CalcId) (*TimeRows, error)
+	StopCalcItem(context.Context, *CalcId) (*TimeRows, error)
+	DeleteCalcItem(context.Context, *CalcId) (*TimeRows, error)
 	mustEmbedUnimplementedCalcServer()
 }
 
@@ -2185,7 +3469,7 @@ type CalcServer interface {
 type UnimplementedCalcServer struct {
 }
 
-func (UnimplementedCalcServer) TestCalcItem(context.Context, *TestCalcItemInfo) (*TestResult, error) {
+func (UnimplementedCalcServer) TestCalcItem(context.Context, *TestCalcItemInfo) (*CalculationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TestCalcItem not implemented")
 }
 func (UnimplementedCalcServer) AddCalcItem(context.Context, *AddedCalcItemInfo) (*CalculationResult, error) {
@@ -2200,13 +3484,13 @@ func (UnimplementedCalcServer) GetCalcItems(context.Context, *QueryCalcItemsInfo
 func (UnimplementedCalcServer) UpdateCalcItem(context.Context, *UpdatedCalcInfo) (*CalculationResult, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateCalcItem not implemented")
 }
-func (UnimplementedCalcServer) StartCalcItem(context.Context, *CalcId) (*Rows, error) {
+func (UnimplementedCalcServer) StartCalcItem(context.Context, *CalcId) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StartCalcItem not implemented")
 }
-func (UnimplementedCalcServer) StopCalcItem(context.Context, *CalcId) (*Rows, error) {
+func (UnimplementedCalcServer) StopCalcItem(context.Context, *CalcId) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopCalcItem not implemented")
 }
-func (UnimplementedCalcServer) DeleteCalcItem(context.Context, *CalcId) (*Rows, error) {
+func (UnimplementedCalcServer) DeleteCalcItem(context.Context, *CalcId) (*TimeRows, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCalcItem not implemented")
 }
 func (UnimplementedCalcServer) mustEmbedUnimplementedCalcServer() {}

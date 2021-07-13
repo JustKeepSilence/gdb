@@ -9,67 +9,35 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/sync/errgroup"
+	"strings"
 )
 
-// SQLite errors
-type sqliteConnectionError struct {
-	ErrorInfo string
-}
-
-func (ct sqliteConnectionError) Error() string {
-	return ct.ErrorInfo
-}
-
-type sqliteExecutionError struct {
-	ErrorInfo string
-}
-
-func (se sqliteExecutionError) Error() string {
-	return se.ErrorInfo
-}
-
-type sqliteRowsError struct {
-	ErrorInfo string
-}
-
-func (sr sqliteRowsError) Error() string {
-	return sr.ErrorInfo
-}
-
-type sqliteTransactionError struct {
-	ErrorInfo string
-}
-
-func (st sqliteTransactionError) Error() string {
-	return st.ErrorInfo
-}
-
 // connect SQLite, if not exist then create
-func connectSqlite(sqlitePath string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", sqlitePath)
-	if db == nil {
-		return nil, sqliteConnectionError{"sqliteConnectionError: null sqlite pointer"}
+func (gdb *Gdb) connectDataBase(driverName, dsn string) error {
+	if db, err := sql.Open(driverName, dsn); err != nil {
+		return fmt.Errorf("failded to connecting to database:" + err.Error())
+	} else {
+		if err := db.Ping(); err != nil {
+			return err
+		}
+		gdb.itemDb = db
+		gdb.driverName = driverName
+		if driverName == "mysql" {
+			gdb.itemDbName = strings.Split(strings.Split(dsn, "/")[1], "?")[0]
+		}
+		return nil
 	}
-	if err != nil {
-		return nil, sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
-	}
-	return db, nil
 }
 
 // query data from SQLite, the format of return value is: [{columnName1: value1, columnName2: value2}]
-func query(sqlitePath, queryString string) ([]map[string]string, error) {
-	db, err := connectSqlite(sqlitePath)
+func (gdb *Gdb) query(queryString string) ([]map[string]string, error) {
+	rows, err := gdb.itemDb.Query(queryString)
 	if err != nil {
-		return nil, err
-	}
-	defer func(db *sql.DB) {
-		_ = db.Close()
-	}(db)
-	rows, err := db.Query(queryString)
-	if err != nil {
-		return nil, sqliteExecutionError{"sqliteExecutionError: " + err.Error()}
+		return nil, fmt.Errorf("sqlExecutionError:" + err.Error())
 	}
 	columnNames, _ := rows.Columns() // get column names
 	var scanColumns []interface{}    // Store the address of the variable corresponding to each column to store the result of the Scan scan
@@ -84,7 +52,7 @@ func query(sqlitePath, queryString string) ([]map[string]string, error) {
 		err := rows.Scan(scanColumns...)
 		if err != nil {
 			// Write each row of data to scanColumns
-			return nil, sqliteRowsError{"sqliteRowsError: " + err.Error()}
+			return nil, fmt.Errorf("sqlExecutionError:" + err.Error())
 		}
 		temp := make(map[string]string)
 		for index, scanColumnValue := range scanColumns {
@@ -103,18 +71,14 @@ func query(sqlitePath, queryString string) ([]map[string]string, error) {
 }
 
 // insert items into group
-func insertItems(sqlitePath, insertString string, rowValues ...[]string) error {
-	db, err := connectSqlite(sqlitePath)
+func (gdb *Gdb) insertItems(insertString string, rowValues ...[]string) error {
+	tx, err := gdb.itemDb.Begin()
 	if err != nil {
-		return sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
-	}
-	tx, err := db.Begin()
-	if err != nil {
-		return sqliteTransactionError{"sqliteTransactionError: " + err.Error()}
+		return fmt.Errorf("sqlExecutionError:" + err.Error())
 	}
 	stmt, err := tx.Prepare(insertString)
 	if err != nil {
-		return sqliteTransactionError{"sqliteTransactionError: " + err.Error()}
+		return fmt.Errorf("sqlExecutionError:" + err.Error())
 	}
 	eg := errgroup.Group{}
 	for _, rowValue := range rowValues {
@@ -130,7 +94,7 @@ func insertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 				tx.Rollback() is the key ,see https://github.com/mattn/go-sqlite3/issues/184
 				*/
 				//flagChan <- true
-				return sqliteExecutionError{"sqliteExecutionError: " + err.Error() + "\n"}
+				return fmt.Errorf("sqlExecutionError:" + err.Error() + "\n")
 			} else {
 				return nil
 			}
@@ -140,9 +104,6 @@ func insertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 		defer func(tx *sql.Tx) {
 			_ = tx.Rollback()
 		}(tx)
-		defer func(db *sql.DB) {
-			_ = db.Close()
-		}(db)
 		defer func(stmt *sql.Stmt) {
 			_ = stmt.Close()
 		}(stmt)
@@ -152,20 +113,14 @@ func insertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 			defer func(tx *sql.Tx) {
 				_ = tx.Rollback()
 			}(tx)
-			defer func(db *sql.DB) {
-				_ = db.Close()
-			}(db)
 			defer func(stmt *sql.Stmt) {
 				_ = stmt.Close()
 			}(stmt)
-			return sqliteTransactionError{"sqliteTransactionError: " + err.Error()}
+			return fmt.Errorf("sqlExecutionError:" + err.Error())
 		} else {
 			defer func(tx *sql.Tx) {
 				_ = tx.Rollback()
 			}(tx)
-			defer func(db *sql.DB) {
-				_ = db.Close()
-			}(db)
 			defer func(stmt *sql.Stmt) {
 				_ = stmt.Close()
 			}(stmt)
@@ -175,42 +130,28 @@ func insertItems(sqlitePath, insertString string, rowValues ...[]string) error {
 }
 
 // update items with transaction
-func updateItems(sqlitePath string, sqlStrings ...string) error {
-	db, err := connectSqlite(sqlitePath)
+func (gdb *Gdb) updateItems(sqlStrings ...string) error {
+	tx, err := gdb.itemDb.Begin()
 	if err != nil {
-		return sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
-	}
-	defer func(db *sql.DB) {
-		_ = db.Close()
-	}(db)
-	tx, err := db.Begin()
-	if err != nil {
-		return sqliteTransactionError{"sqliteTransactionError: " + err.Error()}
+		return fmt.Errorf("sqlExecutionError:" + err.Error())
 	}
 	for _, sqlString := range sqlStrings {
-		if _, err := tx.Exec(sqlString, nil); err != nil {
+		if _, err := tx.Exec(sqlString); err != nil {
 			_ = tx.Rollback()
-			return sqliteExecutionError{"sqliteExecutionError: " + err.Error()}
+			return fmt.Errorf("sqlExecutionError:" + err.Error())
 		}
 	}
 	if err := tx.Commit(); err != nil {
-		return sqliteExecutionError{"sqliteExecutionError: " + err.Error()}
+		return fmt.Errorf("sqlExecutionError:" + err.Error())
 	}
 	return nil
 }
 
 // update item
-func updateItem(sqlitePath, sqlString string) (int64, error) {
-	db, err := connectSqlite(sqlitePath)
+func (gdb *Gdb) updateItem(sqlString string) (int64, error) {
+	r, err := gdb.itemDb.Exec(sqlString)
 	if err != nil {
-		return -1, sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
-	}
-	defer func(db *sql.DB) {
-		_ = db.Close()
-	}(db)
-	r, err := db.Exec(sqlString, nil)
-	if err != nil {
-		return -1, sqliteConnectionError{"sqliteConnectionError: " + err.Error()}
+		return -1, fmt.Errorf("sqlExecutionError:" + err.Error())
 	}
 	e, _ := r.RowsAffected()
 	return e, nil

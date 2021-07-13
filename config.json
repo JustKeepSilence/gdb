@@ -1,47 +1,74 @@
 // Notes: you can use // single line comments in json file
 {
-  "gdbConfigs": {
-    // ip address of gdb service, if empty, we will get ip of local machine
+  // base configs of gdb
+  "baseConfigs": {
+    // ip address of gdb service, if empty, we will use local ip of machine
     "ip": "",
     // port of gdb service
     "port": 8082,
-    // path of gdb service to store data
-    "dbPath": "./leveldb",
-    // path of gdb service to store item data
-    "itemDbPath": "./itemDb",
+    // path of gdb service to store historical, info data
+    "dbPath": "./historyData",
     // name of gdb service to get runTime info of gdb, should be the same
     // as the name of the compiled executable file
-    "applicationName": "gdb.exe",
+    "applicationName": "gdb",
     // whether to open authorization mode, if true, when use restful or rpc
     // user need to token authorization authentication
     "authorization": true,
     // Specify the operating mode of gdb, currently supports http and https modes, default mode is http
     // if it is http mode, there is no tls verification, if it is https mode, tls verification is required
     // if mode is "", mode is http
-    "mode": "",
-    // configs of https
-    "httpsConfigs": {
-      // Whether to use CA root certificate authentication,default is false,
-      // if CA root certificate authentication is adopted, you need to place the CA root certificate file in the ssl
-      // folder and specify its name in the configuration file. and, self-signed CA root certificate is not supported
-      // on windows
-      "ca": false,
-      // whether self-signed ca
-      "selfSignedCa": false,
-      // fileName of ca root certificate
-      "caCertificateName": "",
-      // fileName of ca server certificate
-      "serverCertificateName": "gdbServer.crt",
-      // key file of server
-      "serverKeyName": "gdbServer.key"
-    }
+    "mode": "http",
+    // whether use redis as realTime database, default is false, which will use fast cache as realTime database
+    "useRedis": false,
+    // time durations to sync RealTime data in memory to other database or file system,unit is second
+    "rtTimeDuration": 3600,
+    //time durations to sync history data in memory to leveldb, unit is second
+    // Note:You can only increase this value after the database is started, otherwise the historical data may not be get
+    "hisTimeDuration": 300
+  },
+  // configs of item database, you can use sqlite or mysql to store item data of gdb,default is sqlite
+  "itemDbConfigs": {
+    // sql driver name, can be sqlite3 of mysql
+    "driverName": "sqlite3",
+    // dsn to connect to database
+    // mysql:"root:admin@123@tcp(192.168.0.166:3306)/itemDb"
+    // sqlite3: "./leveldb/item.db"
+    "dsn": "./itemDb.db"
+  },
+  // configs of https mode
+  "httpsConfigs": {
+    // Whether to use CA root certificate authentication,default is false,
+    // if CA root certificate authentication is adopted, you need to place the CA root certificate file in the ssl
+    // folder and specify its name in the configuration file. and, self-signed CA root certificate is not supported
+    // on windows
+    "ca": false,
+    // whether self-signed ca
+    "selfSignedCa": false,
+    // fileName of ca root certificate
+    "caCertificateName": "",
+    // fileName of ca server certificate
+    "serverCertificateName": "gdbServer.crt",
+    // key file of server
+    "serverKeyName": "gdbServer.key"
   },
   "logConfigs": {
     // whether write log for gdb
     "logWriting": true,
     // loglevel of gdb, Info or Error
-    "Level" : "Info",
+    "Level": "Error",
     // expiredTime of gdb, unit is seconds
-    "expiredTime": 24
+    "expiredTime": 3600
+  },
+  // if you use redis as realTime database, you need configs this filed
+  "redisConfigs": {
+    // ip of redis server
+    "redisIp": "192.168.0.199",
+    // port of redis server
+    "redisPort": 6379,
+    // passWord of redis
+    "redisPassWord": "",
+    "redisDb": 0,
+    // key name of hash in redis
+    "keyName": "gdbRealTime"
   }
 }

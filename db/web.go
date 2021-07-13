@@ -18,26 +18,28 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/process"
+	"github.com/syndtr/goleveldb/leveldb"
 	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
 )
+
 //go:embed templateFiles
 var dFiles embed.FS
 
 // group handler, add json binding to all request data, for details see:
 // https://github.com/gin-gonic/gin#model-binding-and-validation
 func (gdb *Gdb) addGroupsHandler(c *gin.Context) {
-	g := AddedGroupInfos{}
+	var g addedGroupInfos
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.AddGroups(g.GroupInfos...) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -46,15 +48,15 @@ func (gdb *Gdb) addGroupsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) deleteGroupsHandler(c *gin.Context) {
-	g := GroupNamesInfo{}
+	var g GroupNamesInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.DeleteGroups(g)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -65,7 +67,7 @@ func (gdb *Gdb) deleteGroupsHandler(c *gin.Context) {
 func (gdb *Gdb) getGroupsHandler(c *gin.Context) {
 	responseData, err := gdb.GetGroups()
 	if err != nil {
-		gdb.string(c, 500, "%s", []byte(err.Error()), gin.H{})
+		gdb.string(c, 500, "%s", convertStringToByte(err.Error()), gin.H{})
 	} else {
 		r, _ := json.Marshal(ResponseData{200, "", responseData})
 		gdb.string(c, 200, "%s", r, gin.H{})
@@ -73,16 +75,16 @@ func (gdb *Gdb) getGroupsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) getGroupPropertyHandler(c *gin.Context) {
-	g := queryGroupPropertyInfo{}
+	var g queryGroupPropertyInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		groupName, condition := g.GroupName, g.Condition
 		responseData, err := gdb.GetGroupProperty(groupName, condition)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -91,15 +93,15 @@ func (gdb *Gdb) getGroupPropertyHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateGroupNamesHandler(c *gin.Context) {
-	g := UpdatedGroupNamesInfo{}
+	var g updatedGroupNamesInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.UpdateGroupNames(g.Infos...)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -108,15 +110,15 @@ func (gdb *Gdb) updateGroupNamesHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateGroupColumnNamesHandler(c *gin.Context) {
-	g := UpdatedGroupColumnNamesInfo{}
+	var g UpdatedGroupColumnNamesInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.UpdateGroupColumnNames(g)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -125,15 +127,15 @@ func (gdb *Gdb) updateGroupColumnNamesHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) deleteGroupColumnsHandler(c *gin.Context) {
-	g := DeletedGroupColumnNamesInfo{}
+	var g DeletedGroupColumnNamesInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.DeleteGroupColumns(g)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -142,15 +144,15 @@ func (gdb *Gdb) deleteGroupColumnsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) addGroupColumnsHandler(c *gin.Context) {
-	g := AddedGroupColumnsInfo{}
+	var g AddedGroupColumnsInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.AddGroupColumns(g)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -160,14 +162,14 @@ func (gdb *Gdb) addGroupColumnsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) cleanGroupItemsHandler(c *gin.Context) {
-	g := GroupNamesInfo{}
+	var g GroupNamesInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if responseData, err := gdb.CleanGroupItems(g.GroupNames...); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -177,15 +179,15 @@ func (gdb *Gdb) cleanGroupItemsHandler(c *gin.Context) {
 
 // item handler
 func (gdb *Gdb) addItemsHandler(c *gin.Context) {
-	g := AddedItemsInfo{}
+	var g AddedItemsInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.AddItems(g) // add items
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -195,50 +197,33 @@ func (gdb *Gdb) addItemsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) deleteItemsHandler(c *gin.Context) {
-	g := DeletedItemsInfo{}
+	var g DeletedItemsInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.DeleteItems(g) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
 	}
 
-}
-
-func (gdb *Gdb) getItemsHandler(c *gin.Context) {
-	g := ItemsInfo{}
-	request := c.Request
-	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
-	} else {
-		responseData, err := gdb.GetItems(g) // get items
-		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
-		} else {
-			r, _ := json.Marshal(ResponseData{200, "", responseData})
-			gdb.string(c, 200, "%s", r, g)
-		}
-	}
 }
 
 func (gdb *Gdb) handleGetItemsWithCount(c *gin.Context) {
-	g := ItemsInfo{}
+	var g ItemsInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.getItemsWithCount(g) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -247,15 +232,15 @@ func (gdb *Gdb) handleGetItemsWithCount(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateItemsHandler(c *gin.Context) {
-	g := UpdatedItemsInfo{}
+	var g UpdatedItemsInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.UpdateItems(g) //
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -264,14 +249,14 @@ func (gdb *Gdb) updateItemsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) checkItemsHandler(c *gin.Context) {
-	g := CheckItemsInfo{}
+	var g checkItemsInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if err := gdb.CheckItems(g.GroupName, g.ItemNames...); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", ""})
 			gdb.string(c, 200, "%s", r, g)
@@ -279,46 +264,129 @@ func (gdb *Gdb) checkItemsHandler(c *gin.Context) {
 	}
 }
 
-// data handler
-func (gdb *Gdb) batchWriteHandler(c *gin.Context) {
-	//startTime := time.Now()
-	var endTime, endTime1 time.Time
+func (gdb *Gdb) batchWriteFloatDataHandler(c *gin.Context) {
 	request := c.Request
-	var g batchWriteString
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g floatItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
-		//kv := batchWriteString.ItemValues
-		var responseData Rows
-		//var err error
-		endTime = time.Now()
-		responseData, err := gdb.BatchWrite(g.ItemValues...)
-		endTime1 = time.Now()
-		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+		if responseData, err := gdb.BatchWriteFloatData(g.GroupNames, g.ItemNames, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			_ = gdb.infoDb.Put([]byte(writtenItems), []byte(fmt.Sprintf("%d", len(g.ItemValues))), nil)
-			_ = gdb.infoDb.Put([]byte(speed), []byte(fmt.Sprintf("%dms/%d", endTime1.Sub(endTime).Milliseconds(), len(g.ItemValues))), nil)
-			ts, _ := gdb.infoDb.Get([]byte(timeKey), nil)
-			_ = gdb.infoDb.Put([]byte(speed+fmt.Sprintf("%s", ts)), []byte(fmt.Sprintf("%s", endTime1.Sub(endTime))), nil) // write history
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
 	}
 }
 
-func (gdb *Gdb) batchWriteHistoricalDataHandler(c *gin.Context) {
+func (gdb *Gdb) batchWriteIntDataHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := batchWriteHistoricalString{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g intItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
-		if err := gdb.BatchWriteHistoricalData(g.HistoricalItemValues...); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+		if responseData, err := gdb.BatchWriteIntData(g.GroupNames, g.ItemNames, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", ""})
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) batchWriteBoolDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g boolItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
+	} else {
+		if responseData, err := gdb.BatchWriteBoolData(g.GroupNames, g.ItemNames, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) batchWriteStringDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g stringItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
+	} else {
+		if responseData, err := gdb.BatchWriteStringData(g.GroupNames, g.ItemNames, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) batchWriteFloatHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g floatHItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
+	} else {
+		if responseData, err := gdb.BatchWriteFloatHistoricalData(g.GroupNames, g.ItemNames, g.TimeStamps, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) batchWriteIntHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g intHItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
+	} else {
+		if responseData, err := gdb.BatchWriteIntHistoricalData(g.GroupNames, g.ItemNames, g.TimeStamps, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) batchWriteStringHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g stringHItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
+	} else {
+		if responseData, err := gdb.BatchWriteStringHistoricalData(g.GroupNames, g.ItemNames, g.TimeStamps, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
+			gdb.string(c, 200, "%s", r, g)
+		}
+	}
+}
+
+func (gdb *Gdb) batchWriteBoolHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g boolHItemValues
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
+	} else {
+		if responseData, err := gdb.BatchWriteBoolHistoricalData(g.GroupNames, g.ItemNames, g.TimeStamps, g.ItemValues); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
 	}
@@ -328,16 +396,15 @@ func (gdb *Gdb) getRealTimeDataHandler(c *gin.Context) {
 	request := c.Request
 	var g queryRealTimeDataString
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		itemNames := g.ItemNames
-		responseData, err := gdb.GetRealTimeData(g.GroupNames, itemNames...)
+		responseData, err := gdb.GetRealTimeData(g.GroupNames, g.ItemNames)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			if r, err := json.Marshal(ResponseData{200, "", gdbRealTimeData{responseData}}); err != nil {
-				gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 			} else {
 				gdb.string(c, 200, "%s", r, g)
 			}
@@ -345,65 +412,415 @@ func (gdb *Gdb) getRealTimeDataHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) getHistoricalDataHandler(c *gin.Context) {
+func (gdb *Gdb) getFloatHistoricalDataHandler(c *gin.Context) {
 	request := c.Request
-	g := queryHistoricalDataString{}
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	var g queryHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		itemNames := g.ItemNames
-		startTimes := g.StartTimes
-		endTimes := g.EndTimes
-		intervals := g.Intervals
-		responseData, err := gdb.GetHistoricalData(g.GroupNames, itemNames, startTimes, endTimes, intervals)
-		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+		if responseData, err := gdb.GetFloatHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", gdbHistoricalData{HistoricalData: responseData}})
-			gdb.string(c, 200, "%s", r, g)
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
 		}
 	}
 }
 
-func (gdb *Gdb) getHistoricalDataWithConditionHandler(c *gin.Context) {
+func (gdb *Gdb) getIntHistoricalDataHandler(c *gin.Context) {
 	request := c.Request
-	g := queryHistoricalDataWithConditionString{}
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g queryHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		itemNames := g.ItemNames
-		startTimes := g.StartTimes
-		endTimes := g.EndTimes
-		intervals := g.Intervals
-		filterCondition := g.FilterCondition
-		deadZones := g.DeadZones
-		responseData, err := gdb.GetHistoricalDataWithCondition(g.GroupNames, itemNames, startTimes, endTimes, intervals, filterCondition, deadZones...)
-		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+		if responseData, err := gdb.GetIntHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", gdbHistoricalData{responseData}})
-			gdb.string(c, 200, "%s", r, g)
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
 		}
 	}
 }
 
-func (gdb *Gdb) getHistoricalDataWithStampHandler(c *gin.Context) {
+func (gdb *Gdb) getStringHistoricalDataHandler(c *gin.Context) {
 	request := c.Request
-	g := queryHistoricalDataWithTimeStampString{}
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g queryHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		itemNames := g.ItemNames
-		timeStamps := g.TimeStamps
-		responseData, err := gdb.GetHistoricalDataWithStamp(g.GroupNames, itemNames, timeStamps...)
-		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+		if responseData, err := gdb.GetStringHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", gdbHistoricalData{responseData}})
-			gdb.string(c, 200, "%s", r, g)
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getBoolHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetBoolHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getFloatRawHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryRawHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetFloatRawHistoricalData(g.GroupNames, g.ItemNames); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getIntRawHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryRawHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetIntRawHistoricalData(g.GroupNames, g.ItemNames); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getStringRawHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryRawHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetStringRawHistoricalData(g.GroupNames, g.ItemNames); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getBoolRawHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryRawHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetBoolRawHistoricalData(g.GroupNames, g.ItemNames); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getFloatHistoricalDataWithStampHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithStampString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetFloatHistoricalDataWithStamp(g.GroupNames, g.ItemNames, g.TimeStamps); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getIntHistoricalDataWithStampHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithStampString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetIntHistoricalDataWithStamp(g.GroupNames, g.ItemNames, g.TimeStamps); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getStringHistoricalDataWithStampHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithStampString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetStringHistoricalDataWithStamp(g.GroupNames, g.ItemNames, g.TimeStamps); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getBoolHistoricalDataWithStampHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithStampString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetBoolHistoricalDataWithStamp(g.GroupNames, g.ItemNames, g.TimeStamps); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getFloatHistoricalDataWithConditionHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithConditionString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetFloatHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getIntHistoricalDataWithConditionHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithConditionString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetIntHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getStringHistoricalDataWithConditionHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithConditionString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetStringHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) getBoolHistoricalDataWithConditionHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g queryHistoricalDataWithConditionString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.GetBoolHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) deleteFloatHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g deleteHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.DeleteFloatHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) deleteIntHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g deleteHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.DeleteIntHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) deleteStringHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g deleteHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.DeleteStringHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) deleteBoolHistoricalDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g deleteHistoricalDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.DeleteBoolHistoricalData(g.GroupNames, g.ItemNames, g.StartTimes, g.EndTimes); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) cleanItemDataHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	var g DeletedItemsInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
+	} else {
+		if responseData, err := gdb.CleanItemData(g); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+		} else {
+			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
+			} else {
+				gdb.string(c, 200, "%s", r, g)
+			}
+		}
+	}
+}
+
+func (gdb *Gdb) reLoadDbHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	if responseData, err := gdb.ReLoadDb(); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(err.Error()), nil)
+	} else {
+		if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), nil)
+		} else {
+			gdb.string(c, 200, "%s", r, nil)
 		}
 	}
 }
@@ -414,7 +831,7 @@ func (gdb *Gdb) getDbInfoHandler(c *gin.Context) {
 	defer request.Body.Close()
 	responseData, err := gdb.getDbInfo()
 	if err != nil {
-		gdb.string(c, 500, "%s", []byte(err.Error()), gin.H{})
+		gdb.string(c, 500, "%s", convertStringToByte(err.Error()), gin.H{})
 	} else {
 		r, _ := json.Marshal(ResponseData{200, "", gdbInfoData{responseData}})
 		gdb.string(c, 200, "%s", r, gin.H{})
@@ -424,13 +841,13 @@ func (gdb *Gdb) getDbInfoHandler(c *gin.Context) {
 func (gdb *Gdb) getDbInfoHistoryHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := querySpeedHistoryDataString{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g querySpeedHistoryDataString
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
-		responseData, err := gdb.getDbInfoHistory(g.ItemName, g.StartTimes, g.EndTimes, g.Intervals)
+		responseData, err := gdb.getDbInfoHistory(g.InfoType, g.ItemName, g.StartTimes, g.EndTimes, g.Intervals)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", gin.H{"historicalData": responseData}})
 			gdb.string(c, 200, "%s", r, g)
@@ -442,7 +859,7 @@ func (gdb *Gdb) getRoutesHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
 	if responseData, err := gdb.getRoutes(); err != nil {
-		gdb.string(c, 500, "%s", []byte(err.Error()), nil)
+		gdb.string(c, 500, "%s", convertStringToByte(err.Error()), nil)
 	} else {
 		r, _ := json.Marshal(ResponseData{200, "", map[string][]map[string]string{"routes": responseData}})
 		gdb.string(c, 200, "%s", r, nil)
@@ -452,14 +869,14 @@ func (gdb *Gdb) getRoutesHandler(c *gin.Context) {
 func (gdb *Gdb) deleteRoutesHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := routesInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g routesInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if err := gdb.deleteRoutes(g.Name, g.Routes...); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), err)
 		} else {
-			responseData := Rows{EffectedRows: len(g.Routes)}
+			responseData := TimeRows{EffectedRows: len(g.Routes)}
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
@@ -469,14 +886,14 @@ func (gdb *Gdb) deleteRoutesHandler(c *gin.Context) {
 func (gdb *Gdb) addRoutesHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := routesInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g routesInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if err := gdb.addRoutes(g.Name, g.Routes...); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), err)
 		} else {
-			responseData := Rows{EffectedRows: len(g.Routes)}
+			responseData := TimeRows{EffectedRows: len(g.Routes)}
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
@@ -486,14 +903,14 @@ func (gdb *Gdb) addRoutesHandler(c *gin.Context) {
 func (gdb *Gdb) addUserRoutesHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := routesInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g routesInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if err := gdb.addUserRoutes(g.Name, g.Routes...); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), err)
 		} else {
-			responseData := Rows{EffectedRows: 1}
+			responseData := TimeRows{EffectedRows: 1}
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
@@ -503,15 +920,15 @@ func (gdb *Gdb) addUserRoutesHandler(c *gin.Context) {
 func (gdb *Gdb) deleteUserRoutesHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := userName{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g userName
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
-		if _, err := updateItem(gdb.ItemDbPath, "delete from route_cfg where userName='"+g.Name+"'"); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), err)
+		if _, err := gdb.updateItem("delete from route_cfg where userName='" + g.Name + "'"); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), err)
 		} else {
 			_ = gdb.e.LoadPolicy()
-			responseData := Rows{EffectedRows: 1}
+			responseData := TimeRows{EffectedRows: 1}
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
@@ -521,16 +938,16 @@ func (gdb *Gdb) deleteUserRoutesHandler(c *gin.Context) {
 func (gdb *Gdb) getAllRoutesHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	r, _ := json.Marshal(ResponseData{200, "", map[string][][]string{"routes": {allRoutes, commonUserRoutes, visitorUserRoutes}}})
+	r, _ := json.Marshal(ResponseData{200, "", map[string][][]string{"routes": {superUserRoutes, commonUserRoutes, visitorUserRoutes}}})
 	gdb.string(c, 200, "%s", r, nil)
 }
 
 func (gdb *Gdb) checkRoutesHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := routesInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g routesInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, _ := gdb.checkRoutes(g.Name, g.Routes...)
 		r, _ := json.Marshal(ResponseData{200, "", gin.H{"result": responseData}})
@@ -538,34 +955,16 @@ func (gdb *Gdb) checkRoutesHandler(c *gin.Context) {
 	}
 }
 
-func (gdb *Gdb) getRawDataHandler(c *gin.Context) {
-	g := queryRealTimeDataString{}
-	request := c.Request
-	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
-	} else {
-		responseData, err := gdb.GetRawHistoricalData(g.GroupNames, g.ItemNames...) // add groups
-		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
-		} else {
-			r, _ := json.Marshal(ResponseData{200, "", responseData})
-			gdb.string(c, 200, "%s", r, g)
-		}
-	}
-}
-
-// page handler
 func (gdb *Gdb) handleUserLogin(c *gin.Context) {
-	g := authInfo{}
+	var g authInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		token, err := gdb.userLogin(g) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", token})
 			gdb.string(c, 200, "%s", r, g)
@@ -577,12 +976,12 @@ func (gdb *Gdb) handleUserLogout(c *gin.Context) {
 	g := gin.H{}
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		userName := g["name"].(string)
 		if responseData, err := gdb.userLogout(userName); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), gin.H{})
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), gin.H{})
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, gin.H{})
@@ -591,15 +990,15 @@ func (gdb *Gdb) handleUserLogout(c *gin.Context) {
 }
 
 func (gdb *Gdb) getUerInfoHandler(c *gin.Context) {
-	g := userName{} // userName
+	var g userName // userName
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.getUserInfo(g.Name) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -610,8 +1009,8 @@ func (gdb *Gdb) getUerInfoHandler(c *gin.Context) {
 func (gdb *Gdb) getUsersHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	if responseData, err := query(gdb.ItemDbPath, "select id, userName, role from user_cfg"); err != nil {
-		gdb.string(c, 500, "%s", []byte(err.Error()), gin.H{})
+	if responseData, err := gdb.query("select id, userName, role from user_cfg"); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(err.Error()), gin.H{})
 	} else {
 		r, _ := json.Marshal(ResponseData{200, "", gin.H{"userInfos": responseData}})
 		gdb.string(c, 200, "%s", r, gin.H{})
@@ -621,12 +1020,12 @@ func (gdb *Gdb) getUsersHandler(c *gin.Context) {
 func (gdb *Gdb) addUsersHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := addedUserInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g addedUserInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if responseData, err := gdb.addUsers(g); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -637,12 +1036,12 @@ func (gdb *Gdb) addUsersHandler(c *gin.Context) {
 func (gdb *Gdb) deleteUsersHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := userName{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g userName
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if responseData, err := gdb.deleteUsers(g); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -653,12 +1052,12 @@ func (gdb *Gdb) deleteUsersHandler(c *gin.Context) {
 func (gdb *Gdb) updateUsersHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := updatedUserInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g updatedUserInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if responseData, err := gdb.updateUsers(g); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -669,10 +1068,10 @@ func (gdb *Gdb) updateUsersHandler(c *gin.Context) {
 func (gdb *Gdb) handleUploadFile(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
-		gdb.string(c, 500, "%s", []byte(fmt.Sprintf("fail parsing string: %s", err)), gin.H{})
+		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), gin.H{})
 	} else {
 		if err := c.SaveUploadedFile(file, "./uploadFiles/"+file.Filename); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), gin.H{})
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), gin.H{})
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", nil})
 			c.String(200, fmt.Sprintf("%s", r))
@@ -683,16 +1082,16 @@ func (gdb *Gdb) handleUploadFile(c *gin.Context) {
 func (gdb *Gdb) handleHttpsUploadFile(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := httpsFile{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g httpsFile
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		files, b := g.File, []uint8{}
 		for _, file := range files {
 			b = append(b, uint8(file))
 		}
 		if err := ioutil.WriteFile("./uploadFiles/"+g.FileName, b, 0644); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", ""})
 			gdb.string(c, 200, "%s", r, g)
@@ -701,16 +1100,16 @@ func (gdb *Gdb) handleHttpsUploadFile(c *gin.Context) {
 }
 
 func (gdb *Gdb) handleAddItemsByExcelHandler(c *gin.Context) {
-	g := fileInfo{}
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g fileInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		fileName, groupName := g.FileName, g.GroupName
 		responseData, err := gdb.addItemsByExcel(groupName, "./uploadFiles/"+fileName) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -719,17 +1118,17 @@ func (gdb *Gdb) handleAddItemsByExcelHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) importHistoryByExcelHandler(c *gin.Context) {
-	g := historyFileInfo{}
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g historyFileInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		fileName, itemNames, sheetNames := g.FileName, g.ItemNames, g.SheetNames
-		if err := gdb.importHistoryByExcel("./uploadFiles/"+fileName, g.GroupName, itemNames, sheetNames...); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+		if responseData, err := gdb.importHistoryByExcel("./uploadFiles/"+fileName, g.GroupName, itemNames, sheetNames...); err != nil {
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", ""})
+			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
 		}
 	}
@@ -738,14 +1137,14 @@ func (gdb *Gdb) importHistoryByExcelHandler(c *gin.Context) {
 func (gdb *Gdb) getJsCodeHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := fileInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g fileInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		fileName := g.FileName
 		responseData, err := getJsCode(fileName) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", map[string]string{"code": responseData}})
 			gdb.string(c, 200, "%s", r, g)
@@ -755,14 +1154,14 @@ func (gdb *Gdb) getJsCodeHandler(c *gin.Context) {
 
 func (gdb *Gdb) getLogsHandler(c *gin.Context) {
 	request := c.Request
-	g := queryLogsInfo{}
+	var g queryLogsInfo
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte(err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 	} else {
 		responseData, err := gdb.getLogs(g)
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -773,12 +1172,12 @@ func (gdb *Gdb) getLogsHandler(c *gin.Context) {
 func (gdb *Gdb) deleteLogsHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := deletedLogInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g deletedLogInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if responseData, err := gdb.deleteLogs(g); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -789,14 +1188,14 @@ func (gdb *Gdb) deleteLogsHandler(c *gin.Context) {
 func (gdb *Gdb) downloadFileHandler(c *gin.Context) {
 	request := c.Request
 	defer request.Body.Close()
-	g := fileInfo{}
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	var g fileInfo
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		fileName := g.FileName
 		contents := []int32{}
 		if fileContent, err := dFiles.ReadFile("templateFiles/" + fileName); err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			for _, c := range fileContent {
 				contents = append(contents, int32(c))
@@ -807,18 +1206,29 @@ func (gdb *Gdb) downloadFileHandler(c *gin.Context) {
 	}
 }
 
+func (gdb *Gdb) getDbSizeHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	if responseData, err := gdb.getDbSize(); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), nil)
+	} else {
+		r, _ := json.Marshal(ResponseData{200, "", gin.H{"fileSize": responseData}})
+		gdb.string(c, 200, "%s", r, nil)
+	}
+}
+
 func (gdb *Gdb) testCalcItemHandler(c *gin.Context) {
 	g := gin.H{}
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		if expression, ok := g["expression"]; !ok {
-			gdb.string(c, 500, "%s", []byte("json must contain expression field"), g)
+			gdb.string(c, 500, "%s", convertStringToByte("json must contain expression field"), g)
 		} else {
 			if responseData, err := gdb.testCalculation(expression.(string)); err != nil {
-				gdb.string(c, 500, "%s", []byte(err.Error()), g)
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 			} else {
 				r, _ := json.Marshal(ResponseData{200, "", responseData})
 				gdb.string(c, 200, "%s", r, g)
@@ -828,20 +1238,20 @@ func (gdb *Gdb) testCalcItemHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) addCalcItemHandler(c *gin.Context) {
-	g := addedCalcItemInfo{}
+	var g addedCalcItemInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.testCalculation(g.Expression) // test expression
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			// add item to calc_cfg
 			createTime := time.Now().Format(timeFormatString)
-			if _, err := updateItem(gdb.ItemDbPath, "insert into calc_cfg (description, expression, createTime, updatedTime, duration, status) values ('"+g.Description+"', '"+g.Expression+"' , '"+createTime+"', '"+createTime+"', '"+g.Duration+"', '"+g.Flag+"')"); err != nil {
-				gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			if _, err := gdb.updateItem("insert into calc_cfg (description, expression, createTime, updatedTime, duration, status) values ('" + g.Description + "', '" + g.Expression + "' , '" + createTime + "', '" + createTime + "', '" + g.Duration + "', '" + g.Flag + "')"); err != nil {
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 			} else {
 				r, _ := json.Marshal(ResponseData{200, "", responseData})
 				gdb.string(c, 200, "%s", r, g)
@@ -851,15 +1261,15 @@ func (gdb *Gdb) addCalcItemHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) getCalcItemsHandler(c *gin.Context) {
-	g := queryCalcItemsInfo{} // condition
+	var g queryCalcItemsInfo // condition
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.getCalculationItem(g.Condition) // add groups
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			r, _ := json.Marshal(ResponseData{200, "", responseData})
 			gdb.string(c, 200, "%s", r, g)
@@ -868,18 +1278,18 @@ func (gdb *Gdb) getCalcItemsHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) updateCalcItemHandler(c *gin.Context) {
-	g := updatedCalcInfo{}
+	var g updatedCalcInfo
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		responseData, err := gdb.testCalculation(g.Expression) // test expression
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			if _, err := gdb.updateCalculationItem(g); err != nil {
-				gdb.string(c, 500, "%s", []byte(err.Error()), g)
+				gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 			} else {
 				r, _ := json.Marshal(ResponseData{200, "", responseData})
 				gdb.string(c, 200, "%s", r, g)
@@ -890,65 +1300,80 @@ func (gdb *Gdb) updateCalcItemHandler(c *gin.Context) {
 }
 
 func (gdb *Gdb) startCalculationItemHandler(c *gin.Context) {
-	g := calcId{}
+	var g calcId
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		id := []string{}
 		for _, item := range g.Id {
 			id = append(id, "id = '"+item+"'")
 		}
-		_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='true', updatedTime = '"+time.Now().Format(timeFormatString)+"' where "+strings.Join(id, " or "))
+		st := time.Now()
+		_, err := gdb.updateItem("update calc_cfg set status='true', updatedTime = '" + time.Now().Format(timeFormatString) + "' where " + strings.Join(id, " or "))
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", Rows{len(g.Id)}})
+			r, _ := json.Marshal(ResponseData{200, "", TimeRows{EffectedRows: len(g.Id), Times: time.Since(st).Milliseconds()}})
 			gdb.string(c, 200, "%s", r, g)
 		}
 	}
 }
 
 func (gdb *Gdb) stopCalculationItemHandler(c *gin.Context) {
-	g := calcId{}
+	var g calcId
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		id := []string{}
 		for _, item := range g.Id {
 			id = append(id, "id = '"+item+"'")
 		}
-		_, err := updateItem(gdb.ItemDbPath, "update calc_cfg set status='false', updatedTime='"+time.Now().Format(timeFormatString)+"' where "+strings.Join(id, " or "))
+		st := time.Now()
+		_, err := gdb.updateItem("update calc_cfg set status='false', updatedTime='" + time.Now().Format(timeFormatString) + "' where " + strings.Join(id, " or "))
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", Rows{len(g.Id)}})
+			r, _ := json.Marshal(ResponseData{200, "", TimeRows{EffectedRows: len(g.Id), Times: time.Since(st).Milliseconds()}})
 			gdb.string(c, 200, "%s", r, g)
 		}
 	}
 }
 
 func (gdb *Gdb) deleteCalculationItemHandler(c *gin.Context) {
-	g := calcId{}
+	var g calcId
 	request := c.Request
 	defer request.Body.Close()
-	if err := c.ShouldBind(&g); err != nil {
-		gdb.string(c, 500, "%s", []byte("incorrect json form :"+err.Error()), g)
+	if err := c.ShouldBindJSON(&g); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte("incorrect json form :"+err.Error()), g)
 	} else {
 		id := []string{}
 		for _, item := range g.Id {
 			id = append(id, "id = '"+item+"'")
 		}
-		_, err := updateItem(gdb.ItemDbPath, "delete from calc_cfg where "+strings.Join(id, " or "))
+		st := time.Now()
+		_, err := gdb.updateItem("delete from calc_cfg where " + strings.Join(id, " or "))
 		if err != nil {
-			gdb.string(c, 500, "%s", []byte(err.Error()), g)
+			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
-			r, _ := json.Marshal(ResponseData{200, "", Rows{len(g.Id)}})
+			r, _ := json.Marshal(ResponseData{200, "", TimeRows{EffectedRows: len(g.Id), Times: time.Since(st).Milliseconds()}})
 			gdb.string(c, 200, "%s", r, g)
 		}
+	}
+}
+
+func (gdb *Gdb) getCmdInfoHandler(c *gin.Context) {
+	request := c.Request
+	defer request.Body.Close()
+	param := c.Param("name")
+	if responseData, err := gdb.getCmdInfo(param); err != nil {
+		gdb.string(c, 500, "%s", convertStringToByte(err.Error()), nil)
+	} else {
+		r, _ := json.Marshal(ResponseData{200, "", responseData})
+		gdb.string(c, 200, "%s", r, nil)
 	}
 }
 
@@ -968,22 +1393,30 @@ func (gdb *Gdb) getProcessInfo() error {
 			for _, p := range ps {
 				name, _ := p.Name()
 				if name == appName {
+					currentTimeStamp := int(time.Now().Unix()) + 8*3600 // current ts
+					ts := strconv.Itoa(currentTimeStamp)
+					batch := &leveldb.Batch{}
 					m, _ := p.MemoryPercent()
 					v := fmt.Sprintf("%.2f", float64(m)*float64(tm.Total)*10e-9)
-					_ = gdb.infoDb.Put([]byte(ram), []byte(v), nil) // write mem usage
-					currentTimeStamp := int(time.Now().Unix()) + 8*3600
-					ts := strconv.Itoa(currentTimeStamp)
-					_ = gdb.infoDb.Put([]byte(ram+fmt.Sprintf("%s", ts)), []byte(v), nil) // write history
+					batch.Put(convertStringToByte(ram), convertStringToByte(v))                       // ram
+					batch.Put(convertStringToByte(ram+fmt.Sprintf("%s", ts)), convertStringToByte(v)) // write history data of ram
+					c, _ := p.CPUPercent()
+					{
+						batch.Put(convertStringToByte(cpu), convertStringToByte(fmt.Sprintf("%.2f", c)))                       // cpu
+						batch.Put(convertStringToByte(cpu+fmt.Sprintf("%s", ts)), convertStringToByte(fmt.Sprintf("%.2f", c))) // write history data of cpu
+					}
+					size, err := dirSize(gdb.dbPath)
+					{
+						if err != nil {
+							return err
+						}
+						batch.Put(convertStringToByte(fileSize), convertStringToByte(strconv.FormatFloat(size, 'f', 2, 64))) // fileSize
+					}
+					batch.Put(convertStringToByte(timeKey), convertStringToByte(ts))
+					if err := gdb.systemInfoDb.Write(batch, nil); err != nil {
+						return err
+					}
 				}
-			}
-			ts, _ := gdb.infoDb.Get([]byte(timeKey), nil)
-			cs, _ := strconv.ParseInt(fmt.Sprintf("%s", ts), 10, 64)
-			n := time.Now()
-			currentTimeStamp := time.Date(n.Year(), n.Month(), n.Day(), n.Hour(), n.Minute(), n.Second(), 0, time.UTC).Unix() // unix timestamp
-			// un fresh
-			if currentTimeStamp-cs > 60 {
-				_ = gdb.infoDb.Put([]byte(writtenItems), []byte(fmt.Sprintf("%d", 0)), nil)
-				_ = gdb.infoDb.Put([]byte(speed), []byte(fmt.Sprintf("0ms/0")), nil)
 			}
 		}
 	}
@@ -998,13 +1431,13 @@ func (gdb *Gdb) calc() error {
 		c := map[string]calcConfig{}
 		//c := map[string]calcConfig{}
 		flag := true // record whether it is the first time to run
-		startTime := time.NewTicker(5 * time.Second)
+		startTime := time.NewTicker(60 * time.Second)
 		expressions := map[string]string{} // record expressions
 		for {
 			select {
 			case <-startTime.C:
 				if flag {
-					rows, _ := query(gdb.ItemDbPath, "select id, expression, status, duration from calc_cfg where 1=1")
+					rows, _ := gdb.query("select id, expression, status, duration from calc_cfg where 1=1")
 					for _, row := range rows {
 						id, _ := strconv.ParseInt(row["id"], 10, 64)
 						duration, _ := strconv.ParseInt(row["duration"], 10, 64)
@@ -1030,7 +1463,7 @@ func (gdb *Gdb) calc() error {
 							duration:   c[k].duration,
 						}
 					}
-					rows, _ := query(gdb.ItemDbPath, "select id, expression, status, duration from calc_cfg where 1=1")
+					rows, _ := gdb.query("select id, expression, status, duration from calc_cfg where 1=1")
 					m := messageCalcConfig{}
 					index := []interface{}{}  // id in calc_cfg
 					indexC := []interface{}{} // id in c
@@ -1134,7 +1567,7 @@ func (gdb *Gdb) calc() error {
 							select {
 							case <-ts.C:
 								if err := r.f(); err != nil {
-									_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(r.id)))
+									_, _ = gdb.updateItem("update calc_cfg set errorMessage='" + strings.Replace(err.Error(), "'", `"`, -1) + "', status='false' where id=" + strconv.Itoa(int(r.id)))
 								}
 							}
 						}
@@ -1166,7 +1599,7 @@ func (gdb *Gdb) calc() error {
 									select {
 									case <-ts.C:
 										if err := f(); err != nil {
-											_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+id)
+											_, _ = gdb.updateItem("update calc_cfg set errorMessage='" + strings.Replace(err.Error(), "'", `"`, -1) + "', status='false' where id=" + id)
 										}
 									}
 								}
@@ -1181,7 +1614,7 @@ func (gdb *Gdb) calc() error {
 								select {
 								case <-ts.C:
 									if err := f(); err != nil {
-										_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+id)
+										_, _ = gdb.updateItem("update calc_cfg set errorMessage='" + strings.Replace(err.Error(), "'", `"`, -1) + "', status='false' where id=" + id)
 									}
 								}
 							}
@@ -1206,7 +1639,7 @@ func (gdb *Gdb) calc() error {
 						select {
 						case <-ts.C:
 							if err := in.f(); err != nil {
-								_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+strings.Replace(err.Error(), "'", `"`, -1)+"', status='false' where id="+strconv.Itoa(int(id)))
+								_, _ = gdb.updateItem("update calc_cfg set errorMessage='" + strings.Replace(err.Error(), "'", `"`, -1) + "', status='false' where id=" + strconv.Itoa(int(id)))
 							}
 						}
 					}
@@ -1222,18 +1655,27 @@ func (gdb *Gdb) getJsFunction(expression, id string) func() error {
 		var err error
 		loop.Run(func(vm *goja.Runtime) {
 			vm.Set("getRtData", gdb.getRtData)
-			vm.Set("getHData", gdb.getHData)
-			vm.Set("getHDataWithTs", gdb.getHDataWithTs)
-			vm.Set("writeRtData", gdb.writeRtData)
+			vm.Set("getFloatHData", gdb.getFloatHData)
+			vm.Set("getIntHData", gdb.getIntHData)
+			vm.Set("getStringHData", gdb.getStringHData)
+			vm.Set("getBoolHData", gdb.getBoolHData)
+			vm.Set("getFloatHDataWithTs", gdb.getFloatHDataWithTs)
+			vm.Set("getIntHDataWithTs", gdb.getIntHDataWithTs)
+			vm.Set("getStringHDataWithTs", gdb.getStringHDataWithTs)
+			vm.Set("getBoolHDataWithTs", gdb.getBoolHDataWithTs)
+			vm.Set("writeFloatRtData", gdb.writeFloatRtData)
+			vm.Set("writeIntRtData", gdb.writeIntRtData)
+			vm.Set("writeStringRtData", gdb.writeStringRtData)
+			vm.Set("writeBoolRtData", gdb.writeBoolRtData)
 			vm.Set("getTimeStamp", gdb.getUnixTimeStamp)
 			vm.Set("getNowTime", gdb.getNowTime)
-			vm.Set("testItemValue", gdb.testItemValue)
+			vm.Set("console", gdb.console)
 			program, _ := goja.Compile(id+".js", expression, false)
 			_, err = vm.RunProgram(program)
 		})
 		if err != nil {
 			return err
-			//_, _ = updateItem(gdb.ItemDbPath, "update calc_cfg set errorMessage='"+err.Error()+"' where id="+r["id"])
+			//_, _ = updateItem("update calc_cfg set errorMessage='"+err.Error()+"' where id="+r["id"])
 		} else {
 			return nil
 		}
@@ -1258,7 +1700,7 @@ func (gdb *Gdb) cleanLogs() error {
 					// clean logs
 					expiredDate := time.Now().Add(d * -1).Format(timeFormatString)
 					sqlString := "delete from log_cfg where insertTime < '" + expiredDate + "'"
-					if _, err := updateItem(gdb.ItemDbPath, sqlString); err != nil {
+					if _, err := gdb.updateItem(sqlString); err != nil {
 						return err
 					} else {
 						return nil

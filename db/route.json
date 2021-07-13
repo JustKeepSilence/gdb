@@ -1,0 +1,15 @@
+{
+  "allRoutes": ["addGroups", "deleteGroups", "getGroups", "getGroupProperty", "updateGroupNames", "updateGroupColumnNames", "deleteGroupColumns", "addGroupColumns", "addItems", "deleteItems", "getItemsWithCount", "updateItems", "checkItems", "cleanGroupItems",
+    "batchWrite", "batchWriteHistoricalData", "getRealTimeData", "getHistoricalData", "getHistoricalDataWithStamp", "getHistoricalDataWithCondition",
+    "userLogin", "userLogOut", "getUserInfo", "getRoutes", "deleteRoutes", "addRoutes", "addUserRoutes", "deleteUserRoutes", "getAllRoutes",
+    "getUsers", "updateUsers", "uploadFile", "httpsUploadFile", "addItemsByExcel", "importHistoryByExcel", "getJsCode",
+    "getLogs", "deleteLogs", "downloadFile", "getDbInfo", "getDbInfoHistory", "testCalcItem", "addCalcItem",
+    "getCalcItems", "updateCalcItem", "startCalcItem", "stopCalcItem", "deleteCalcItem", "streamWrite"],
+  "commonUserRoutes": ["addGroups", "getGroups", "getGroupProperty", "addItems", "getItemsWithCount", "updateItems", "checkItems", "streamWrite",
+    "getRealTimeData", "getHistoricalData", "getHistoricalDataWithStamp", "userLogin", "userLogOut", "getUserInfo", "getRoutes", "deleteRoutes", "addRoutes", "getAllRoutes",
+    "getUsers", "updateUsers", "uploadFile", "httpsUploadFile", "addItemsByExcel", "importHistoryByExcel", "getJsCode",
+    "getLogs", "deleteLogs", "downloadFile", "getDbInfo", "getDbInfoHistory", "testCalcItem", "addCalcItem",
+    "getCalcItems", "updateCalcItem", "startCalcItem", "stopCalcItem", "deleteCalcItem"],
+  "visitorUserRoutes": ["getGroups", "getGroupProperty", "getItemsWithCount", "getRealTimeData", "getDbInfo", "getDbInfoHistory",
+    "getHistoricalData", "getHistoricalDataWithStamp", "userLogin", "userLogOut", "getUserInfo", "getCalcItems"]
+}

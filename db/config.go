@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -33,6 +32,7 @@ func ReadDbConfig(path string) (Config, error) {
 	}
 }
 
+// get local ip address
 func getLocalIp() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
@@ -48,16 +48,15 @@ func getLocalIp() string {
 // handle json to allow  // single line comments in json file
 func handleJson(js string) []byte {
 	var lines, configs []string
+	splitLines := []string{"\r\n", "\n", "\r"}
 	var newLine string
-	switch runtime.GOOS {
-	case "windows":
-		newLine = "\r\n"
-	case "linux":
-		newLine = "\n"
-	default:
-		newLine = "r" // mac
+	for _, splitLine := range splitLines {
+		lines = strings.Split(js, splitLine)
+		if len(lines) > 1 {
+			newLine = splitLine
+			break
+		}
 	}
-	lines = strings.Split(js, newLine)
 code:
 	for _, line := range lines {
 		if strings.HasPrefix(strings.Trim(line, " "), "//") {
@@ -67,5 +66,5 @@ code:
 		}
 
 	}
-	return []byte(strings.Join(configs, newLine))
+	return convertStringToByte(strings.Join(configs, newLine))
 }

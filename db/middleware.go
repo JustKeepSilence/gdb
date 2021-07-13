@@ -21,11 +21,11 @@ import (
 func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// for userLogin not need authorization
-		if c.Request.URL.String() != "/page/userLogin" {
+		if c.Request.URL.String() != "/page/userLogin" && !strings.Contains(c.Request.URL.String(), "/cmd/getCmdInfo") {
 			if userName, token, ok := c.Request.BasicAuth(); !ok {
 				c.AbortWithStatus(401)
 			} else {
-				if r, err := query(gdb.ItemDbPath, "select token from user_cfg where userName='"+userName+"'"); err != nil || len(r) == 0 {
+				if r, err := gdb.query("select token from user_cfg where userName='" + userName + "'"); err != nil || len(r) == 0 {
 					c.AbortWithStatus(401)
 				} else {
 					if token != r[0]["token"] {
@@ -33,8 +33,8 @@ func (gdb *Gdb) authorizationMiddleware() gin.HandlerFunc {
 					} else {
 						// route permission check
 						url := strings.Split(c.Request.URL.String(), "/")
-						sub, obj, act := userName, toTitle(url[len(url)-1]), c.Request.Method
-						if ok, _ := gdb.gdbAdapter.e.Enforce(sub, obj, act); !ok {
+						sub, obj, act := userName, strings.Title(url[len(url)-1]), c.Request.Method
+						if ok, _ := gdb.e.Enforce(sub, obj, act); !ok {
 							c.AbortWithStatus(401)
 						} else {
 							c.Request.Header.Add("userName", userName)
@@ -115,8 +115,11 @@ func (gdb *Gdb) corsMiddleware() gin.HandlerFunc {
 }
 
 func (gdb *Gdb) writeLog(level, logMessage, requestUser string) error {
+	if gdb.driverName == "mysql" {
+		logMessage = strings.Replace(logMessage, `\`, `\\`, -1)
+	}
 	sqlString := "insert into log_cfg (logMessage, level, requestUser) values ('" + logMessage + "', '" + level + "','" + requestUser + "')"
-	_, err := updateItem(gdb.ItemDbPath, sqlString)
+	_, err := gdb.updateItem(sqlString)
 	if err != nil {
 		return err
 	}

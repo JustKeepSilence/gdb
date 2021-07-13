@@ -12,36 +12,52 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
-	types = "int64, float64, bool, string"
+	types = "int32, float32, bool, string"
 )
 
-// AddItems to gdb,you can not add existed items
-func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
+// AddItems to gdb,you can not add duplicate items.you need not add value of id column, and for
+// value of dataType, it can only be int32 or float32 or bool or string.If column has not
+// default value, you MUST specify value
+//
+// The operation is atomic
+func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (TimeRows, error) {
+	st := time.Now()
 	groupName := itemInfo.GroupName
 	itemValues := itemInfo.ItemValues
-	c, err := query(gdb.ItemDbPath, "PRAGMA table_info(["+groupName+"])") // get column names
-	if err != nil {
-		return Rows{-1}, err
+	var c []map[string]string
+	if gdb.driverName == "sqlite3" {
+		var err error
+		c, err = gdb.query("PRAGMA table_info([" + groupName + "])") // get column names
+		if err != nil {
+			return TimeRows{EffectedRows: -1, Times: time.Since(st).Milliseconds()}, err
+		}
+	} else {
+		var err error
+		c, err = gdb.query("select column_name as name from information_schema.columns where table_schema='" + gdb.itemDbName + "' and table_name='" + groupName + "'")
+		if err != nil {
+			return TimeRows{EffectedRows: -1, Times: time.Since(st).Milliseconds()}, err
+		}
 	}
 	c = c[1:]                     // abort first item id
 	var columnNames []string      // without '
 	var addedColumnNames []string // with '
 	for i := 0; i < len(c); i++ {
 		columnNames = append(columnNames, c[i]["name"])
-		addedColumnNames = append(addedColumnNames, "'"+c[i]["name"]+"'")
+		addedColumnNames = append(addedColumnNames, "`"+c[i]["name"]+"`")
 	}
 	sb := strings.Builder{}
-	sb.Write([]byte("insert into '"))
-	sb.Write([]byte(groupName))
-	sb.Write([]byte("' ("))
-	sb.Write([]byte(strings.Join(addedColumnNames, ",")))
-	sb.Write([]byte(") "))
-	sb.Write([]byte("values("))
-	sb.Write([]byte(strings.TrimRight(strings.Repeat("?,", len(columnNames)), ","))) // groupName column
-	sb.Write([]byte(")"))
+	sb.Write(convertStringToByte("insert into `"))
+	sb.Write(convertStringToByte(groupName))
+	sb.Write(convertStringToByte("` ("))
+	sb.Write(convertStringToByte(strings.Join(addedColumnNames, ",")))
+	sb.Write(convertStringToByte(") "))
+	sb.Write(convertStringToByte("values("))
+	sb.Write(convertStringToByte(strings.TrimRight(strings.Repeat("?,", len(columnNames)), ","))) // groupName column
+	sb.Write(convertStringToByte(")"))
 	insertSqlString := sb.String()
 	var addedItemValues [][]string
 	var itemNames []string
@@ -59,51 +75,56 @@ func (gdb *Gdb) AddItems(itemInfo AddedItemsInfo) (Rows, error) {
 				if columnNames[i] == "dataType" {
 					// check dataTypes of item
 					if strings.Trim(cv, " ") == "" || !strings.Contains(types, cv) {
-						return Rows{-1}, fmt.Errorf("dataType can't be empty, it must be " + types)
+						return TimeRows{EffectedRows: -1, Times: time.Since(st).Milliseconds()}, fmt.Errorf("dataType can't be empty, it must be " + types)
 					} else {
 						dataTypes = append(dataTypes, cv)
 					}
 				}
 			} else {
 				// key not exist
-				return Rows{-1}, columnNameError{"columnNameError: " + columnNames[i]}
+				return TimeRows{EffectedRows: -1, Times: time.Since(st).Milliseconds()}, fmt.Errorf("columnNameError: " + columnNames[i])
 			}
 
 		}
 		addedItemValues = append(addedItemValues, t)
 	}
-	if err := insertItems(gdb.ItemDbPath, insertSqlString, addedItemValues...); err != nil {
-		return Rows{-1}, err
+	if err := gdb.insertItems(insertSqlString, addedItemValues...); err != nil {
+		return TimeRows{EffectedRows: -1, Times: time.Since(st).Milliseconds()}, err
 	}
 	for index, itemName := range itemNames {
 		gdb.rtDbFilter.Set(itemName+joiner+groupName, dataTypes[index])
 	}
-	return Rows{len(itemValues)}, nil
+	return TimeRows{EffectedRows: len(itemValues), Times: time.Since(st).Milliseconds()}, nil
 }
 
 // DeleteItems delete items from given group according to condition, condition is where clause
-// in sqlite
-func (gdb *Gdb) DeleteItems(itemInfo DeletedItemsInfo) (Rows, error) {
+// in SQL.
+//
+//NOTE:this operation will not delete history data of item, if you want to delete history data of
+// item, you should use CleanItemData method
+func (gdb *Gdb) DeleteItems(itemInfo DeletedItemsInfo) (TimeRows, error) {
+	st := time.Now()
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
-	item, err := query(gdb.ItemDbPath, "select itemName from '"+groupName+"' where "+condition)
+	item, err := gdb.query("select itemName from `" + groupName + "` where " + condition)
 	if len(item) == 0 {
-		return Rows{}, conditionError{"conditionError: " + condition}
+		return TimeRows{}, fmt.Errorf("conditionError: " + condition)
 	}
 	if err != nil {
-		return Rows{}, err
+		return TimeRows{}, err
 	}
-	rows, err := updateItem(gdb.ItemDbPath, "delete from '"+groupName+"' where "+condition)
+	rows, err := gdb.updateItem("delete from `" + groupName + "` where " + condition)
 	if err != nil {
-		return Rows{}, err
+		return TimeRows{}, err
 	}
 	gdb.rtDbFilter.Remove(item[0]["itemName"] + joiner + groupName) // remove key from bloom filter
-	return Rows{int(rows)}, nil
+	return TimeRows{EffectedRows: int(rows), Times: time.Since(st).Milliseconds()}, nil
 }
 
 // GetItems get items from gdb according to the given columnName, condition,startRow and rowCount.
-// columnName is the columnName you want to get, and condition is where clause, startRow and rowCount
-// is used to page query, if startRow is -1, that is get all items without pagination
+// columnName is the columnName you want to get, if you want to get all columns info, you should use *
+// and condition is where clause, startRow and rowCount is used to page query, if startRow is -1,
+// that is get all items without pagination
 func (gdb *Gdb) GetItems(itemInfo ItemsInfo) (GdbItems, error) {
 	groupName := itemInfo.GroupName // groupName
 	columns := itemInfo.ColumnNames // column
@@ -113,14 +134,14 @@ func (gdb *Gdb) GetItems(itemInfo ItemsInfo) (GdbItems, error) {
 	var err error
 	if startRow == -1 {
 		// all rows
-		rows, err = query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition)
+		rows, err = gdb.query("select " + columns + " from `" + groupName + "` where " + condition)
 		if err != nil {
 			return GdbItems{}, err
 		}
 	} else {
-		// Limit query
+		// Limit gdb.query
 		rowCount := itemInfo.RowCount
-		rows, err = query(gdb.ItemDbPath, "select "+columns+" from '"+groupName+"' where "+condition+" Limit "+strconv.Itoa(rowCount)+" offset "+strconv.Itoa(startRow))
+		rows, err = gdb.query("select " + columns + " from `" + groupName + "` where " + condition + " Limit " + strconv.Itoa(int(rowCount)) + " offset " + strconv.Itoa(int(startRow)))
 		if err != nil {
 			return GdbItems{}, err
 		}
@@ -131,7 +152,7 @@ func (gdb *Gdb) GetItems(itemInfo ItemsInfo) (GdbItems, error) {
 func (gdb *Gdb) getItemsWithCount(itemInfo ItemsInfo) (gdbItemsWithCount, error) {
 	condition := itemInfo.Condition
 	groupName := itemInfo.GroupName
-	c, err := query(gdb.ItemDbPath, "select count(*) as count from '"+groupName+"' where "+condition)
+	c, err := gdb.query("select count(*) as count from `" + groupName + "` where " + condition)
 	if err != nil {
 		return gdbItemsWithCount{}, err
 	}
@@ -143,39 +164,60 @@ func (gdb *Gdb) getItemsWithCount(itemInfo ItemsInfo) (gdbItemsWithCount, error)
 	if err != nil {
 		return gdbItemsWithCount{}, nil
 	}
-	return gdbItemsWithCount{count, itemValues}, nil
+	return gdbItemsWithCount{int32(count), itemValues}, nil
 }
 
 // UpdateItems update items in gdb according to given condition and clause.condition is where
-// clause in sqlite and clause is set clause in sqlite
-func (gdb *Gdb) UpdateItems(itemInfo UpdatedItemsInfo) (Rows, error) {
+// clause in SQL and clause is set clause in SQL.You can't update id or itemName or dataType column
+func (gdb *Gdb) UpdateItems(itemInfo UpdatedItemsInfo) (TimeRows, error) {
+	st := time.Now()
 	groupName := itemInfo.GroupName
 	condition := itemInfo.Condition
 	clause := itemInfo.Clause
-	// Firstly determine whether to update itemName
+	// Firstly determine whether to update itemName or dataType or id
 	regPoint := regexp.MustCompile(`(?i)itemName='(.*?)'`) // Match the content after itemName
-	if !regPoint.Match([]byte(clause)) {
+	regItemName := regexp.MustCompile(`(?i)dataType='(.*?)'`)
+	regId := regexp.MustCompile(`(?i)id='(.*?)'`)
+	if !regPoint.Match(convertStringToByte(clause)) && !regItemName.Match(convertStringToByte(clause)) && !regId.Match(convertStringToByte(clause)) {
 		// no itemName
 		// update SQLite
-		rows, err := updateItem(gdb.ItemDbPath, "update '"+groupName+"' set "+clause+" where "+condition)
+		rows, err := gdb.updateItem("update `" + groupName + "` set " + clause + " where " + condition)
 		if err != nil {
-			return Rows{}, err
+			return TimeRows{}, err
 		}
-		return Rows{int(rows)}, nil
+		return TimeRows{EffectedRows: int(rows), Times: time.Since(st).Milliseconds()}, nil
 	} else {
-		return Rows{}, updateItemError{"updateItemError: can't update itemName!"}
+		return TimeRows{}, fmt.Errorf("can't update itemName, dataType or id")
 	}
 }
 
 // CheckItems check whether the given items existed in the given group
 func (gdb *Gdb) CheckItems(groupName string, itemNames ...string) error {
 	for _, itemName := range itemNames {
-		sqlString := "select 1 from '" + groupName + "' where itemName='" + itemName + "' limit 1"
-		if r, err := query(gdb.ItemDbPath, sqlString); err != nil {
-			return err
-		} else {
-			if len(r) == 0 {
-				return fmt.Errorf("itemName: " + itemName + " not existed")
+		if _, ok := gdb.rtDbFilter.Get(itemName + joiner + groupName); !ok {
+			return fmt.Errorf("itemName: " + itemName + " not existed")
+		}
+	}
+	return nil
+}
+
+//shrinkItemDb will shrink itemDb when using sqlite to store items if fileSize >= 0.5G
+func (gdb *Gdb) shrinkItemDb() error {
+	if gdb.driverName == "sqlite3" {
+		t := time.NewTicker(time.Minute)
+		for {
+			select {
+			case <-t.C:
+				if size, err := dirSize(gdb.dsn); err != nil {
+					fmt.Println("failing to get size of database:" + err.Error())
+				} else {
+					if size > 0.5 {
+						// more than 0.5G
+						if _, err := gdb.updateItem("vacuum ;"); err != nil {
+							return err
+						}
+					}
+				}
 			}
 		}
 	}
