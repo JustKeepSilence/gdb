@@ -288,7 +288,7 @@ func StartDbServer(configs Config) error {
 	pb.RegisterDataServer(s, se)
 	pb.RegisterPageServer(s, se)
 	pb.RegisterCalcServer(s, se)
-	fmt.Printf("%s: launch gdb service successfully!: %s, mode: %s,authorization: %s, you can you should use Ctrl+C to stop gdbService \n ", time.Now().Format(timeFormatString), address, mode, strconv.FormatBool(configs.Authorization))
+	fmt.Printf("%s: launch gdb service successfully!: %s, mode: %s,authorization: %s, you should use Ctrl+C to stop gdbService \n ", time.Now().Format(timeFormatString), address, mode, strconv.FormatBool(configs.Authorization))
 	var hs *http.Server
 	if mode == "http" {
 		// http mode
