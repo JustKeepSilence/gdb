@@ -113,6 +113,9 @@ func (gdb *Gdb) addUsers(info addedUserInfo) (TimeRows, error) {
 
 func (gdb *Gdb) deleteUsers(name userName) (TimeRows, error) {
 	st := time.Now()
+	if name.Name == "admin" {
+		return TimeRows{}, fmt.Errorf("you can't delete admin user")
+	}
 	if err := gdb.updateItems("delete from user_cfg where userName='"+name.Name+"'", "delete from route_cfg where userName='"+name.Name+"'"); err != nil {
 		return TimeRows{}, err
 	} else {
@@ -152,13 +155,15 @@ func (gdb *Gdb) updateUsers(info updatedUserInfo) (TimeRows, error) {
 			routeRoles = append(routeRoles, routeRole)
 		}
 		break
-	default:
+	case "visitor":
 		// visitor
 		for _, route := range visitorUserRoutes {
 			routeRole := "p," + info.NewUserName + "," + strings.Title(route) + "," + "POST"
 			routeRoles = append(routeRoles, routeRole)
 		}
 		break
+	default:
+		return TimeRows{}, fmt.Errorf("userRole can only be " + roles)
 	}
 	r, _ := json.Marshal(routeRoles)
 	routeSqlString = "update route_cfg set userName='" + info.NewUserName + "', routeRoles='" + string(r) + "' where userName='" + info.UserName + "'"
@@ -419,6 +424,9 @@ func getJsCode(fileName string) (string, error) {
 
 func (gdb *Gdb) getLogs(info queryLogsInfo) (logsInfo, error) {
 	var queryStringTemplate, queryCountStringTemplate string
+	if !strings.Contains("all, Info, Error", info.Level) {
+		return logsInfo{}, fmt.Errorf("query log level can only be all or Info or Error")
+	}
 	if info.Level == "all" {
 		queryStringTemplate = `select * from log_cfg where (insertTime > '{{.StartTime}}' and insertTime < '{{.EndTime}}') and (requestUser = '{{.Name}}' or requestUser = '') Limit {{.RowCount}} offset {{.StartRow}}`
 		queryCountStringTemplate = `select count(*) as count from log_cfg where (insertTime > '{{.StartTime}}' and insertTime < '{{.EndTime}}') and (requestUser = '{{.Name}}' or requestUser = '')`
