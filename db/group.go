@@ -137,9 +137,11 @@ func (gdb *Gdb) DeleteGroups(groupInfos GroupNamesInfo) (TimeRows, error) {
 	}
 	// delete groupNames in gdb
 	gs := []string{}
-	for _, groupName := range groupNames {
-		if !From(gdb.groupNames).Contains(groupName) {
-			gs = append(gs, groupName)
+	if rows, err := gdb.query("select groupName from group_cfg"); err != nil {
+		return TimeRows{}, err
+	} else {
+		for _, row := range rows {
+			gs = append(gs, row["groupName"])
 		}
 	}
 	gdb.groupNames = gs
