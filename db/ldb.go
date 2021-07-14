@@ -411,7 +411,7 @@ func (gdb *Gdb) BatchWriteIntHistoricalData(groupNames []string, itemNames []str
 								}
 							}
 						}
-						count += len(ts)
+						count += len(timeStamps[index])
 					}
 					sn.Release()
 				}
@@ -477,7 +477,7 @@ func (gdb *Gdb) BatchWriteStringHistoricalData(groupNames []string, itemNames []
 								}
 							}
 						}
-						count += len(ts)
+						count += len(timeStamps[index])
 					}
 					sn.Release()
 				}
@@ -543,7 +543,7 @@ func (gdb *Gdb) BatchWriteBoolHistoricalData(groupNames []string, itemNames []st
 								}
 							}
 						}
-						count += len(ts)
+						count += len(timeStamps[index])
 					}
 					sn.Release()
 				}
@@ -561,6 +561,10 @@ func (gdb *Gdb) BatchWriteBoolHistoricalData(groupNames []string, itemNames []st
 // GetRealTimeData get realTime data,that is the latest updated value of item.All items should be
 // existed in gdb, otherWise will fail to getting data.If realTime of item not exist, the corresponding
 // value will be nil
+//
+// you MUST NOT get the realTime data of the same name item in different groups
+// such as {groupNames: ['3DCS', '5DCS', '5DCS'], itemNames: ['xInt', 'xInt', 'xString']}
+// otherWise the result of xInt will be unreliable
 //
 // The format of return value is {"itemName1": value1, "itemName2": value2}, values corresponds to the dataType of item
 func (gdb *Gdb) GetRealTimeData(groupNames, itemNames []string) (GdbRealTimeData, error) {
