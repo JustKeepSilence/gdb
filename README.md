@@ -613,8 +613,9 @@ var t1 = new DateTime(2021, 2, 11, 14, 26, 26);
 long timeStamp1 = (long)(t1 - new DateTime(1970, 1, 1, 0, 0, 0)).TotalSeconds;
 ```
 ### Js(In China)
+In nodeJs, you can use moment.js to handle time easily, to getTimeStamp of now 
 ```js
-new Date(2021, 1, 11 , 14, 26, 26).getTime()/1000 + 8 * 3600
+moment().unix() + 8 * 3600
 ```
 ### Python(In China)
 ```python
