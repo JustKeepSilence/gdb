@@ -342,7 +342,7 @@ header if you use restful, or to context if you use gRPC.For more details, you c
 ## Restful API Examples
 If you use other language to access gdb, you can use restful interface, before use
 you need [build gdb](#build-gdb) or [download](#download-gdb), and after running the application,you can interact with 
-gdb by the restful interface easily.For more details, you can see [restFulExamples](https://github.com/JustKeepSilence/gdb/tree/master/examples/restfulExamples)
+gdb by the restful interface easily.For more details, you can see [RestFulExamples](https://github.com/JustKeepSilence/gdb/tree/master/examples/restfulExamples)
 
 ## gRPC API Examples
 We recommend you to interact with gdb by gRPC.For more details, you can see [gRPCExamples](https://github.com/JustKeepSilence/gdb/tree/master/examples/gRPCExamples)
