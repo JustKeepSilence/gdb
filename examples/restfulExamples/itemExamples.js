@@ -36,10 +36,19 @@ const {ip} = require('./utils')
  * @param(String){groupName}
  * @param(Array){itemValues} every item of itemValues should be like {"column1": "v1", "column2": "v2"}
  */
-axios.post(`${ip}/item/addItems`,{groupName: '5DCS', itemValues: [{itemName: 'xFloat', 'dataType': 'float32'},{itemName: 'yFloat', 'dataType': 'float32'},
-        {itemName: 'xInt', 'dataType': 'int32'}, {itemName: 'yInt', 'dataType': 'int32'}, {itemName: 'xString', 'dataType': 'string'},
-        {itemName: 'yString', 'dataType': 'string'}, {itemName: 'xBool', 'dataType': 'bool'}, {itemName: 'yBool', 'dataType': 'bool'}]}, configs).then(({data: {data}})=>{
-            console.log(data)
+axios.post(`${ip}/item/addItems`, {
+    groupName: '5DCS',
+    itemValues: [{itemName: 'xFloat', 'dataType': 'float32'}, {itemName: 'yFloat', 'dataType': 'float32'},
+        {itemName: 'xInt', 'dataType': 'int32'}, {itemName: 'yInt', 'dataType': 'int32'}, {
+            itemName: 'xString',
+            'dataType': 'string'
+        },
+        {itemName: 'yString', 'dataType': 'string'}, {itemName: 'xBool', 'dataType': 'bool'}, {
+            itemName: 'yBool',
+            'dataType': 'bool'
+        }]
+}, configs).then(({data: {data}}) => {
+    console.log(data)
     // { effectedRows: 8, times: 151 }
 })
 
@@ -52,7 +61,10 @@ axios.post(`${ip}/item/addItems`,{groupName: '5DCS', itemValues: [{itemName: 'xF
  * @param(String){groupName}
  * @param(String){condition}  condition is where clause in SQL
  */
-axios.post(`${ip}/item/deleteItems`, {groupName: '5DCS', condition: `itemName like '%Bool%'`}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/item/deleteItems`, {
+    groupName: '5DCS',
+    condition: `itemName like '%Bool%'`
+}, configs).then(({data: {data}}) => {
     console.log(data)
     //  { effectedRows: 2, times: 426 }
 })
@@ -66,7 +78,13 @@ axios.post(`${ip}/item/deleteItems`, {groupName: '5DCS', condition: `itemName li
  * @param(number){startRow} pagination query parameters
  * @param(number){rowCount} pagination query parameters, if -1 ==> get all items
  */
-axios.post(`${ip}/item/getItemsWithCount`, {groupName: '5DCS', columnNames: 'itemName, dataType', condition: '1=1', startRow: 0, rowCount: 10}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/item/getItemsWithCount`, {
+    groupName: '5DCS',
+    columnNames: 'itemName, dataType',
+    condition: '1=1',
+    startRow: 0,
+    rowCount: 10
+}, configs).then(({data: {data}}) => {
     console.log(data)
     // {
     //   itemCount: 6,
@@ -90,7 +108,11 @@ axios.post(`${ip}/item/getItemsWithCount`, {groupName: '5DCS', columnNames: 'ite
  * @param(String){condition} where clause in SQL
  * @param(String){clause} update clause in SQL
  */
-axios.post(`${ip}/item/updateItems`, {groupName: '3DCS', condition: `itemName='X'`, clause: `descriptions='X',units=''`}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/item/updateItems`, {
+    groupName: '3DCS',
+    condition: `itemName='X'`,
+    clause: `descriptions='X',units=''`
+}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedRows: 1, times: 65 }
 })
@@ -103,7 +125,10 @@ axios.post(`${ip}/item/updateItems`, {groupName: '3DCS', condition: `itemName='X
  * @param(String){groupName}
  * @param(Array){itemNames}
  */
-axios.post(`${ip}/item/checkItems`, {groupName: '5DCS', itemNames: ['xFloat', 'zFloat']}, configs).then(({data: data})=>{
+axios.post(`${ip}/item/checkItems`, {
+    groupName: '5DCS',
+    itemNames: ['xFloat', 'zFloat']
+}, configs).then(({data: data}) => {
     console.log(data)
     // {"code":500,"message":"itemName:zFloat not existed","data":""}
 })
@@ -115,7 +140,7 @@ axios.post(`${ip}/item/checkItems`, {groupName: '5DCS', itemNames: ['xFloat', 'z
  * 2. history data of item will be deleted
  *
  */
-axios.post(`${ip}/item/cleanGroupItems`, {groupNames : ['3DCS']}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/item/cleanGroupItems`, {groupNames: ['3DCS']}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedRows: 1, times: 0 }
 })

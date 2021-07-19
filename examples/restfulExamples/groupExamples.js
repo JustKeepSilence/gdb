@@ -1,9 +1,9 @@
 /**
-creatTime: 2021/7/13
-creator: JustKeepSilence
-github: https://github.com/JustKeepSilence
-nodeVersion: 14.16.1
-**/
+ creatTime: 2021/7/13
+ creator: JustKeepSilence
+ github: https://github.com/JustKeepSilence
+ nodeVersion: 14.16.1
+ **/
 
 // examples of handle groups in gdb by restful in node
 
@@ -37,7 +37,12 @@ const {ip} = require('./utils')
  * @param(String){groupName} the groupName to be added to gdb
  * @param(Array)(columnNames) the group columns to be add to gdb
  */
-axios.post(`${ip}/group/addGroups`, {groupInfos: [{groupName: '3DCS', columnNames: ['description', 'unit']},{groupName:'4DCS', columnNames: []}]}, configs).then(({data:{data}})=>{
+axios.post(`${ip}/group/addGroups`, {
+    groupInfos: [{
+        groupName: '3DCS',
+        columnNames: ['description', 'unit']
+    }, {groupName: '4DCS', columnNames: []}]
+}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedRows: 2, times: 1278 }
 })
@@ -50,7 +55,7 @@ axios.post(`${ip}/group/addGroups`, {groupInfos: [{groupName: '3DCS', columnName
  * 3. this operation will also delete history data of group
  * @param(Array){groupNames} the groupNames to be deleted from gdb
  */
-axios.post(`${ip}/group/deleteGroups`, {groupNames: ['3DCS']}, configs).then(({data:{data}})=>{
+axios.post(`${ip}/group/deleteGroups`, {groupNames: ['3DCS']}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedRows: 1, times: 1278 }
 })
@@ -58,7 +63,7 @@ axios.post(`${ip}/group/deleteGroups`, {groupNames: ['3DCS']}, configs).then(({d
 /**
  * get all groups in gdb
  */
-axios.post(`${ip}/group/getGroups`, {}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/group/getGroups`, {}, configs).then(({data: {data}}) => {
     console.log(data)
     // { groupNames: [ 'calc', '4DCS' ] }
 })
@@ -69,7 +74,7 @@ axios.post(`${ip}/group/getGroups`, {}, configs).then(({data: {data}})=>{
  * @param(String){groupName}
  * @param(String){condition} the condition of where clause in SQL
  */
-axios.post(`${ip}/group/getGroupProperty`, {groupName: '4DCS', condition: '1=1'}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/group/getGroupProperty`, {groupName: '4DCS', condition: '1=1'}, configs).then(({data: {data}}) => {
     console.log(data)
     // { itemCount: '0', itemColumnNames: [ 'itemName', 'dataType' ] }
 })
@@ -84,7 +89,12 @@ axios.post(`${ip}/group/getGroupProperty`, {groupName: '4DCS', condition: '1=1'}
  * @param(String){oldGroupName}
  * @param(String){newGroupName}
  */
-axios.post(`${ip}/group/updateGroupNames`, {infos:[{oldGroupName: '4DCS', newGroupName: '5DCS'}]}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/group/updateGroupNames`, {
+    infos: [{
+        oldGroupName: '4DCS',
+        newGroupName: '5DCS'
+    }]
+}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedRows: 1, times: 502 }
 })
@@ -98,7 +108,11 @@ axios.post(`${ip}/group/updateGroupNames`, {infos:[{oldGroupName: '4DCS', newGro
  * @param(Array){oldColumnNames}
  * @param(Array){newColumnNames}
  */
-axios.post(`${ip}/group/updateGroupColumnNames`, {groupName: '3DCS', oldColumnNames: ['description', 'unit'], newColumnNames: ['descriptions', 'units']}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/group/updateGroupColumnNames`, {
+    groupName: '3DCS',
+    oldColumnNames: ['description', 'unit'],
+    newColumnNames: ['descriptions', 'units']
+}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedCols: 2, times: 103 }
 })
@@ -111,7 +125,10 @@ axios.post(`${ip}/group/updateGroupColumnNames`, {groupName: '3DCS', oldColumnNa
  * @param(String){groupName}
  * @param(Array){columnNames}
  */
-axios.post(`${ip}/group/deleteGroupColumns`, {groupName: '3DCS', columnNames: ['units']}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/group/deleteGroupColumns`, {
+    groupName: '3DCS',
+    columnNames: ['units']
+}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedCols: 1, times: 38 }
 })
@@ -127,7 +144,11 @@ axios.post(`${ip}/group/deleteGroupColumns`, {groupName: '3DCS', columnNames: ['
  * @param(Array){columnNames}
  * @param(Array){defaultValues}
  */
-axios.post(`${ip}/group/addGroupColumns`, {groupName: '3DCS', columnNames: ['units'], defaultValues:['m/s']}, configs).then(({data: {data}})=>{
+axios.post(`${ip}/group/addGroupColumns`, {
+    groupName: '3DCS',
+    columnNames: ['units'],
+    defaultValues: ['m/s']
+}, configs).then(({data: {data}}) => {
     console.log(data)
     // { effectedCols: 1, times: 122 }
 })
