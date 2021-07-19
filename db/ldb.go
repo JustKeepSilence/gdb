@@ -3321,7 +3321,6 @@ bool32:
 }
 
 func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemNames []string, startTime, endTime, interval int32, filterCondition string, zones ...DeadZone) (cmap.ConcurrentMap, error) {
-	st := time.Now()
 	if rawNamesMap, namesMap, err := gdb.checkSingleItemDataTypeWithMap(strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(itemNames)), ","), ","), itemNames, dataType); err != nil {
 		return nil, err
 	} else {
@@ -3362,11 +3361,9 @@ func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemN
 			return nil, err
 		} else {
 			// pass check
-			et := time.Now()
 			if filterHistoryData, err := gdb.getHistoricalDataWithMinLength(groupName, rawFilterNamesMap, filterNamesMap, startTime, endTime, interval); err != nil {
 				return nil, err
 			} else {
-				et1 := time.Now()
 				vm := goja.New()
 				f := `function filterData(s){return s.filter(function(item){return ` + filterCondition + `})}`
 				if _, err := vm.RunString(f); err != nil {
@@ -3389,7 +3386,6 @@ func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemN
 						for i := 0; i < len(itemNames); i++ {
 							tts[i] = timeStamps
 						}
-						et2 := time.Now()
 						var startTimes, endTimes, intervals []int32
 						for k := 0; k < len(rawNamesMap[groupName]); k++ {
 							startTimes = append(startTimes, startTime)
@@ -3404,8 +3400,6 @@ func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemN
 							if m, err := gdb.getHistoricalDataWithTsAndIntervals(dataType, rawNamesMap, namesMap, startTimes, endTimes, intervals, tts...); err != nil {
 								return nil, err
 							} else {
-								et3 := time.Now()
-								fmt.Println("读取配置耗时:", et.Sub(st).Milliseconds(), ", 获取条件历史耗时:", et1.Sub(et).Milliseconds(), ", 解析condition并获取数据耗时:", et2.Sub(et1).Milliseconds(), ", 获取历史耗时:", et3.Sub(et2).Milliseconds())
 								return m, nil
 							}
 						} else {

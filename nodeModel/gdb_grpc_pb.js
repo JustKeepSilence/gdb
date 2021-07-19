@@ -1,5 +1,12 @@
 // GENERATED CODE -- DO NOT EDIT!
 
+// Original file comments:
+//
+// creatTime: 2021/2/8
+// creator: JustKeepSilence
+// github: https://github.com/JustKeepSilence
+// goVersion: 1.16
+//
 'use strict';
 var gdb_pb = require('./gdb_pb.js');
 var google_protobuf_empty_pb = require('google-protobuf/google/protobuf/empty_pb.js');

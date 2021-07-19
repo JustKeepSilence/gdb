@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=b'Z\005model',
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\tgdb.proto\x12\x05model\x1a\x1bgoogle/protobuf/empty.proto\"/\n\x08TimeRows\x12\x14\n\x0c\x65\x66\x66\x65\x63tedRows\x18\x01 \x01(\x05\x12\r\n\x05times\x18\x02 \x01(\x03\"/\n\x08TimeCols\x12\x14\n\x0c\x65\x66\x66\x65\x63tedCols\x18\x01 \x01(\x05\x12\r\n\x05times\x18\x02 \x01(\x03\"8\n\x0e\x41\x64\x64\x65\x64GroupInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x03(\t\"<\n\x0f\x41\x64\x64\x65\x64GroupInfos\x12)\n\ngroupInfos\x18\x01 \x03(\x0b\x32\x15.model.AddedGroupInfo\"$\n\x0eGroupNamesInfo\x12\x12\n\ngroupNames\x18\x01 \x03(\t\">\n\x16QueryGroupPropertyInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x02 \x01(\t\"B\n\x14UpdatedGroupNameInfo\x12\x14\n\x0coldGroupName\x18\x01 \x01(\t\x12\x14\n\x0cnewGroupName\x18\x02 \x01(\t\"C\n\x15UpdatedGroupNamesInfo\x12*\n\x05infos\x18\x01 \x03(\x0b\x32\x1b.model.UpdatedGroupNameInfo\"V\n\x15\x41\x64\x64\x65\x64GroupColumnsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x03(\t\x12\x15\n\rdefaultValues\x18\x03 \x03(\t\"E\n\x1b\x44\x65letedGroupColumnNamesInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x03(\t\"?\n\x11GroupPropertyInfo\x12\x11\n\titemCount\x18\x01 \x01(\t\x12\x17\n\x0fitemColumnNames\x18\x02 \x03(\t\"`\n\x1bUpdatedGroupColumnNamesInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x16\n\x0eoldColumnNames\x18\x02 \x03(\t\x12\x16\n\x0enewColumnNames\x18\x03 \x03(\t\"7\n\x0e\x41\x64\x64\x65\x64ItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x12\n\nitemValues\x18\x02 \x01(\t\"8\n\x10\x44\x65letedItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x02 \x01(\t\"j\n\tItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x05 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x01(\t\x12\x10\n\x08startRow\x18\x03 \x01(\x05\x12\x10\n\x08rowCount\x18\x04 \x01(\x05\"K\n\x11GdbItemsWithCount\x12\x11\n\titemCount\x18\x01 \x01(\x05\x12#\n\nitemValues\x18\x02 \x03(\x0b\x32\x0f.model.GdbItems\"c\n\x08GdbItems\x12)\n\x05items\x18\x01 \x03(\x0b\x32\x1a.model.GdbItems.ItemsEntry\x1a,\n\nItemsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"6\n\x0e\x43heckItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\"H\n\x10UpdatedItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x02 \x01(\t\x12\x0e\n\x06\x63lause\x18\x03 \x01(\t\"\x1c\n\x08ItemName\x12\x10\n\x08itemName\x18\x01 \x03(\t\"#\n\x0e\x46loatItemValue\x12\x11\n\titemValue\x18\x01 \x03(\x02\"!\n\x0cIntItemValue\x12\x11\n\titemValue\x18\x01 \x03(\x05\"$\n\x0fStringItemValue\x12\x11\n\titemValue\x18\x01 \x03(\t\"\"\n\rBoolItemValue\x12\x11\n\titemValue\x18\x01 \x03(\x08\"t\n\x0f\x46loatItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12)\n\nitemValues\x18\x03 \x03(\x0b\x32\x15.model.FloatItemValue\"p\n\rIntItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12\'\n\nitemValues\x18\x03 \x03(\x0b\x32\x13.model.IntItemValue\"r\n\x0e\x42oolItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12(\n\nitemValues\x18\x03 \x03(\x0b\x32\x14.model.BoolItemValue\"v\n\x10StringItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12*\n\nitemValues\x18\x03 \x03(\x0b\x32\x16.model.StringItemValue\":\n\x10\x46loatHItemValues\x12&\n\x06values\x18\x03 \x03(\x0b\x32\x16.model.FloatHItemValue\"^\n\x0f\x46loatHItemValue\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x10\n\x08itemName\x18\x02 \x03(\t\x12\x12\n\nitemValues\x18\x03 \x03(\x02\x12\x12\n\ntimeStamps\x18\x04 \x03(\x05\"6\n\x0eIntHItemValues\x12$\n\x06values\x18\x03 \x03(\x0b\x32\x14.model.IntHItemValue\"\\\n\rIntHItemValue\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x10\n\x08itemName\x18\x02 \x03(\t\x12\x12\n\nitemValues\x18\x03 \x03(\x05\x12\x12\n\ntimeStamps\x18\x04 \x03(\x05\"<\n\x11StringHItemValues\x12\'\n\x06values\x18\x03 \x03(\x0b\x32\x17.model.StringHItemValue\"_\n\x10StringHItemValue\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x10\n\x08itemName\x18\x02 \x03(\t\x12\x12\n\nitemValues\x18\x03 \x03(\t\x12\x12\n\ntimeStamps\x18\x04 \x03(\x05\"8\n\x0f\x42oolHItemValues\x12%\n\x06values\x18\x03 \x03(\x0b\x32\x15.model.BoolHItemValue\"]\n\x0e\x42oolHItemValue\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x10\n\x08itemName\x18\x02 \x03(\t\x12\x12\n\nitemValues\x18\x03 \x03(\x08\x12\x12\n\ntimeStamps\x18\x04 \x03(\x05\"@\n\x17QueryRealTimeDataString\x12\x12\n\ngroupNames\x18\x02 \x03(\t\x12\x11\n\titemNames\x18\x01 \x03(\t\"{\n\x19QueryHistoricalDataString\x12\x12\n\ngroupNames\x18\x05 \x03(\t\x12\x11\n\titemNames\x18\x01 \x03(\t\x12\x12\n\nstartTimes\x18\x02 \x03(\x05\x12\x10\n\x08\x65ndTimes\x18\x03 \x03(\x05\x12\x11\n\tintervals\x18\x04 \x03(\x05\"E\n\x1cQueryRawHistoricalDataString\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\"W\n\x1cQueryHistoricalDataWithStamp\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x10\n\x08itemName\x18\x02 \x01(\t\x12\x12\n\ntimeStamps\x18\x03 \x03(\x05\"^\n\"QueryHistoricalDataWithStampString\x12\x38\n\x0bqueryString\x18\x01 \x03(\x0b\x32#.model.QueryHistoricalDataWithStamp\"3\n\x08\x44\x65\x61\x64Zone\x12\x10\n\x08itemName\x18\x01 \x01(\t\x12\x15\n\rdeadZoneCount\x18\x02 \x01(\x05\"\xc4\x01\n&QueryHistoricalDataWithConditionString\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12\x12\n\nstartTimes\x18\x03 \x03(\x05\x12\x10\n\x08\x65ndTimes\x18\x04 \x03(\x05\x12\x11\n\tintervals\x18\x05 \x03(\x05\x12\x17\n\x0f\x66ilterCondition\x18\x06 \x01(\t\x12\"\n\tdeadZones\x18\x07 \x03(\x0b\x32\x0f.model.DeadZone\"i\n\x1a\x44\x65leteHistoricalDataString\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12\x12\n\nstartTimes\x18\x03 \x03(\x05\x12\x10\n\x08\x65ndTimes\x18\x04 \x03(\x05\"6\n\x0fGdbRealTimeData\x12\x14\n\x0crealTimeData\x18\x01 \x01(\t\x12\r\n\x05times\x18\x02 \x01(\x03\":\n\x11GdbHistoricalData\x12\x16\n\x0ehistoricalData\x18\x01 \x01(\t\x12\r\n\x05times\x18\x02 \x01(\x03\".\n\x08\x41uthInfo\x12\x10\n\x08userName\x18\x01 \x01(\t\x12\x10\n\x08passWord\x18\x02 \x01(\t\"\x18\n\x08UserName\x12\x0c\n\x04name\x18\x01 \x01(\t\"=\n\rAddedUserInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04role\x18\x02 \x01(\t\x12\x10\n\x08passWord\x18\x03 \x01(\t\"^\n\x0fUpdatedUserInfo\x12\x10\n\x08userName\x18\x01 \x01(\t\x12\x13\n\x0bnewUserName\x18\x02 \x01(\t\x12\x13\n\x0bnewPassWord\x18\x03 \x01(\t\x12\x0f\n\x07newRole\x18\x04 \x01(\t\"/\n\x08\x46ileInfo\x12\x10\n\x08\x66ileName\x18\x01 \x01(\t\x12\x11\n\tgroupName\x18\x02 \x01(\t\"]\n\x0fHistoryFileInfo\x12\x11\n\tgroupName\x18\x04 \x01(\t\x12\x10\n\x08\x66ileName\x18\x01 \x01(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12\x12\n\nsheetNames\x18\x03 \x03(\t\"t\n\rQueryLogsInfo\x12\r\n\x05level\x18\x01 \x01(\t\x12\x11\n\tstartTime\x18\x02 \x01(\t\x12\x0f\n\x07\x65ndTime\x18\x03 \x01(\t\x12\x10\n\x08startRow\x18\x04 \x01(\x05\x12\x10\n\x08rowCount\x18\x05 \x01(\x05\x12\x0c\n\x04name\x18\x06 \x01(\t\"[\n\x0e\x44\x65letedLogInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\tstartTime\x18\x02 \x01(\t\x12\x0f\n\x07\x65ndTime\x18\x03 \x01(\t\x12\x19\n\x11userNameCondition\x18\x04 \x01(\t\"z\n\x1bQuerySpeedHistoryDataString\x12\x10\n\x08infoType\x18\x05 \x01(\t\x12\x10\n\x08itemName\x18\x01 \x01(\t\x12\x12\n\nstartTimes\x18\x02 \x03(\x05\x12\x10\n\x08\x65ndTimes\x18\x03 \x03(\x05\x12\x11\n\tintervals\x18\x04 \x03(\x05\"*\n\nRoutesInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06routes\x18\x02 \x03(\t\"\x1b\n\x0bGdbInfoData\x12\x0c\n\x04info\x18\x01 \x01(\t\"\x1a\n\tUserToken\x12\r\n\x05token\x18\x01 \x01(\t\"*\n\x08UserInfo\x12\x10\n\x08userName\x18\x01 \x01(\t\x12\x0c\n\x04role\x18\x02 \x03(\t\"(\n\x08LogsInfo\x12\r\n\x05infos\x18\x01 \x01(\t\x12\r\n\x05\x63ount\x18\x02 \x01(\x05\"2\n\x10UploadedFileInfo\x12\x10\n\x08\x66ileName\x18\x01 \x01(\t\x12\x0c\n\x04\x66ile\x18\x02 \x03(\x05\" \n\x0c\x46ileContents\x12\x10\n\x08\x63ontents\x18\x01 \x03(\x05\"\x1c\n\x08\x46ileSize\x12\x10\n\x08\x66ileSize\x18\x01 \x01(\t\"\x1e\n\tUserInfos\x12\x11\n\tuserInfos\x18\x01 \x01(\t\"\x18\n\x06Routes\x12\x0e\n\x06routes\x18\x01 \x01(\t\"\x1d\n\x0b\x43heckResult\x12\x0e\n\x06result\x18\x01 \x03(\x05\"\x14\n\x04\x43ode\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\"\\\n\x11\x41\x64\x64\x65\x64\x43\x61lcItemInfo\x12\x12\n\nexpression\x18\x01 \x01(\t\x12\x0c\n\x04\x66lag\x18\x02 \x01(\t\x12\x10\n\x08\x64uration\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\"\'\n\x12QueryCalcItemsInfo\x12\x11\n\tcondition\x18\x01 \x01(\t\"m\n\x0fUpdatedCalcInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x12\n\nexpression\x18\x03 \x01(\t\x12\x10\n\x08\x64uration\x18\x04 \x01(\t\x12\x13\n\x0bupdatedTime\x18\x05 \x01(\t\"\x14\n\x06\x43\x61lcId\x12\n\n\x02id\x18\x01 \x03(\t\"#\n\x11\x43\x61lculationResult\x12\x0e\n\x06result\x18\x01 \x01(\t\"\x1e\n\rCalcItemsInfo\x12\r\n\x05infos\x18\x01 \x01(\t\"?\n\x12\x43\x61lculationResults\x12)\n\x07results\x18\x01 \x03(\x0b\x32\x18.model.CalculationResult\"&\n\x10TestCalcItemInfo\x12\x12\n\nexpression\x18\x01 \x01(\t\"9\n\x13\x46loatHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\x02\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\"7\n\x11IntHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\x05\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\":\n\x14StringHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\t\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\"8\n\x12\x42oolHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\x08\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\x32\xad\x04\n\x05Group\x12\x36\n\tAddGroups\x12\x16.model.AddedGroupInfos\x1a\x0f.model.TimeRows\"\x00\x12\x38\n\x0c\x44\x65leteGroups\x12\x15.model.GroupNamesInfo\x1a\x0f.model.TimeRows\"\x00\x12<\n\tGetGroups\x12\x16.google.protobuf.Empty\x1a\x15.model.GroupNamesInfo\"\x00\x12M\n\x10GetGroupProperty\x12\x1d.model.QueryGroupPropertyInfo\x1a\x18.model.GroupPropertyInfo\"\x00\x12\x43\n\x10UpdateGroupNames\x12\x1c.model.UpdatedGroupNamesInfo\x1a\x0f.model.TimeRows\"\x00\x12O\n\x16UpdateGroupColumnNames\x12\".model.UpdatedGroupColumnNamesInfo\x1a\x0f.model.TimeCols\"\x00\x12K\n\x12\x44\x65leteGroupColumns\x12\".model.DeletedGroupColumnNamesInfo\x1a\x0f.model.TimeCols\"\x00\x12\x42\n\x0f\x41\x64\x64GroupColumns\x12\x1c.model.AddedGroupColumnsInfo\x1a\x0f.model.TimeCols\"\x00\x32\xf1\x02\n\x04Item\x12\x34\n\x08\x41\x64\x64Items\x12\x15.model.AddedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12\x39\n\x0b\x44\x65leteItems\x12\x17.model.DeletedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12\x41\n\x11GetItemsWithCount\x12\x10.model.ItemsInfo\x1a\x18.model.GdbItemsWithCount\"\x00\x12\x39\n\x0bUpdateItems\x12\x17.model.UpdatedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12=\n\nCheckItems\x12\x15.model.CheckItemsInfo\x1a\x16.google.protobuf.Empty\"\x00\x12;\n\x0f\x43leanGroupItems\x12\x15.model.GroupNamesInfo\x1a\x0f.model.TimeRows\"\x00\x32\x99\x1a\n\x04\x44\x61ta\x12@\n\x13\x42\x61tchWriteFloatData\x12\x16.model.FloatItemValues\x1a\x0f.model.TimeRows\"\x00\x12L\n\x1d\x42\x61tchWriteFloatDataWithStream\x12\x16.model.FloatItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12<\n\x11\x42\x61tchWriteIntData\x12\x14.model.IntItemValues\x1a\x0f.model.TimeRows\"\x00\x12H\n\x1b\x42\x61tchWriteIntDataWithStream\x12\x14.model.IntItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12\x42\n\x14\x42\x61tchWriteStringData\x12\x17.model.StringItemValues\x1a\x0f.model.TimeRows\"\x00\x12N\n\x1e\x42\x61tchWriteStringDataWithStream\x12\x17.model.StringItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12>\n\x12\x42\x61tchWriteBoolData\x12\x15.model.BoolItemValues\x1a\x0f.model.TimeRows\"\x00\x12J\n\x1c\x42\x61tchWriteBoolDataWithStream\x12\x15.model.BoolItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12K\n\x1d\x42\x61tchWriteFloatHistoricalData\x12\x17.model.FloatHItemValues\x1a\x0f.model.TimeRows\"\x00\x12W\n\'BatchWriteFloatHistoricalDataWithStream\x12\x17.model.FloatHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12G\n\x1b\x42\x61tchWriteIntHistoricalData\x12\x15.model.IntHItemValues\x1a\x0f.model.TimeRows\"\x00\x12S\n%BatchWriteIntHistoricalDataWithStream\x12\x15.model.IntHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12M\n\x1e\x42\x61tchWriteStringHistoricalData\x12\x18.model.StringHItemValues\x1a\x0f.model.TimeRows\"\x00\x12Y\n(BatchWriteStringHistoricalDataWithStream\x12\x18.model.StringHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12I\n\x1c\x42\x61tchWriteBoolHistoricalData\x12\x16.model.BoolHItemValues\x1a\x0f.model.TimeRows\"\x00\x12U\n&BatchWriteBoolHistoricalDataWithStream\x12\x16.model.BoolHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12K\n\x0fGetRealTimeData\x12\x1e.model.QueryRealTimeDataString\x1a\x16.model.GdbRealTimeData\"\x00\x12V\n\x16GetFloatHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12T\n\x14GetIntHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12W\n\x17GetStringHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12U\n\x15GetBoolHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12\\\n\x19GetFloatRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12Z\n\x17GetIntRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12]\n\x1aGetStringRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12[\n\x18GetBoolRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12h\n\x1fGetFloatHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12\x66\n\x1dGetIntHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12i\n GetStringHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12g\n\x1eGetBoolHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12p\n#GetFloatHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12n\n!GetIntHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12q\n$GetStringHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12o\n\"GetBoolHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12Q\n\x19\x44\x65leteFloatHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12O\n\x17\x44\x65leteIntHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12R\n\x1a\x44\x65leteStringHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12P\n\x18\x44\x65leteBoolHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12;\n\rCleanItemData\x12\x17.model.DeletedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12\x35\n\x08ReLoadDb\x12\x16.google.protobuf.Empty\x1a\x0f.model.TimeRows\"\x00\x32\x9d\x0b\n\x04Page\x12\x30\n\tUserLogin\x12\x0f.model.AuthInfo\x1a\x10.model.UserToken\"\x00\x12\x37\n\nUserLogOut\x12\x0f.model.UserName\x1a\x16.google.protobuf.Empty\"\x00\x12\x31\n\x0bGetUserInfo\x12\x0f.model.UserName\x1a\x0f.model.UserInfo\"\x00\x12\x36\n\x08GetUsers\x12\x16.google.protobuf.Empty\x1a\x10.model.UserInfos\"\x00\x12\x33\n\x08\x41\x64\x64Users\x12\x14.model.AddedUserInfo\x1a\x0f.model.TimeRows\"\x00\x12\x31\n\x0b\x44\x65leteUsers\x12\x0f.model.UserName\x1a\x0f.model.TimeRows\"\x00\x12\x38\n\x0bUpdateUsers\x12\x16.model.UpdatedUserInfo\x1a\x0f.model.TimeRows\"\x00\x12?\n\nUploadFile\x12\x17.model.UploadedFileInfo\x1a\x16.google.protobuf.Empty\"\x00\x12K\n\x14UploadFileWithStream\x12\x17.model.UploadedFileInfo\x1a\x16.google.protobuf.Empty\"\x00(\x01\x12\x35\n\x0f\x41\x64\x64ItemsByExcel\x12\x0f.model.FileInfo\x1a\x0f.model.TimeRows\"\x00\x12\x41\n\x14ImportHistoryByExcel\x12\x16.model.HistoryFileInfo\x1a\x0f.model.TimeRows\"\x00\x12\x32\n\x07GetLogs\x12\x14.model.QueryLogsInfo\x1a\x0f.model.LogsInfo\"\x00\x12+\n\tGetJsCode\x12\x0f.model.FileInfo\x1a\x0b.model.Code\"\x00\x12\x36\n\nDeleteLogs\x12\x15.model.DeletedLogInfo\x1a\x0f.model.TimeRows\"\x00\x12\x36\n\x0c\x44ownloadFile\x12\x0f.model.FileInfo\x1a\x13.model.FileContents\"\x00\x12\x36\n\tGetDbSize\x12\x16.google.protobuf.Empty\x1a\x0f.model.FileSize\"\x00\x12\x39\n\tGetDbInfo\x12\x16.google.protobuf.Empty\x1a\x12.model.GdbInfoData\"\x00\x12R\n\x10GetDbInfoHistory\x12\".model.QuerySpeedHistoryDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12\x34\n\tGetRoutes\x12\x16.google.protobuf.Empty\x1a\r.model.Routes\"\x00\x12\x34\n\x0c\x44\x65leteRoutes\x12\x11.model.RoutesInfo\x1a\x0f.model.TimeRows\"\x00\x12\x31\n\tAddRoutes\x12\x11.model.RoutesInfo\x1a\x0f.model.TimeRows\"\x00\x12\x35\n\rAddUserRoutes\x12\x11.model.RoutesInfo\x1a\x0f.model.TimeRows\"\x00\x12\x36\n\x10\x44\x65leteUserRoutes\x12\x0f.model.UserName\x1a\x0f.model.TimeRows\"\x00\x12\x37\n\x0cGetAllRoutes\x12\x16.google.protobuf.Empty\x1a\r.model.Routes\"\x00\x12\x36\n\x0b\x43heckRoutes\x12\x11.model.RoutesInfo\x1a\x12.model.CheckResult\"\x00\x32\x84\x04\n\x04\x43\x61lc\x12\x43\n\x0cTestCalcItem\x12\x17.model.TestCalcItemInfo\x1a\x18.model.CalculationResult\"\x00\x12\x43\n\x0b\x41\x64\x64\x43\x61lcItem\x12\x18.model.AddedCalcItemInfo\x1a\x18.model.CalculationResult\"\x00\x12P\n\x15\x41\x64\x64\x43\x61lcItemWithStream\x12\x18.model.AddedCalcItemInfo\x1a\x19.model.CalculationResults\"\x00(\x01\x12\x41\n\x0cGetCalcItems\x12\x19.model.QueryCalcItemsInfo\x1a\x14.model.CalcItemsInfo\"\x00\x12\x44\n\x0eUpdateCalcItem\x12\x16.model.UpdatedCalcInfo\x1a\x18.model.CalculationResult\"\x00\x12\x31\n\rStartCalcItem\x12\r.model.CalcId\x1a\x0f.model.TimeRows\"\x00\x12\x30\n\x0cStopCalcItem\x12\r.model.CalcId\x1a\x0f.model.TimeRows\"\x00\x12\x32\n\x0e\x44\x65leteCalcItem\x12\r.model.CalcId\x1a\x0f.model.TimeRows\"\x00\x42\x07Z\x05modelb\x06proto3'
+  serialized_pb=b'\n\tgdb.proto\x12\x05model\x1a\x1bgoogle/protobuf/empty.proto\"/\n\x08TimeRows\x12\x14\n\x0c\x65\x66\x66\x65\x63tedRows\x18\x01 \x01(\x05\x12\r\n\x05times\x18\x02 \x01(\x03\"/\n\x08TimeCols\x12\x14\n\x0c\x65\x66\x66\x65\x63tedCols\x18\x01 \x01(\x05\x12\r\n\x05times\x18\x02 \x01(\x03\"8\n\x0e\x41\x64\x64\x65\x64GroupInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x03(\t\"<\n\x0f\x41\x64\x64\x65\x64GroupInfos\x12)\n\ngroupInfos\x18\x01 \x03(\x0b\x32\x15.model.AddedGroupInfo\"$\n\x0eGroupNamesInfo\x12\x12\n\ngroupNames\x18\x01 \x03(\t\">\n\x16QueryGroupPropertyInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x02 \x01(\t\"B\n\x14UpdatedGroupNameInfo\x12\x14\n\x0coldGroupName\x18\x01 \x01(\t\x12\x14\n\x0cnewGroupName\x18\x02 \x01(\t\"C\n\x15UpdatedGroupNamesInfo\x12*\n\x05infos\x18\x01 \x03(\x0b\x32\x1b.model.UpdatedGroupNameInfo\"V\n\x15\x41\x64\x64\x65\x64GroupColumnsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x03(\t\x12\x15\n\rdefaultValues\x18\x03 \x03(\t\"E\n\x1b\x44\x65letedGroupColumnNamesInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x03(\t\"?\n\x11GroupPropertyInfo\x12\x11\n\titemCount\x18\x01 \x01(\t\x12\x17\n\x0fitemColumnNames\x18\x02 \x03(\t\"`\n\x1bUpdatedGroupColumnNamesInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x16\n\x0eoldColumnNames\x18\x02 \x03(\t\x12\x16\n\x0enewColumnNames\x18\x03 \x03(\t\"7\n\x0e\x41\x64\x64\x65\x64ItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x12\n\nitemValues\x18\x02 \x01(\t\"8\n\x10\x44\x65letedItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x02 \x01(\t\"j\n\tItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x05 \x01(\t\x12\x13\n\x0b\x63olumnNames\x18\x02 \x01(\t\x12\x10\n\x08startRow\x18\x03 \x01(\x05\x12\x10\n\x08rowCount\x18\x04 \x01(\x05\"K\n\x11GdbItemsWithCount\x12\x11\n\titemCount\x18\x01 \x01(\x05\x12#\n\nitemValues\x18\x02 \x03(\x0b\x32\x0f.model.GdbItems\"c\n\x08GdbItems\x12)\n\x05items\x18\x01 \x03(\x0b\x32\x1a.model.GdbItems.ItemsEntry\x1a,\n\nItemsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"6\n\x0e\x43heckItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\"H\n\x10UpdatedItemsInfo\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\tcondition\x18\x02 \x01(\t\x12\x0e\n\x06\x63lause\x18\x03 \x01(\t\"\x1c\n\x08ItemName\x12\x10\n\x08itemName\x18\x01 \x03(\t\"#\n\x0e\x46loatItemValue\x12\x11\n\titemValue\x18\x01 \x03(\x02\"!\n\x0cIntItemValue\x12\x11\n\titemValue\x18\x01 \x03(\x05\"$\n\x0fStringItemValue\x12\x11\n\titemValue\x18\x01 \x03(\t\"\"\n\rBoolItemValue\x12\x11\n\titemValue\x18\x01 \x03(\x08\"\x1f\n\tTimeStamp\x12\x12\n\ntimeStamps\x18\x01 \x03(\x05\"t\n\x0f\x46loatItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12)\n\nitemValues\x18\x03 \x03(\x0b\x32\x15.model.FloatItemValue\"p\n\rIntItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12\'\n\nitemValues\x18\x03 \x03(\x0b\x32\x13.model.IntItemValue\"r\n\x0e\x42oolItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12(\n\nitemValues\x18\x03 \x03(\x0b\x32\x14.model.BoolItemValue\"v\n\x10StringItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\"\n\titemNames\x18\x02 \x03(\x0b\x32\x0f.model.ItemName\x12*\n\nitemValues\x18\x03 \x03(\x0b\x32\x16.model.StringItemValue\"\x8a\x01\n\x10\x46loatHItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12)\n\nitemValues\x18\x03 \x03(\x0b\x32\x15.model.FloatItemValue\x12$\n\ntimeStamps\x18\x04 \x03(\x0b\x32\x10.model.TimeStamp\"\x86\x01\n\x0eIntHItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12\'\n\nitemValues\x18\x03 \x03(\x0b\x32\x13.model.IntItemValue\x12$\n\ntimeStamps\x18\x04 \x03(\x0b\x32\x10.model.TimeStamp\"\x8c\x01\n\x11StringHItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12*\n\nitemValues\x18\x03 \x03(\x0b\x32\x16.model.StringItemValue\x12$\n\ntimeStamps\x18\x04 \x03(\x0b\x32\x10.model.TimeStamp\"\x88\x01\n\x0f\x42oolHItemValues\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12(\n\nitemValues\x18\x03 \x03(\x0b\x32\x14.model.BoolItemValue\x12$\n\ntimeStamps\x18\x04 \x03(\x0b\x32\x10.model.TimeStamp\"@\n\x17QueryRealTimeDataString\x12\x12\n\ngroupNames\x18\x02 \x03(\t\x12\x11\n\titemNames\x18\x01 \x03(\t\"{\n\x19QueryHistoricalDataString\x12\x12\n\ngroupNames\x18\x05 \x03(\t\x12\x11\n\titemNames\x18\x01 \x03(\t\x12\x12\n\nstartTimes\x18\x02 \x03(\x05\x12\x10\n\x08\x65ndTimes\x18\x03 \x03(\x05\x12\x11\n\tintervals\x18\x04 \x03(\x05\"E\n\x1cQueryRawHistoricalDataString\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\"W\n\x1cQueryHistoricalDataWithStamp\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x10\n\x08itemName\x18\x02 \x01(\t\x12\x12\n\ntimeStamps\x18\x03 \x03(\x05\"^\n\"QueryHistoricalDataWithStampString\x12\x38\n\x0bqueryString\x18\x01 \x03(\x0b\x32#.model.QueryHistoricalDataWithStamp\"3\n\x08\x44\x65\x61\x64Zone\x12\x10\n\x08itemName\x18\x01 \x01(\t\x12\x15\n\rdeadZoneCount\x18\x02 \x01(\x05\"\xc1\x01\n&QueryHistoricalDataWithConditionString\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12\x11\n\tstartTime\x18\x03 \x01(\x05\x12\x0f\n\x07\x65ndTime\x18\x04 \x01(\x05\x12\x10\n\x08interval\x18\x05 \x01(\x05\x12\x17\n\x0f\x66ilterCondition\x18\x06 \x01(\t\x12\"\n\tdeadZones\x18\x07 \x03(\x0b\x32\x0f.model.DeadZone\"i\n\x1a\x44\x65leteHistoricalDataString\x12\x12\n\ngroupNames\x18\x01 \x03(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12\x12\n\nstartTimes\x18\x03 \x03(\x05\x12\x10\n\x08\x65ndTimes\x18\x04 \x03(\x05\"6\n\x0fGdbRealTimeData\x12\x14\n\x0crealTimeData\x18\x01 \x01(\t\x12\r\n\x05times\x18\x02 \x01(\x03\":\n\x11GdbHistoricalData\x12\x16\n\x0ehistoricalData\x18\x01 \x01(\t\x12\r\n\x05times\x18\x02 \x01(\x03\".\n\x08\x41uthInfo\x12\x10\n\x08userName\x18\x01 \x01(\t\x12\x10\n\x08passWord\x18\x02 \x01(\t\"\x18\n\x08UserName\x12\x0c\n\x04name\x18\x01 \x01(\t\"=\n\rAddedUserInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04role\x18\x02 \x01(\t\x12\x10\n\x08passWord\x18\x03 \x01(\t\"^\n\x0fUpdatedUserInfo\x12\x10\n\x08userName\x18\x01 \x01(\t\x12\x13\n\x0bnewUserName\x18\x02 \x01(\t\x12\x13\n\x0bnewPassWord\x18\x03 \x01(\t\x12\x0f\n\x07newRole\x18\x04 \x01(\t\"/\n\x08\x46ileInfo\x12\x10\n\x08\x66ileName\x18\x01 \x01(\t\x12\x11\n\tgroupName\x18\x02 \x01(\t\"]\n\x0fHistoryFileInfo\x12\x11\n\tgroupName\x18\x04 \x01(\t\x12\x10\n\x08\x66ileName\x18\x01 \x01(\t\x12\x11\n\titemNames\x18\x02 \x03(\t\x12\x12\n\nsheetNames\x18\x03 \x03(\t\"t\n\rQueryLogsInfo\x12\r\n\x05level\x18\x01 \x01(\t\x12\x11\n\tstartTime\x18\x02 \x01(\t\x12\x0f\n\x07\x65ndTime\x18\x03 \x01(\t\x12\x10\n\x08startRow\x18\x04 \x01(\x05\x12\x10\n\x08rowCount\x18\x05 \x01(\x05\x12\x0c\n\x04name\x18\x06 \x01(\t\"[\n\x0e\x44\x65letedLogInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\tstartTime\x18\x02 \x01(\t\x12\x0f\n\x07\x65ndTime\x18\x03 \x01(\t\x12\x19\n\x11userNameCondition\x18\x04 \x01(\t\"z\n\x1bQuerySpeedHistoryDataString\x12\x10\n\x08infoType\x18\x05 \x01(\t\x12\x10\n\x08itemName\x18\x01 \x01(\t\x12\x12\n\nstartTimes\x18\x02 \x03(\x05\x12\x10\n\x08\x65ndTimes\x18\x03 \x03(\x05\x12\x11\n\tintervals\x18\x04 \x03(\x05\"*\n\nRoutesInfo\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0e\n\x06routes\x18\x02 \x03(\t\"\x1b\n\x0bGdbInfoData\x12\x0c\n\x04info\x18\x01 \x01(\t\"\x1a\n\tUserToken\x12\r\n\x05token\x18\x01 \x01(\t\"*\n\x08UserInfo\x12\x10\n\x08userName\x18\x01 \x01(\t\x12\x0c\n\x04role\x18\x02 \x03(\t\"(\n\x08LogsInfo\x12\r\n\x05infos\x18\x01 \x01(\t\x12\r\n\x05\x63ount\x18\x02 \x01(\x05\"2\n\x10UploadedFileInfo\x12\x10\n\x08\x66ileName\x18\x01 \x01(\t\x12\x0c\n\x04\x66ile\x18\x02 \x03(\x05\" \n\x0c\x46ileContents\x12\x10\n\x08\x63ontents\x18\x01 \x03(\x05\"\x1c\n\x08\x46ileSize\x12\x10\n\x08\x66ileSize\x18\x01 \x01(\t\"\x1e\n\tUserInfos\x12\x11\n\tuserInfos\x18\x01 \x01(\t\"\x18\n\x06Routes\x12\x0e\n\x06routes\x18\x01 \x01(\t\"\x1d\n\x0b\x43heckResult\x12\x0e\n\x06result\x18\x01 \x03(\x05\"\x14\n\x04\x43ode\x12\x0c\n\x04\x63ode\x18\x01 \x01(\t\"\\\n\x11\x41\x64\x64\x65\x64\x43\x61lcItemInfo\x12\x12\n\nexpression\x18\x01 \x01(\t\x12\x0c\n\x04\x66lag\x18\x02 \x01(\t\x12\x10\n\x08\x64uration\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\"\'\n\x12QueryCalcItemsInfo\x12\x11\n\tcondition\x18\x01 \x01(\t\"m\n\x0fUpdatedCalcInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x02 \x01(\t\x12\x12\n\nexpression\x18\x03 \x01(\t\x12\x10\n\x08\x64uration\x18\x04 \x01(\t\x12\x13\n\x0bupdatedTime\x18\x05 \x01(\t\"\x14\n\x06\x43\x61lcId\x12\n\n\x02id\x18\x01 \x03(\t\"#\n\x11\x43\x61lculationResult\x12\x0e\n\x06result\x18\x01 \x01(\t\"\x1e\n\rCalcItemsInfo\x12\r\n\x05infos\x18\x01 \x01(\t\"?\n\x12\x43\x61lculationResults\x12)\n\x07results\x18\x01 \x03(\x0b\x32\x18.model.CalculationResult\"&\n\x10TestCalcItemInfo\x12\x12\n\nexpression\x18\x01 \x01(\t\"9\n\x13\x46loatHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\x02\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\"7\n\x11IntHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\x05\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\":\n\x14StringHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\t\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\"8\n\x12\x42oolHistoricalData\x12\x0e\n\x06values\x18\x01 \x03(\x08\x12\x12\n\ntimeStamps\x18\x02 \x03(\x05\"\xaf\x01\n\x14\x46loatHistoricalDatas\x12\x45\n\rhistoryValues\x18\x01 \x03(\x0b\x32..model.FloatHistoricalDatas.HistoryValuesEntry\x1aP\n\x12HistoryValuesEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12)\n\x05value\x18\x02 \x01(\x0b\x32\x1a.model.FloatHistoricalData:\x02\x38\x01\x32\xad\x04\n\x05Group\x12\x36\n\tAddGroups\x12\x16.model.AddedGroupInfos\x1a\x0f.model.TimeRows\"\x00\x12\x38\n\x0c\x44\x65leteGroups\x12\x15.model.GroupNamesInfo\x1a\x0f.model.TimeRows\"\x00\x12<\n\tGetGroups\x12\x16.google.protobuf.Empty\x1a\x15.model.GroupNamesInfo\"\x00\x12M\n\x10GetGroupProperty\x12\x1d.model.QueryGroupPropertyInfo\x1a\x18.model.GroupPropertyInfo\"\x00\x12\x43\n\x10UpdateGroupNames\x12\x1c.model.UpdatedGroupNamesInfo\x1a\x0f.model.TimeRows\"\x00\x12O\n\x16UpdateGroupColumnNames\x12\".model.UpdatedGroupColumnNamesInfo\x1a\x0f.model.TimeCols\"\x00\x12K\n\x12\x44\x65leteGroupColumns\x12\".model.DeletedGroupColumnNamesInfo\x1a\x0f.model.TimeCols\"\x00\x12\x42\n\x0f\x41\x64\x64GroupColumns\x12\x1c.model.AddedGroupColumnsInfo\x1a\x0f.model.TimeCols\"\x00\x32\xf1\x02\n\x04Item\x12\x34\n\x08\x41\x64\x64Items\x12\x15.model.AddedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12\x39\n\x0b\x44\x65leteItems\x12\x17.model.DeletedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12\x41\n\x11GetItemsWithCount\x12\x10.model.ItemsInfo\x1a\x18.model.GdbItemsWithCount\"\x00\x12\x39\n\x0bUpdateItems\x12\x17.model.UpdatedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12=\n\nCheckItems\x12\x15.model.CheckItemsInfo\x1a\x16.google.protobuf.Empty\"\x00\x12;\n\x0f\x43leanGroupItems\x12\x15.model.GroupNamesInfo\x1a\x0f.model.TimeRows\"\x00\x32\x99\x1a\n\x04\x44\x61ta\x12@\n\x13\x42\x61tchWriteFloatData\x12\x16.model.FloatItemValues\x1a\x0f.model.TimeRows\"\x00\x12L\n\x1d\x42\x61tchWriteFloatDataWithStream\x12\x16.model.FloatItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12<\n\x11\x42\x61tchWriteIntData\x12\x14.model.IntItemValues\x1a\x0f.model.TimeRows\"\x00\x12H\n\x1b\x42\x61tchWriteIntDataWithStream\x12\x14.model.IntItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12\x42\n\x14\x42\x61tchWriteStringData\x12\x17.model.StringItemValues\x1a\x0f.model.TimeRows\"\x00\x12N\n\x1e\x42\x61tchWriteStringDataWithStream\x12\x17.model.StringItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12>\n\x12\x42\x61tchWriteBoolData\x12\x15.model.BoolItemValues\x1a\x0f.model.TimeRows\"\x00\x12J\n\x1c\x42\x61tchWriteBoolDataWithStream\x12\x15.model.BoolItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12K\n\x1d\x42\x61tchWriteFloatHistoricalData\x12\x17.model.FloatHItemValues\x1a\x0f.model.TimeRows\"\x00\x12W\n\'BatchWriteFloatHistoricalDataWithStream\x12\x17.model.FloatHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12G\n\x1b\x42\x61tchWriteIntHistoricalData\x12\x15.model.IntHItemValues\x1a\x0f.model.TimeRows\"\x00\x12S\n%BatchWriteIntHistoricalDataWithStream\x12\x15.model.IntHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12M\n\x1e\x42\x61tchWriteStringHistoricalData\x12\x18.model.StringHItemValues\x1a\x0f.model.TimeRows\"\x00\x12Y\n(BatchWriteStringHistoricalDataWithStream\x12\x18.model.StringHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12I\n\x1c\x42\x61tchWriteBoolHistoricalData\x12\x16.model.BoolHItemValues\x1a\x0f.model.TimeRows\"\x00\x12U\n&BatchWriteBoolHistoricalDataWithStream\x12\x16.model.BoolHItemValues\x1a\x0f.model.TimeRows\"\x00(\x01\x12K\n\x0fGetRealTimeData\x12\x1e.model.QueryRealTimeDataString\x1a\x16.model.GdbRealTimeData\"\x00\x12V\n\x16GetFloatHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12T\n\x14GetIntHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12W\n\x17GetStringHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12U\n\x15GetBoolHistoricalData\x12 .model.QueryHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12\\\n\x19GetFloatRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12Z\n\x17GetIntRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12]\n\x1aGetStringRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12[\n\x18GetBoolRawHistoricalData\x12#.model.QueryRawHistoricalDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12h\n\x1fGetFloatHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12\x66\n\x1dGetIntHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12i\n GetStringHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12g\n\x1eGetBoolHistoricalDataWithStamp\x12).model.QueryHistoricalDataWithStampString\x1a\x18.model.GdbHistoricalData\"\x00\x12p\n#GetFloatHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12n\n!GetIntHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12q\n$GetStringHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12o\n\"GetBoolHistoricalDataWithCondition\x12-.model.QueryHistoricalDataWithConditionString\x1a\x18.model.GdbHistoricalData\"\x00\x12Q\n\x19\x44\x65leteFloatHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12O\n\x17\x44\x65leteIntHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12R\n\x1a\x44\x65leteStringHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12P\n\x18\x44\x65leteBoolHistoricalData\x12!.model.DeleteHistoricalDataString\x1a\x0f.model.TimeRows\"\x00\x12;\n\rCleanItemData\x12\x17.model.DeletedItemsInfo\x1a\x0f.model.TimeRows\"\x00\x12\x35\n\x08ReLoadDb\x12\x16.google.protobuf.Empty\x1a\x0f.model.TimeRows\"\x00\x32\x9d\x0b\n\x04Page\x12\x30\n\tUserLogin\x12\x0f.model.AuthInfo\x1a\x10.model.UserToken\"\x00\x12\x37\n\nUserLogOut\x12\x0f.model.UserName\x1a\x16.google.protobuf.Empty\"\x00\x12\x31\n\x0bGetUserInfo\x12\x0f.model.UserName\x1a\x0f.model.UserInfo\"\x00\x12\x36\n\x08GetUsers\x12\x16.google.protobuf.Empty\x1a\x10.model.UserInfos\"\x00\x12\x33\n\x08\x41\x64\x64Users\x12\x14.model.AddedUserInfo\x1a\x0f.model.TimeRows\"\x00\x12\x31\n\x0b\x44\x65leteUsers\x12\x0f.model.UserName\x1a\x0f.model.TimeRows\"\x00\x12\x38\n\x0bUpdateUsers\x12\x16.model.UpdatedUserInfo\x1a\x0f.model.TimeRows\"\x00\x12?\n\nUploadFile\x12\x17.model.UploadedFileInfo\x1a\x16.google.protobuf.Empty\"\x00\x12K\n\x14UploadFileWithStream\x12\x17.model.UploadedFileInfo\x1a\x16.google.protobuf.Empty\"\x00(\x01\x12\x35\n\x0f\x41\x64\x64ItemsByExcel\x12\x0f.model.FileInfo\x1a\x0f.model.TimeRows\"\x00\x12\x41\n\x14ImportHistoryByExcel\x12\x16.model.HistoryFileInfo\x1a\x0f.model.TimeRows\"\x00\x12\x32\n\x07GetLogs\x12\x14.model.QueryLogsInfo\x1a\x0f.model.LogsInfo\"\x00\x12+\n\tGetJsCode\x12\x0f.model.FileInfo\x1a\x0b.model.Code\"\x00\x12\x36\n\nDeleteLogs\x12\x15.model.DeletedLogInfo\x1a\x0f.model.TimeRows\"\x00\x12\x36\n\x0c\x44ownloadFile\x12\x0f.model.FileInfo\x1a\x13.model.FileContents\"\x00\x12\x36\n\tGetDbSize\x12\x16.google.protobuf.Empty\x1a\x0f.model.FileSize\"\x00\x12\x39\n\tGetDbInfo\x12\x16.google.protobuf.Empty\x1a\x12.model.GdbInfoData\"\x00\x12R\n\x10GetDbInfoHistory\x12\".model.QuerySpeedHistoryDataString\x1a\x18.model.GdbHistoricalData\"\x00\x12\x34\n\tGetRoutes\x12\x16.google.protobuf.Empty\x1a\r.model.Routes\"\x00\x12\x34\n\x0c\x44\x65leteRoutes\x12\x11.model.RoutesInfo\x1a\x0f.model.TimeRows\"\x00\x12\x31\n\tAddRoutes\x12\x11.model.RoutesInfo\x1a\x0f.model.TimeRows\"\x00\x12\x35\n\rAddUserRoutes\x12\x11.model.RoutesInfo\x1a\x0f.model.TimeRows\"\x00\x12\x36\n\x10\x44\x65leteUserRoutes\x12\x0f.model.UserName\x1a\x0f.model.TimeRows\"\x00\x12\x37\n\x0cGetAllRoutes\x12\x16.google.protobuf.Empty\x1a\r.model.Routes\"\x00\x12\x36\n\x0b\x43heckRoutes\x12\x11.model.RoutesInfo\x1a\x12.model.CheckResult\"\x00\x32\x84\x04\n\x04\x43\x61lc\x12\x43\n\x0cTestCalcItem\x12\x17.model.TestCalcItemInfo\x1a\x18.model.CalculationResult\"\x00\x12\x43\n\x0b\x41\x64\x64\x43\x61lcItem\x12\x18.model.AddedCalcItemInfo\x1a\x18.model.CalculationResult\"\x00\x12P\n\x15\x41\x64\x64\x43\x61lcItemWithStream\x12\x18.model.AddedCalcItemInfo\x1a\x19.model.CalculationResults\"\x00(\x01\x12\x41\n\x0cGetCalcItems\x12\x19.model.QueryCalcItemsInfo\x1a\x14.model.CalcItemsInfo\"\x00\x12\x44\n\x0eUpdateCalcItem\x12\x16.model.UpdatedCalcInfo\x1a\x18.model.CalculationResult\"\x00\x12\x31\n\rStartCalcItem\x12\r.model.CalcId\x1a\x0f.model.TimeRows\"\x00\x12\x30\n\x0cStopCalcItem\x12\r.model.CalcId\x1a\x0f.model.TimeRows\"\x00\x12\x32\n\x0e\x44\x65leteCalcItem\x12\r.model.CalcId\x1a\x0f.model.TimeRows\"\x00\x42\x07Z\x05modelb\x06proto3'
   ,
   dependencies=[google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,])
 
@@ -980,6 +980,38 @@ _BOOLITEMVALUE = _descriptor.Descriptor(
 )
 
 
+_TIMESTAMP = _descriptor.Descriptor(
+  name='TimeStamp',
+  full_name='model.TimeStamp',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='timeStamps', full_name='model.TimeStamp.timeStamps', index=0,
+      number=1, type=5, cpp_type=1, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=1535,
+  serialized_end=1566,
+)
+
+
 _FLOATITEMVALUES = _descriptor.Descriptor(
   name='FloatItemValues',
   full_name='model.FloatItemValues',
@@ -1021,8 +1053,8 @@ _FLOATITEMVALUES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1535,
-  serialized_end=1651,
+  serialized_start=1568,
+  serialized_end=1684,
 )
 
 
@@ -1067,8 +1099,8 @@ _INTITEMVALUES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1653,
-  serialized_end=1765,
+  serialized_start=1686,
+  serialized_end=1798,
 )
 
 
@@ -1113,8 +1145,8 @@ _BOOLITEMVALUES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1767,
-  serialized_end=1881,
+  serialized_start=1800,
+  serialized_end=1914,
 )
 
 
@@ -1159,8 +1191,8 @@ _STRINGITEMVALUES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1883,
-  serialized_end=2001,
+  serialized_start=1916,
+  serialized_end=2034,
 )
 
 
@@ -1173,61 +1205,29 @@ _FLOATHITEMVALUES = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='model.FloatHItemValues.values', index=0,
-      number=3, type=11, cpp_type=10, label=3,
+      name='groupNames', full_name='model.FloatHItemValues.groupNames', index=0,
+      number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2003,
-  serialized_end=2061,
-)
-
-
-_FLOATHITEMVALUE = _descriptor.Descriptor(
-  name='FloatHItemValue',
-  full_name='model.FloatHItemValue',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='groupName', full_name='model.FloatHItemValue.groupName', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='itemName', full_name='model.FloatHItemValue.itemName', index=1,
+      name='itemNames', full_name='model.FloatHItemValues.itemNames', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='itemValues', full_name='model.FloatHItemValue.itemValues', index=2,
-      number=3, type=2, cpp_type=6, label=3,
+      name='itemValues', full_name='model.FloatHItemValues.itemValues', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='timeStamps', full_name='model.FloatHItemValue.timeStamps', index=3,
-      number=4, type=5, cpp_type=1, label=3,
+      name='timeStamps', full_name='model.FloatHItemValues.timeStamps', index=3,
+      number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1244,8 +1244,8 @@ _FLOATHITEMVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2063,
-  serialized_end=2157,
+  serialized_start=2037,
+  serialized_end=2175,
 )
 
 
@@ -1258,61 +1258,29 @@ _INTHITEMVALUES = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='model.IntHItemValues.values', index=0,
-      number=3, type=11, cpp_type=10, label=3,
+      name='groupNames', full_name='model.IntHItemValues.groupNames', index=0,
+      number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2159,
-  serialized_end=2213,
-)
-
-
-_INTHITEMVALUE = _descriptor.Descriptor(
-  name='IntHItemValue',
-  full_name='model.IntHItemValue',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='groupName', full_name='model.IntHItemValue.groupName', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='itemName', full_name='model.IntHItemValue.itemName', index=1,
+      name='itemNames', full_name='model.IntHItemValues.itemNames', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='itemValues', full_name='model.IntHItemValue.itemValues', index=2,
-      number=3, type=5, cpp_type=1, label=3,
+      name='itemValues', full_name='model.IntHItemValues.itemValues', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='timeStamps', full_name='model.IntHItemValue.timeStamps', index=3,
-      number=4, type=5, cpp_type=1, label=3,
+      name='timeStamps', full_name='model.IntHItemValues.timeStamps', index=3,
+      number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1329,8 +1297,8 @@ _INTHITEMVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2215,
-  serialized_end=2307,
+  serialized_start=2178,
+  serialized_end=2312,
 )
 
 
@@ -1343,61 +1311,29 @@ _STRINGHITEMVALUES = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='model.StringHItemValues.values', index=0,
-      number=3, type=11, cpp_type=10, label=3,
+      name='groupNames', full_name='model.StringHItemValues.groupNames', index=0,
+      number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2309,
-  serialized_end=2369,
-)
-
-
-_STRINGHITEMVALUE = _descriptor.Descriptor(
-  name='StringHItemValue',
-  full_name='model.StringHItemValue',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='groupName', full_name='model.StringHItemValue.groupName', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='itemName', full_name='model.StringHItemValue.itemName', index=1,
+      name='itemNames', full_name='model.StringHItemValues.itemNames', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='itemValues', full_name='model.StringHItemValue.itemValues', index=2,
-      number=3, type=9, cpp_type=9, label=3,
+      name='itemValues', full_name='model.StringHItemValues.itemValues', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='timeStamps', full_name='model.StringHItemValue.timeStamps', index=3,
-      number=4, type=5, cpp_type=1, label=3,
+      name='timeStamps', full_name='model.StringHItemValues.timeStamps', index=3,
+      number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1414,8 +1350,8 @@ _STRINGHITEMVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2371,
-  serialized_end=2466,
+  serialized_start=2315,
+  serialized_end=2455,
 )
 
 
@@ -1428,61 +1364,29 @@ _BOOLHITEMVALUES = _descriptor.Descriptor(
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='values', full_name='model.BoolHItemValues.values', index=0,
-      number=3, type=11, cpp_type=10, label=3,
+      name='groupNames', full_name='model.BoolHItemValues.groupNames', index=0,
+      number=1, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2468,
-  serialized_end=2524,
-)
-
-
-_BOOLHITEMVALUE = _descriptor.Descriptor(
-  name='BoolHItemValue',
-  full_name='model.BoolHItemValue',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='groupName', full_name='model.BoolHItemValue.groupName', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='itemName', full_name='model.BoolHItemValue.itemName', index=1,
+      name='itemNames', full_name='model.BoolHItemValues.itemNames', index=1,
       number=2, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='itemValues', full_name='model.BoolHItemValue.itemValues', index=2,
-      number=3, type=8, cpp_type=7, label=3,
+      name='itemValues', full_name='model.BoolHItemValues.itemValues', index=2,
+      number=3, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='timeStamps', full_name='model.BoolHItemValue.timeStamps', index=3,
-      number=4, type=5, cpp_type=1, label=3,
+      name='timeStamps', full_name='model.BoolHItemValues.timeStamps', index=3,
+      number=4, type=11, cpp_type=10, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1499,8 +1403,8 @@ _BOOLHITEMVALUE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2526,
-  serialized_end=2619,
+  serialized_start=2458,
+  serialized_end=2594,
 )
 
 
@@ -1538,8 +1442,8 @@ _QUERYREALTIMEDATASTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2621,
-  serialized_end=2685,
+  serialized_start=2596,
+  serialized_end=2660,
 )
 
 
@@ -1598,8 +1502,8 @@ _QUERYHISTORICALDATASTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2687,
-  serialized_end=2810,
+  serialized_start=2662,
+  serialized_end=2785,
 )
 
 
@@ -1637,8 +1541,8 @@ _QUERYRAWHISTORICALDATASTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2812,
-  serialized_end=2881,
+  serialized_start=2787,
+  serialized_end=2856,
 )
 
 
@@ -1683,8 +1587,8 @@ _QUERYHISTORICALDATAWITHSTAMP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2883,
-  serialized_end=2970,
+  serialized_start=2858,
+  serialized_end=2945,
 )
 
 
@@ -1715,8 +1619,8 @@ _QUERYHISTORICALDATAWITHSTAMPSTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=2972,
-  serialized_end=3066,
+  serialized_start=2947,
+  serialized_end=3041,
 )
 
 
@@ -1754,8 +1658,8 @@ _DEADZONE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3068,
-  serialized_end=3119,
+  serialized_start=3043,
+  serialized_end=3094,
 )
 
 
@@ -1782,23 +1686,23 @@ _QUERYHISTORICALDATAWITHCONDITIONSTRING = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='startTimes', full_name='model.QueryHistoricalDataWithConditionString.startTimes', index=2,
-      number=3, type=5, cpp_type=1, label=3,
-      has_default_value=False, default_value=[],
+      name='startTime', full_name='model.QueryHistoricalDataWithConditionString.startTime', index=2,
+      number=3, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='endTimes', full_name='model.QueryHistoricalDataWithConditionString.endTimes', index=3,
-      number=4, type=5, cpp_type=1, label=3,
-      has_default_value=False, default_value=[],
+      name='endTime', full_name='model.QueryHistoricalDataWithConditionString.endTime', index=3,
+      number=4, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='intervals', full_name='model.QueryHistoricalDataWithConditionString.intervals', index=4,
-      number=5, type=5, cpp_type=1, label=3,
-      has_default_value=False, default_value=[],
+      name='interval', full_name='model.QueryHistoricalDataWithConditionString.interval', index=4,
+      number=5, type=5, cpp_type=1, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -1828,8 +1732,8 @@ _QUERYHISTORICALDATAWITHCONDITIONSTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3122,
-  serialized_end=3318,
+  serialized_start=3097,
+  serialized_end=3290,
 )
 
 
@@ -1881,8 +1785,8 @@ _DELETEHISTORICALDATASTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3320,
-  serialized_end=3425,
+  serialized_start=3292,
+  serialized_end=3397,
 )
 
 
@@ -1920,8 +1824,8 @@ _GDBREALTIMEDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3427,
-  serialized_end=3481,
+  serialized_start=3399,
+  serialized_end=3453,
 )
 
 
@@ -1959,8 +1863,8 @@ _GDBHISTORICALDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3483,
-  serialized_end=3541,
+  serialized_start=3455,
+  serialized_end=3513,
 )
 
 
@@ -1998,8 +1902,8 @@ _AUTHINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3543,
-  serialized_end=3589,
+  serialized_start=3515,
+  serialized_end=3561,
 )
 
 
@@ -2030,8 +1934,8 @@ _USERNAME = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3591,
-  serialized_end=3615,
+  serialized_start=3563,
+  serialized_end=3587,
 )
 
 
@@ -2076,8 +1980,8 @@ _ADDEDUSERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3617,
-  serialized_end=3678,
+  serialized_start=3589,
+  serialized_end=3650,
 )
 
 
@@ -2129,8 +2033,8 @@ _UPDATEDUSERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3680,
-  serialized_end=3774,
+  serialized_start=3652,
+  serialized_end=3746,
 )
 
 
@@ -2168,8 +2072,8 @@ _FILEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3776,
-  serialized_end=3823,
+  serialized_start=3748,
+  serialized_end=3795,
 )
 
 
@@ -2221,8 +2125,8 @@ _HISTORYFILEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3825,
-  serialized_end=3918,
+  serialized_start=3797,
+  serialized_end=3890,
 )
 
 
@@ -2288,8 +2192,8 @@ _QUERYLOGSINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3920,
-  serialized_end=4036,
+  serialized_start=3892,
+  serialized_end=4008,
 )
 
 
@@ -2341,8 +2245,8 @@ _DELETEDLOGINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4038,
-  serialized_end=4129,
+  serialized_start=4010,
+  serialized_end=4101,
 )
 
 
@@ -2401,8 +2305,8 @@ _QUERYSPEEDHISTORYDATASTRING = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4131,
-  serialized_end=4253,
+  serialized_start=4103,
+  serialized_end=4225,
 )
 
 
@@ -2440,8 +2344,8 @@ _ROUTESINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4255,
-  serialized_end=4297,
+  serialized_start=4227,
+  serialized_end=4269,
 )
 
 
@@ -2472,8 +2376,8 @@ _GDBINFODATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4299,
-  serialized_end=4326,
+  serialized_start=4271,
+  serialized_end=4298,
 )
 
 
@@ -2504,8 +2408,8 @@ _USERTOKEN = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4328,
-  serialized_end=4354,
+  serialized_start=4300,
+  serialized_end=4326,
 )
 
 
@@ -2543,8 +2447,8 @@ _USERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4356,
-  serialized_end=4398,
+  serialized_start=4328,
+  serialized_end=4370,
 )
 
 
@@ -2582,8 +2486,8 @@ _LOGSINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4400,
-  serialized_end=4440,
+  serialized_start=4372,
+  serialized_end=4412,
 )
 
 
@@ -2621,8 +2525,8 @@ _UPLOADEDFILEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4442,
-  serialized_end=4492,
+  serialized_start=4414,
+  serialized_end=4464,
 )
 
 
@@ -2653,8 +2557,8 @@ _FILECONTENTS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4494,
-  serialized_end=4526,
+  serialized_start=4466,
+  serialized_end=4498,
 )
 
 
@@ -2685,8 +2589,8 @@ _FILESIZE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4528,
-  serialized_end=4556,
+  serialized_start=4500,
+  serialized_end=4528,
 )
 
 
@@ -2717,8 +2621,8 @@ _USERINFOS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4558,
-  serialized_end=4588,
+  serialized_start=4530,
+  serialized_end=4560,
 )
 
 
@@ -2749,8 +2653,8 @@ _ROUTES = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4590,
-  serialized_end=4614,
+  serialized_start=4562,
+  serialized_end=4586,
 )
 
 
@@ -2781,8 +2685,8 @@ _CHECKRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4616,
-  serialized_end=4645,
+  serialized_start=4588,
+  serialized_end=4617,
 )
 
 
@@ -2813,8 +2717,8 @@ _CODE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4647,
-  serialized_end=4667,
+  serialized_start=4619,
+  serialized_end=4639,
 )
 
 
@@ -2866,8 +2770,8 @@ _ADDEDCALCITEMINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4669,
-  serialized_end=4761,
+  serialized_start=4641,
+  serialized_end=4733,
 )
 
 
@@ -2898,8 +2802,8 @@ _QUERYCALCITEMSINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4763,
-  serialized_end=4802,
+  serialized_start=4735,
+  serialized_end=4774,
 )
 
 
@@ -2958,8 +2862,8 @@ _UPDATEDCALCINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4804,
-  serialized_end=4913,
+  serialized_start=4776,
+  serialized_end=4885,
 )
 
 
@@ -2990,8 +2894,8 @@ _CALCID = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4915,
-  serialized_end=4935,
+  serialized_start=4887,
+  serialized_end=4907,
 )
 
 
@@ -3022,8 +2926,8 @@ _CALCULATIONRESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4937,
-  serialized_end=4972,
+  serialized_start=4909,
+  serialized_end=4944,
 )
 
 
@@ -3054,8 +2958,8 @@ _CALCITEMSINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=4974,
-  serialized_end=5004,
+  serialized_start=4946,
+  serialized_end=4976,
 )
 
 
@@ -3086,8 +2990,8 @@ _CALCULATIONRESULTS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5006,
-  serialized_end=5069,
+  serialized_start=4978,
+  serialized_end=5041,
 )
 
 
@@ -3118,8 +3022,8 @@ _TESTCALCITEMINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5071,
-  serialized_end=5109,
+  serialized_start=5043,
+  serialized_end=5081,
 )
 
 
@@ -3157,8 +3061,8 @@ _FLOATHISTORICALDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5111,
-  serialized_end=5168,
+  serialized_start=5083,
+  serialized_end=5140,
 )
 
 
@@ -3196,8 +3100,8 @@ _INTHISTORICALDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5170,
-  serialized_end=5225,
+  serialized_start=5142,
+  serialized_end=5197,
 )
 
 
@@ -3235,8 +3139,8 @@ _STRINGHISTORICALDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5227,
-  serialized_end=5285,
+  serialized_start=5199,
+  serialized_end=5257,
 )
 
 
@@ -3274,8 +3178,78 @@ _BOOLHISTORICALDATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=5287,
-  serialized_end=5343,
+  serialized_start=5259,
+  serialized_end=5315,
+)
+
+
+_FLOATHISTORICALDATAS_HISTORYVALUESENTRY = _descriptor.Descriptor(
+  name='HistoryValuesEntry',
+  full_name='model.FloatHistoricalDatas.HistoryValuesEntry',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='key', full_name='model.FloatHistoricalDatas.HistoryValuesEntry.key', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=b"".decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='model.FloatHistoricalDatas.HistoryValuesEntry.value', index=1,
+      number=2, type=11, cpp_type=10, label=1,
+      has_default_value=False, default_value=None,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=b'8\001',
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=5413,
+  serialized_end=5493,
+)
+
+_FLOATHISTORICALDATAS = _descriptor.Descriptor(
+  name='FloatHistoricalDatas',
+  full_name='model.FloatHistoricalDatas',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  create_key=_descriptor._internal_create_key,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='historyValues', full_name='model.FloatHistoricalDatas.historyValues', index=0,
+      number=1, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
+  ],
+  extensions=[
+  ],
+  nested_types=[_FLOATHISTORICALDATAS_HISTORYVALUESENTRY, ],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=5318,
+  serialized_end=5493,
 )
 
 _ADDEDGROUPINFOS.fields_by_name['groupInfos'].message_type = _ADDEDGROUPINFO
@@ -3291,13 +3265,20 @@ _BOOLITEMVALUES.fields_by_name['itemNames'].message_type = _ITEMNAME
 _BOOLITEMVALUES.fields_by_name['itemValues'].message_type = _BOOLITEMVALUE
 _STRINGITEMVALUES.fields_by_name['itemNames'].message_type = _ITEMNAME
 _STRINGITEMVALUES.fields_by_name['itemValues'].message_type = _STRINGITEMVALUE
-_FLOATHITEMVALUES.fields_by_name['values'].message_type = _FLOATHITEMVALUE
-_INTHITEMVALUES.fields_by_name['values'].message_type = _INTHITEMVALUE
-_STRINGHITEMVALUES.fields_by_name['values'].message_type = _STRINGHITEMVALUE
-_BOOLHITEMVALUES.fields_by_name['values'].message_type = _BOOLHITEMVALUE
+_FLOATHITEMVALUES.fields_by_name['itemValues'].message_type = _FLOATITEMVALUE
+_FLOATHITEMVALUES.fields_by_name['timeStamps'].message_type = _TIMESTAMP
+_INTHITEMVALUES.fields_by_name['itemValues'].message_type = _INTITEMVALUE
+_INTHITEMVALUES.fields_by_name['timeStamps'].message_type = _TIMESTAMP
+_STRINGHITEMVALUES.fields_by_name['itemValues'].message_type = _STRINGITEMVALUE
+_STRINGHITEMVALUES.fields_by_name['timeStamps'].message_type = _TIMESTAMP
+_BOOLHITEMVALUES.fields_by_name['itemValues'].message_type = _BOOLITEMVALUE
+_BOOLHITEMVALUES.fields_by_name['timeStamps'].message_type = _TIMESTAMP
 _QUERYHISTORICALDATAWITHSTAMPSTRING.fields_by_name['queryString'].message_type = _QUERYHISTORICALDATAWITHSTAMP
 _QUERYHISTORICALDATAWITHCONDITIONSTRING.fields_by_name['deadZones'].message_type = _DEADZONE
 _CALCULATIONRESULTS.fields_by_name['results'].message_type = _CALCULATIONRESULT
+_FLOATHISTORICALDATAS_HISTORYVALUESENTRY.fields_by_name['value'].message_type = _FLOATHISTORICALDATA
+_FLOATHISTORICALDATAS_HISTORYVALUESENTRY.containing_type = _FLOATHISTORICALDATAS
+_FLOATHISTORICALDATAS.fields_by_name['historyValues'].message_type = _FLOATHISTORICALDATAS_HISTORYVALUESENTRY
 DESCRIPTOR.message_types_by_name['TimeRows'] = _TIMEROWS
 DESCRIPTOR.message_types_by_name['TimeCols'] = _TIMECOLS
 DESCRIPTOR.message_types_by_name['AddedGroupInfo'] = _ADDEDGROUPINFO
@@ -3322,18 +3303,15 @@ DESCRIPTOR.message_types_by_name['FloatItemValue'] = _FLOATITEMVALUE
 DESCRIPTOR.message_types_by_name['IntItemValue'] = _INTITEMVALUE
 DESCRIPTOR.message_types_by_name['StringItemValue'] = _STRINGITEMVALUE
 DESCRIPTOR.message_types_by_name['BoolItemValue'] = _BOOLITEMVALUE
+DESCRIPTOR.message_types_by_name['TimeStamp'] = _TIMESTAMP
 DESCRIPTOR.message_types_by_name['FloatItemValues'] = _FLOATITEMVALUES
 DESCRIPTOR.message_types_by_name['IntItemValues'] = _INTITEMVALUES
 DESCRIPTOR.message_types_by_name['BoolItemValues'] = _BOOLITEMVALUES
 DESCRIPTOR.message_types_by_name['StringItemValues'] = _STRINGITEMVALUES
 DESCRIPTOR.message_types_by_name['FloatHItemValues'] = _FLOATHITEMVALUES
-DESCRIPTOR.message_types_by_name['FloatHItemValue'] = _FLOATHITEMVALUE
 DESCRIPTOR.message_types_by_name['IntHItemValues'] = _INTHITEMVALUES
-DESCRIPTOR.message_types_by_name['IntHItemValue'] = _INTHITEMVALUE
 DESCRIPTOR.message_types_by_name['StringHItemValues'] = _STRINGHITEMVALUES
-DESCRIPTOR.message_types_by_name['StringHItemValue'] = _STRINGHITEMVALUE
 DESCRIPTOR.message_types_by_name['BoolHItemValues'] = _BOOLHITEMVALUES
-DESCRIPTOR.message_types_by_name['BoolHItemValue'] = _BOOLHITEMVALUE
 DESCRIPTOR.message_types_by_name['QueryRealTimeDataString'] = _QUERYREALTIMEDATASTRING
 DESCRIPTOR.message_types_by_name['QueryHistoricalDataString'] = _QUERYHISTORICALDATASTRING
 DESCRIPTOR.message_types_by_name['QueryRawHistoricalDataString'] = _QUERYRAWHISTORICALDATASTRING
@@ -3377,6 +3355,7 @@ DESCRIPTOR.message_types_by_name['FloatHistoricalData'] = _FLOATHISTORICALDATA
 DESCRIPTOR.message_types_by_name['IntHistoricalData'] = _INTHISTORICALDATA
 DESCRIPTOR.message_types_by_name['StringHistoricalData'] = _STRINGHISTORICALDATA
 DESCRIPTOR.message_types_by_name['BoolHistoricalData'] = _BOOLHISTORICALDATA
+DESCRIPTOR.message_types_by_name['FloatHistoricalDatas'] = _FLOATHISTORICALDATAS
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 TimeRows = _reflection.GeneratedProtocolMessageType('TimeRows', (_message.Message,), {
@@ -3555,6 +3534,13 @@ BoolItemValue = _reflection.GeneratedProtocolMessageType('BoolItemValue', (_mess
   })
 _sym_db.RegisterMessage(BoolItemValue)
 
+TimeStamp = _reflection.GeneratedProtocolMessageType('TimeStamp', (_message.Message,), {
+  'DESCRIPTOR' : _TIMESTAMP,
+  '__module__' : 'gdb_pb2'
+  # @@protoc_insertion_point(class_scope:model.TimeStamp)
+  })
+_sym_db.RegisterMessage(TimeStamp)
+
 FloatItemValues = _reflection.GeneratedProtocolMessageType('FloatItemValues', (_message.Message,), {
   'DESCRIPTOR' : _FLOATITEMVALUES,
   '__module__' : 'gdb_pb2'
@@ -3590,26 +3576,12 @@ FloatHItemValues = _reflection.GeneratedProtocolMessageType('FloatHItemValues', 
   })
 _sym_db.RegisterMessage(FloatHItemValues)
 
-FloatHItemValue = _reflection.GeneratedProtocolMessageType('FloatHItemValue', (_message.Message,), {
-  'DESCRIPTOR' : _FLOATHITEMVALUE,
-  '__module__' : 'gdb_pb2'
-  # @@protoc_insertion_point(class_scope:model.FloatHItemValue)
-  })
-_sym_db.RegisterMessage(FloatHItemValue)
-
 IntHItemValues = _reflection.GeneratedProtocolMessageType('IntHItemValues', (_message.Message,), {
   'DESCRIPTOR' : _INTHITEMVALUES,
   '__module__' : 'gdb_pb2'
   # @@protoc_insertion_point(class_scope:model.IntHItemValues)
   })
 _sym_db.RegisterMessage(IntHItemValues)
-
-IntHItemValue = _reflection.GeneratedProtocolMessageType('IntHItemValue', (_message.Message,), {
-  'DESCRIPTOR' : _INTHITEMVALUE,
-  '__module__' : 'gdb_pb2'
-  # @@protoc_insertion_point(class_scope:model.IntHItemValue)
-  })
-_sym_db.RegisterMessage(IntHItemValue)
 
 StringHItemValues = _reflection.GeneratedProtocolMessageType('StringHItemValues', (_message.Message,), {
   'DESCRIPTOR' : _STRINGHITEMVALUES,
@@ -3618,26 +3590,12 @@ StringHItemValues = _reflection.GeneratedProtocolMessageType('StringHItemValues'
   })
 _sym_db.RegisterMessage(StringHItemValues)
 
-StringHItemValue = _reflection.GeneratedProtocolMessageType('StringHItemValue', (_message.Message,), {
-  'DESCRIPTOR' : _STRINGHITEMVALUE,
-  '__module__' : 'gdb_pb2'
-  # @@protoc_insertion_point(class_scope:model.StringHItemValue)
-  })
-_sym_db.RegisterMessage(StringHItemValue)
-
 BoolHItemValues = _reflection.GeneratedProtocolMessageType('BoolHItemValues', (_message.Message,), {
   'DESCRIPTOR' : _BOOLHITEMVALUES,
   '__module__' : 'gdb_pb2'
   # @@protoc_insertion_point(class_scope:model.BoolHItemValues)
   })
 _sym_db.RegisterMessage(BoolHItemValues)
-
-BoolHItemValue = _reflection.GeneratedProtocolMessageType('BoolHItemValue', (_message.Message,), {
-  'DESCRIPTOR' : _BOOLHITEMVALUE,
-  '__module__' : 'gdb_pb2'
-  # @@protoc_insertion_point(class_scope:model.BoolHItemValue)
-  })
-_sym_db.RegisterMessage(BoolHItemValue)
 
 QueryRealTimeDataString = _reflection.GeneratedProtocolMessageType('QueryRealTimeDataString', (_message.Message,), {
   'DESCRIPTOR' : _QUERYREALTIMEDATASTRING,
@@ -3940,9 +3898,25 @@ BoolHistoricalData = _reflection.GeneratedProtocolMessageType('BoolHistoricalDat
   })
 _sym_db.RegisterMessage(BoolHistoricalData)
 
+FloatHistoricalDatas = _reflection.GeneratedProtocolMessageType('FloatHistoricalDatas', (_message.Message,), {
+
+  'HistoryValuesEntry' : _reflection.GeneratedProtocolMessageType('HistoryValuesEntry', (_message.Message,), {
+    'DESCRIPTOR' : _FLOATHISTORICALDATAS_HISTORYVALUESENTRY,
+    '__module__' : 'gdb_pb2'
+    # @@protoc_insertion_point(class_scope:model.FloatHistoricalDatas.HistoryValuesEntry)
+    })
+  ,
+  'DESCRIPTOR' : _FLOATHISTORICALDATAS,
+  '__module__' : 'gdb_pb2'
+  # @@protoc_insertion_point(class_scope:model.FloatHistoricalDatas)
+  })
+_sym_db.RegisterMessage(FloatHistoricalDatas)
+_sym_db.RegisterMessage(FloatHistoricalDatas.HistoryValuesEntry)
+
 
 DESCRIPTOR._options = None
 _GDBITEMS_ITEMSENTRY._options = None
+_FLOATHISTORICALDATAS_HISTORYVALUESENTRY._options = None
 
 _GROUP = _descriptor.ServiceDescriptor(
   name='Group',
@@ -3951,8 +3925,8 @@ _GROUP = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=5346,
-  serialized_end=5903,
+  serialized_start=5496,
+  serialized_end=6053,
   methods=[
   _descriptor.MethodDescriptor(
     name='AddGroups',
@@ -4047,8 +4021,8 @@ _ITEM = _descriptor.ServiceDescriptor(
   index=1,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=5906,
-  serialized_end=6275,
+  serialized_start=6056,
+  serialized_end=6425,
   methods=[
   _descriptor.MethodDescriptor(
     name='AddItems',
@@ -4123,8 +4097,8 @@ _DATA = _descriptor.ServiceDescriptor(
   index=2,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=6278,
-  serialized_end=9631,
+  serialized_start=6428,
+  serialized_end=9781,
   methods=[
   _descriptor.MethodDescriptor(
     name='BatchWriteFloatData',
@@ -4529,8 +4503,8 @@ _PAGE = _descriptor.ServiceDescriptor(
   index=3,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=9634,
-  serialized_end=11071,
+  serialized_start=9784,
+  serialized_end=11221,
   methods=[
   _descriptor.MethodDescriptor(
     name='UserLogin',
@@ -4795,8 +4769,8 @@ _CALC = _descriptor.ServiceDescriptor(
   index=4,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=11074,
-  serialized_end=11590,
+  serialized_start=11224,
+  serialized_end=11740,
   methods=[
   _descriptor.MethodDescriptor(
     name='TestCalcItem',

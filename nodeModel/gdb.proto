@@ -1,8 +1,15 @@
+/*
+creatTime: 2021/2/8
+creator: JustKeepSilence
+github: https://github.com/JustKeepSilence
+goVersion: 1.16
+*/
+
 syntax = "proto3";
 package model;
 option go_package="model";
 
-import "google/protobuf/empty.proto";
+import "/empty.proto";
 
 message TimeRows{
   int32 effectedRows = 1;
@@ -55,7 +62,7 @@ message DeletedGroupColumnNamesInfo {
 }
 
 message GroupPropertyInfo{
-  string itemCount = 1;
+  int64 itemCount = 1;
   repeated string itemColumnNames = 2;
 }
 
@@ -147,6 +154,10 @@ message BoolItemValue {
   repeated bool itemValue = 1;
 }
 
+message TimeStamp {
+  repeated int32 timeStamps = 1;
+}
+
 message FloatItemValues {
   repeated string groupNames = 1;
   repeated ItemName itemNames = 2;
@@ -172,47 +183,31 @@ message StringItemValues {
 }
 
 message FloatHItemValues {
-  repeated FloatHItemValue values=3;
-}
-
-message FloatHItemValue{
-  string groupName = 1;
-  repeated string itemName = 2;
-  repeated float itemValues = 3;
-  repeated int32 timeStamps = 4;
+  repeated string groupNames = 1;
+  repeated string itemNames = 2;
+  repeated FloatItemValue itemValues = 3;
+  repeated TimeStamp timeStamps = 4;
 }
 
 message IntHItemValues {
-  repeated IntHItemValue values=3;
-}
-
-message IntHItemValue{
-  string groupName = 1;
-  repeated string itemName = 2;
-  repeated int32 itemValues = 3;
-  repeated int32 timeStamps = 4;
+  repeated string groupNames = 1;
+  repeated string itemNames = 2;
+  repeated IntItemValue itemValues = 3;
+  repeated TimeStamp timeStamps = 4;
 }
 
 message StringHItemValues {
-  repeated StringHItemValue values=3;
-}
-
-message StringHItemValue{
-  string groupName = 1;
-  repeated string itemName = 2;
-  repeated string itemValues = 3;
-  repeated int32 timeStamps = 4;
+  repeated string groupNames = 1;
+  repeated string itemNames = 2;
+  repeated StringItemValue itemValues = 3;
+  repeated TimeStamp timeStamps = 4;
 }
 
 message BoolHItemValues {
-  repeated BoolHItemValue values=3;
-}
-
-message BoolHItemValue{
-  string groupName = 1;
-  repeated string itemName = 2;
-  repeated bool itemValues = 3;
-  repeated int32 timeStamps = 4;
+  repeated string groupNames = 1;
+  repeated string itemNames = 2;
+  repeated BoolItemValue itemValues = 3;
+  repeated TimeStamp timeStamps = 4;
 }
 
 message QueryRealTimeDataString{
@@ -233,14 +228,10 @@ message QueryRawHistoricalDataString{
   repeated string itemNames = 2;
 }
 
-message QueryHistoricalDataWithStamp {
-  string groupName = 1;
-  string itemName = 2;
-  repeated int32 timeStamps = 3;
-}
-
 message QueryHistoricalDataWithStampString{
- repeated QueryHistoricalDataWithStamp queryString = 1;
+  repeated string groupNames = 1;
+  repeated string itemNames = 2;
+  repeated TimeStamp timeStamps = 3;
 }
 
 message DeadZone {
@@ -251,9 +242,9 @@ message DeadZone {
 message QueryHistoricalDataWithConditionString {
   string groupName = 1;
   repeated string itemNames = 2;
-  repeated int32 startTimes = 3;
-  repeated int32 endTimes = 4;
-  repeated int32 intervals = 5;
+  int32 startTime = 3;
+  int32 endTime = 4;
+  int32 interval = 5;
   string filterCondition = 6;
   repeated DeadZone deadZones = 7;
 }
@@ -530,4 +521,8 @@ message StringHistoricalData {
 message BoolHistoricalData {
   repeated bool values = 1;
   repeated int32 timeStamps = 2;
+}
+
+message FloatHistoricalDatas {
+  map<string, FloatHistoricalData> historyValues = 1;
 }

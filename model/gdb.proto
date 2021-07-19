@@ -62,7 +62,7 @@ message DeletedGroupColumnNamesInfo {
 }
 
 message GroupPropertyInfo{
-  string itemCount = 1;
+  int64 itemCount = 1;
   repeated string itemColumnNames = 2;
 }
 
@@ -228,14 +228,10 @@ message QueryRawHistoricalDataString{
   repeated string itemNames = 2;
 }
 
-message QueryHistoricalDataWithStamp {
-  string groupName = 1;
-  string itemName = 2;
-  repeated int32 timeStamps = 3;
-}
-
 message QueryHistoricalDataWithStampString{
- repeated QueryHistoricalDataWithStamp queryString = 1;
+  repeated string groupNames = 1;
+  repeated string itemNames = 2;
+  repeated TimeStamp timeStamps = 3;
 }
 
 message DeadZone {

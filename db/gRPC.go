@@ -442,6 +442,7 @@ func (s *server) BatchWriteFloatHistoricalData(_ context.Context, r *pb.FloatHIt
 func (s *server) BatchWriteFloatHistoricalDataWithStream(stream pb.Data_BatchWriteFloatHistoricalDataWithStreamServer) error {
 	bs := []floatHItemValues{}
 	st := time.Now()
+	counts := 0
 	for {
 		b, err := stream.Recv()
 		if err == io.EOF {
@@ -454,11 +455,11 @@ func (s *server) BatchWriteFloatHistoricalDataWithStream(stream pb.Data_BatchWri
 					}
 					return nil
 				})
-				if err := eg.Wait(); err != nil {
-					return err
-				} else {
-					return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds()})
-				}
+			}
+			if err := eg.Wait(); err != nil {
+				return err
+			} else {
+				return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds(), EffectedRows: int32(counts)})
 			}
 		} else if err != nil {
 			return err
@@ -466,6 +467,7 @@ func (s *server) BatchWriteFloatHistoricalDataWithStream(stream pb.Data_BatchWri
 			timeStamps := [][]int32{}
 			itemValues := [][]float32{}
 			for i := 0; i < len(b.TimeStamps); i++ {
+				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
 			}
@@ -496,6 +498,7 @@ func (s *server) BatchWriteIntHistoricalData(_ context.Context, r *pb.IntHItemVa
 func (s *server) BatchWriteIntHistoricalDataWithStream(stream pb.Data_BatchWriteIntHistoricalDataWithStreamServer) error {
 	bs := []intHItemValues{}
 	st := time.Now()
+	counts := 0
 	for {
 		b, err := stream.Recv()
 		if err == io.EOF {
@@ -508,11 +511,11 @@ func (s *server) BatchWriteIntHistoricalDataWithStream(stream pb.Data_BatchWrite
 					}
 					return nil
 				})
-				if err := eg.Wait(); err != nil {
-					return err
-				} else {
-					return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds()})
-				}
+			}
+			if err := eg.Wait(); err != nil {
+				return err
+			} else {
+				return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds(), EffectedRows: int32(counts)})
 			}
 		} else if err != nil {
 			return err
@@ -520,6 +523,7 @@ func (s *server) BatchWriteIntHistoricalDataWithStream(stream pb.Data_BatchWrite
 			timeStamps := [][]int32{}
 			itemValues := [][]int32{}
 			for i := 0; i < len(b.TimeStamps); i++ {
+				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
 			}
@@ -550,6 +554,7 @@ func (s *server) BatchWriteStringHistoricalData(_ context.Context, r *pb.StringH
 func (s *server) BatchWriteStringHistoricalDataWithStream(stream pb.Data_BatchWriteStringHistoricalDataWithStreamServer) error {
 	bs := []stringHItemValues{}
 	st := time.Now()
+	counts := 0
 	for {
 		b, err := stream.Recv()
 		if err == io.EOF {
@@ -562,11 +567,11 @@ func (s *server) BatchWriteStringHistoricalDataWithStream(stream pb.Data_BatchWr
 					}
 					return nil
 				})
-				if err := eg.Wait(); err != nil {
-					return err
-				} else {
-					return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds()})
-				}
+			}
+			if err := eg.Wait(); err != nil {
+				return err
+			} else {
+				return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds(), EffectedRows: int32(counts)})
 			}
 		} else if err != nil {
 			return err
@@ -574,6 +579,7 @@ func (s *server) BatchWriteStringHistoricalDataWithStream(stream pb.Data_BatchWr
 			timeStamps := [][]int32{}
 			itemValues := [][]string{}
 			for i := 0; i < len(b.TimeStamps); i++ {
+				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
 			}
@@ -604,6 +610,7 @@ func (s *server) BatchWriteBoolHistoricalData(_ context.Context, r *pb.BoolHItem
 func (s *server) BatchWriteBoolHistoricalDataWithStream(stream pb.Data_BatchWriteBoolHistoricalDataWithStreamServer) error {
 	bs := []boolHItemValues{}
 	st := time.Now()
+	counts := 0
 	for {
 		b, err := stream.Recv()
 		if err == io.EOF {
@@ -616,11 +623,11 @@ func (s *server) BatchWriteBoolHistoricalDataWithStream(stream pb.Data_BatchWrit
 					}
 					return nil
 				})
-				if err := eg.Wait(); err != nil {
-					return err
-				} else {
-					return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds()})
-				}
+			}
+			if err := eg.Wait(); err != nil {
+				return err
+			} else {
+				return stream.SendAndClose(&pb.TimeRows{Times: time.Since(st).Milliseconds(), EffectedRows: int32(counts)})
 			}
 		} else if err != nil {
 			return err
@@ -628,6 +635,7 @@ func (s *server) BatchWriteBoolHistoricalDataWithStream(stream pb.Data_BatchWrit
 			timeStamps := [][]int32{}
 			itemValues := [][]bool{}
 			for i := 0; i < len(b.TimeStamps); i++ {
+				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
 			}
@@ -723,17 +731,11 @@ func (s *server) GetBoolRawHistoricalData(_ context.Context, r *pb.QueryRawHisto
 }
 
 func (s *server) GetFloatHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistoricalDataWithStampString) (*pb.GdbHistoricalData, error) {
-	var groupNames, itemNames []string
 	timeStamps := [][]int32{}
-	values := r.QueryString
-	{
-		for i := 0; i < len(values); i++ {
-			groupNames = append(groupNames, values[i].GroupName)
-			itemNames = append(itemNames, values[i].ItemName)
-			timeStamps = append(timeStamps, values[i].TimeStamps)
-		}
+	for i := 0; i < len(r.TimeStamps); i++ {
+		timeStamps = append(timeStamps, r.TimeStamps[i].GetTimeStamps())
 	}
-	if result, err := s.gdb.GetFloatHistoricalDataWithStamp(groupNames, itemNames, timeStamps); err != nil {
+	if result, err := s.gdb.GetFloatHistoricalDataWithStamp(r.GroupNames, r.ItemNames, timeStamps); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)
@@ -742,17 +744,11 @@ func (s *server) GetFloatHistoricalDataWithStamp(_ context.Context, r *pb.QueryH
 }
 
 func (s *server) GetIntHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistoricalDataWithStampString) (*pb.GdbHistoricalData, error) {
-	var groupNames, itemNames []string
 	timeStamps := [][]int32{}
-	values := r.QueryString
-	{
-		for i := 0; i < len(values); i++ {
-			groupNames = append(groupNames, values[i].GroupName)
-			itemNames = append(itemNames, values[i].ItemName)
-			timeStamps = append(timeStamps, values[i].TimeStamps)
-		}
+	for i := 0; i < len(r.TimeStamps); i++ {
+		timeStamps = append(timeStamps, r.TimeStamps[i].GetTimeStamps())
 	}
-	if result, err := s.gdb.GetIntHistoricalDataWithStamp(groupNames, itemNames, timeStamps); err != nil {
+	if result, err := s.gdb.GetIntHistoricalDataWithStamp(r.GroupNames, r.ItemNames, timeStamps); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)
@@ -761,17 +757,11 @@ func (s *server) GetIntHistoricalDataWithStamp(_ context.Context, r *pb.QueryHis
 }
 
 func (s *server) GetStringHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistoricalDataWithStampString) (*pb.GdbHistoricalData, error) {
-	var groupNames, itemNames []string
 	timeStamps := [][]int32{}
-	values := r.QueryString
-	{
-		for i := 0; i < len(values); i++ {
-			groupNames = append(groupNames, values[i].GroupName)
-			itemNames = append(itemNames, values[i].ItemName)
-			timeStamps = append(timeStamps, values[i].TimeStamps)
-		}
+	for i := 0; i < len(r.TimeStamps); i++ {
+		timeStamps = append(timeStamps, r.TimeStamps[i].GetTimeStamps())
 	}
-	if result, err := s.gdb.GetStringHistoricalDataWithStamp(groupNames, itemNames, timeStamps); err != nil {
+	if result, err := s.gdb.GetStringHistoricalDataWithStamp(r.GroupNames, r.ItemNames, timeStamps); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)
@@ -780,17 +770,11 @@ func (s *server) GetStringHistoricalDataWithStamp(_ context.Context, r *pb.Query
 }
 
 func (s *server) GetBoolHistoricalDataWithStamp(_ context.Context, r *pb.QueryHistoricalDataWithStampString) (*pb.GdbHistoricalData, error) {
-	var groupNames, itemNames []string
 	timeStamps := [][]int32{}
-	values := r.QueryString
-	{
-		for i := 0; i < len(values); i++ {
-			groupNames = append(groupNames, values[i].GroupName)
-			itemNames = append(itemNames, values[i].ItemName)
-			timeStamps = append(timeStamps, values[i].TimeStamps)
-		}
+	for i := 0; i < len(r.TimeStamps); i++ {
+		timeStamps = append(timeStamps, r.TimeStamps[i].GetTimeStamps())
 	}
-	if result, err := s.gdb.GetBoolHistoricalDataWithStamp(groupNames, itemNames, timeStamps); err != nil {
+	if result, err := s.gdb.GetBoolHistoricalDataWithStamp(r.GroupNames, r.ItemNames, timeStamps); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)

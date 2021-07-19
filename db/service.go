@@ -276,7 +276,7 @@ func StartDbServer(configs Config) error {
 		}
 		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
 			grpc.ChainStreamInterceptor(se.panicWithServerStreamInterceptor, se.authWithServerStreamInterceptor),
-			grpc.Creds(cred))
+			grpc.Creds(cred), grpc.MaxRecvMsgSize(1024*1024*1024))
 	} else {
 		// http gRPC, for http gRPC ,th max message receive is 1G
 		s = grpc.NewServer(grpc.ChainUnaryInterceptor(se.panicInterceptor, se.authInterceptor, se.logInterceptor),
@@ -347,7 +347,6 @@ func StartDbServer(configs Config) error {
 	g.Go(gdb.calc)           // calc goroutine
 	g.Go(gdb.syncRtData)
 	g.Go(gdb.syncHisData)
-	g.Go(gdb.shrinkItemDb)
 	if err := g.Wait(); err != nil {
 		fmt.Println(err)
 		return err

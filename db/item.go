@@ -200,26 +200,3 @@ func (gdb *Gdb) CheckItems(groupName string, itemNames ...string) error {
 	}
 	return nil
 }
-
-//shrinkItemDb will shrink itemDb when using sqlite to store items if fileSize >= 0.5G
-func (gdb *Gdb) shrinkItemDb() error {
-	if gdb.driverName == "sqlite3" {
-		t := time.NewTicker(time.Minute)
-		for {
-			select {
-			case <-t.C:
-				if size, err := dirSize(gdb.dsn); err != nil {
-					fmt.Println("failing to get size of database:" + err.Error())
-				} else {
-					if size > 0.5 {
-						// more than 0.5G
-						if _, err := gdb.updateItem("vacuum ;"); err != nil {
-							return err
-						}
-					}
-				}
-			}
-		}
-	}
-	return nil
-}

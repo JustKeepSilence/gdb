@@ -12,6 +12,7 @@ import (
 	. "github.com/ahmetb/go-linq/v3"
 	"github.com/deckarep/golang-set"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -178,7 +179,8 @@ func (gdb *Gdb) GetGroupProperty(groupName, condition string) (GroupPropertyInfo
 	for i := 0; i < len(c); i++ {
 		columnNames = append(columnNames, c[i]["name"])
 	}
-	return GroupPropertyInfo{ItemCount: itemCount[0]["count"], ItemColumnNames: columnNames[1:]}, nil
+	count, _ := strconv.ParseInt(itemCount[0]["count"], 10, 64)
+	return GroupPropertyInfo{ItemCount: count, ItemColumnNames: columnNames[1:]}, nil
 }
 
 // UpdateGroupNames update groupNames,the history data of oldGroup will migrate to new newGroup as well

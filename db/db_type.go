@@ -66,7 +66,7 @@ type Gdb struct {
 
 type Options struct {
 	DriverName   string // driverName of itemDb, default is sqlite3
-	Dsn          string // dsn to connect itemDb, default is "./itemDb.db"
+	Dsn          string // dsn to connect itemDb, default is "file:itemDb.db?_auth_user=seu&_auth_pass=admin@123&_auth_crypt=SHA1@_vacuum=1"
 	UseInnerStop bool   // whether user inner stopService function, if true, we will use StopService to stopService, you can also define your own method by implement StopGdb interface,in your own method, you should call gdb.CloseGdb to ensure gdbService close successfully
 	RtGdb               // realTime interface, default is FastCacheRt
 }
@@ -224,6 +224,7 @@ func (gdb *Gdb) initialItemDb(clientMode bool, driverName, dsn string) error {
 	default:
 		// sql server
 	}
+	gdb.dsn = dsn
 	sqlCreateGroupCfgTable := `create table if not exists group_cfg (` + gdb.key + `, groupName ` + gdb.unique + ` UNIQUE)` // add group_cfg table
 	if clientMode {
 		sqlAddCalc := `insert into group_cfg (groupName) values ('calc')`                                                                                                                                      // add calc group
@@ -315,13 +316,13 @@ func NewGdb(dbPath string, rtTimeDuration, hisTimeDuration time.Duration, opt *O
 	g.hisTimeDuration = hisTimeDuration
 	sw := sync.WaitGroup{}
 	if opt.UseInnerStop {
-		sw.Add(4)
+		sw.Add(3)
 		go func() {
 			defer sw.Done()
 			_ = g.StopService()
 		}()
 	} else {
-		sw.Add(3)
+		sw.Add(2)
 	}
 	go func() {
 		defer sw.Done()
@@ -330,10 +331,6 @@ func NewGdb(dbPath string, rtTimeDuration, hisTimeDuration time.Duration, opt *O
 	go func() {
 		defer sw.Done()
 		_ = g.syncHisData()
-	}()
-	go func() {
-		defer sw.Done()
-		_ = g.shrinkItemDb()
 	}()
 	return g, nil
 }

@@ -571,7 +571,7 @@ type GroupPropertyInfo struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	ItemCount       string   `protobuf:"bytes,1,opt,name=itemCount,proto3" json:"itemCount,omitempty"`
+	ItemCount       int64    `protobuf:"varint,1,opt,name=itemCount,proto3" json:"itemCount,omitempty"`
 	ItemColumnNames []string `protobuf:"bytes,2,rep,name=itemColumnNames,proto3" json:"itemColumnNames,omitempty"`
 }
 
@@ -607,11 +607,11 @@ func (*GroupPropertyInfo) Descriptor() ([]byte, []int) {
 	return file_gdb_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *GroupPropertyInfo) GetItemCount() string {
+func (x *GroupPropertyInfo) GetItemCount() int64 {
 	if x != nil {
 		return x.ItemCount
 	}
-	return ""
+	return 0
 }
 
 func (x *GroupPropertyInfo) GetItemColumnNames() []string {
@@ -2100,81 +2100,20 @@ func (x *QueryRawHistoricalDataString) GetItemNames() []string {
 	return nil
 }
 
-type QueryHistoricalDataWithStamp struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	GroupName  string  `protobuf:"bytes,1,opt,name=groupName,proto3" json:"groupName,omitempty"`
-	ItemName   string  `protobuf:"bytes,2,opt,name=itemName,proto3" json:"itemName,omitempty"`
-	TimeStamps []int32 `protobuf:"varint,3,rep,packed,name=timeStamps,proto3" json:"timeStamps,omitempty"`
-}
-
-func (x *QueryHistoricalDataWithStamp) Reset() {
-	*x = QueryHistoricalDataWithStamp{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[36]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *QueryHistoricalDataWithStamp) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*QueryHistoricalDataWithStamp) ProtoMessage() {}
-
-func (x *QueryHistoricalDataWithStamp) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[36]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use QueryHistoricalDataWithStamp.ProtoReflect.Descriptor instead.
-func (*QueryHistoricalDataWithStamp) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{36}
-}
-
-func (x *QueryHistoricalDataWithStamp) GetGroupName() string {
-	if x != nil {
-		return x.GroupName
-	}
-	return ""
-}
-
-func (x *QueryHistoricalDataWithStamp) GetItemName() string {
-	if x != nil {
-		return x.ItemName
-	}
-	return ""
-}
-
-func (x *QueryHistoricalDataWithStamp) GetTimeStamps() []int32 {
-	if x != nil {
-		return x.TimeStamps
-	}
-	return nil
-}
-
 type QueryHistoricalDataWithStampString struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	QueryString []*QueryHistoricalDataWithStamp `protobuf:"bytes,1,rep,name=queryString,proto3" json:"queryString,omitempty"`
+	GroupNames []string     `protobuf:"bytes,1,rep,name=groupNames,proto3" json:"groupNames,omitempty"`
+	ItemNames  []string     `protobuf:"bytes,2,rep,name=itemNames,proto3" json:"itemNames,omitempty"`
+	TimeStamps []*TimeStamp `protobuf:"bytes,3,rep,name=timeStamps,proto3" json:"timeStamps,omitempty"`
 }
 
 func (x *QueryHistoricalDataWithStampString) Reset() {
 	*x = QueryHistoricalDataWithStampString{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[37]
+		mi := &file_gdb_proto_msgTypes[36]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2187,7 +2126,7 @@ func (x *QueryHistoricalDataWithStampString) String() string {
 func (*QueryHistoricalDataWithStampString) ProtoMessage() {}
 
 func (x *QueryHistoricalDataWithStampString) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[37]
+	mi := &file_gdb_proto_msgTypes[36]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2200,12 +2139,26 @@ func (x *QueryHistoricalDataWithStampString) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use QueryHistoricalDataWithStampString.ProtoReflect.Descriptor instead.
 func (*QueryHistoricalDataWithStampString) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{37}
+	return file_gdb_proto_rawDescGZIP(), []int{36}
 }
 
-func (x *QueryHistoricalDataWithStampString) GetQueryString() []*QueryHistoricalDataWithStamp {
+func (x *QueryHistoricalDataWithStampString) GetGroupNames() []string {
 	if x != nil {
-		return x.QueryString
+		return x.GroupNames
+	}
+	return nil
+}
+
+func (x *QueryHistoricalDataWithStampString) GetItemNames() []string {
+	if x != nil {
+		return x.ItemNames
+	}
+	return nil
+}
+
+func (x *QueryHistoricalDataWithStampString) GetTimeStamps() []*TimeStamp {
+	if x != nil {
+		return x.TimeStamps
 	}
 	return nil
 }
@@ -2222,7 +2175,7 @@ type DeadZone struct {
 func (x *DeadZone) Reset() {
 	*x = DeadZone{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[38]
+		mi := &file_gdb_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2235,7 +2188,7 @@ func (x *DeadZone) String() string {
 func (*DeadZone) ProtoMessage() {}
 
 func (x *DeadZone) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[38]
+	mi := &file_gdb_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2248,7 +2201,7 @@ func (x *DeadZone) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeadZone.ProtoReflect.Descriptor instead.
 func (*DeadZone) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{38}
+	return file_gdb_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *DeadZone) GetItemName() string {
@@ -2282,7 +2235,7 @@ type QueryHistoricalDataWithConditionString struct {
 func (x *QueryHistoricalDataWithConditionString) Reset() {
 	*x = QueryHistoricalDataWithConditionString{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[39]
+		mi := &file_gdb_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2295,7 +2248,7 @@ func (x *QueryHistoricalDataWithConditionString) String() string {
 func (*QueryHistoricalDataWithConditionString) ProtoMessage() {}
 
 func (x *QueryHistoricalDataWithConditionString) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[39]
+	mi := &file_gdb_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2308,7 +2261,7 @@ func (x *QueryHistoricalDataWithConditionString) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use QueryHistoricalDataWithConditionString.ProtoReflect.Descriptor instead.
 func (*QueryHistoricalDataWithConditionString) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{39}
+	return file_gdb_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *QueryHistoricalDataWithConditionString) GetGroupName() string {
@@ -2374,7 +2327,7 @@ type DeleteHistoricalDataString struct {
 func (x *DeleteHistoricalDataString) Reset() {
 	*x = DeleteHistoricalDataString{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[40]
+		mi := &file_gdb_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2387,7 +2340,7 @@ func (x *DeleteHistoricalDataString) String() string {
 func (*DeleteHistoricalDataString) ProtoMessage() {}
 
 func (x *DeleteHistoricalDataString) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[40]
+	mi := &file_gdb_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2400,7 +2353,7 @@ func (x *DeleteHistoricalDataString) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteHistoricalDataString.ProtoReflect.Descriptor instead.
 func (*DeleteHistoricalDataString) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{40}
+	return file_gdb_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *DeleteHistoricalDataString) GetGroupNames() []string {
@@ -2445,7 +2398,7 @@ type GdbRealTimeData struct {
 func (x *GdbRealTimeData) Reset() {
 	*x = GdbRealTimeData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[41]
+		mi := &file_gdb_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2458,7 +2411,7 @@ func (x *GdbRealTimeData) String() string {
 func (*GdbRealTimeData) ProtoMessage() {}
 
 func (x *GdbRealTimeData) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[41]
+	mi := &file_gdb_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2471,7 +2424,7 @@ func (x *GdbRealTimeData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GdbRealTimeData.ProtoReflect.Descriptor instead.
 func (*GdbRealTimeData) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{41}
+	return file_gdb_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *GdbRealTimeData) GetRealTimeData() string {
@@ -2500,7 +2453,7 @@ type GdbHistoricalData struct {
 func (x *GdbHistoricalData) Reset() {
 	*x = GdbHistoricalData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[42]
+		mi := &file_gdb_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2513,7 +2466,7 @@ func (x *GdbHistoricalData) String() string {
 func (*GdbHistoricalData) ProtoMessage() {}
 
 func (x *GdbHistoricalData) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[42]
+	mi := &file_gdb_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2526,7 +2479,7 @@ func (x *GdbHistoricalData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GdbHistoricalData.ProtoReflect.Descriptor instead.
 func (*GdbHistoricalData) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{42}
+	return file_gdb_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *GdbHistoricalData) GetHistoricalData() string {
@@ -2555,7 +2508,7 @@ type AuthInfo struct {
 func (x *AuthInfo) Reset() {
 	*x = AuthInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[43]
+		mi := &file_gdb_proto_msgTypes[42]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2568,7 +2521,7 @@ func (x *AuthInfo) String() string {
 func (*AuthInfo) ProtoMessage() {}
 
 func (x *AuthInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[43]
+	mi := &file_gdb_proto_msgTypes[42]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2581,7 +2534,7 @@ func (x *AuthInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AuthInfo.ProtoReflect.Descriptor instead.
 func (*AuthInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{43}
+	return file_gdb_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *AuthInfo) GetUserName() string {
@@ -2609,7 +2562,7 @@ type UserName struct {
 func (x *UserName) Reset() {
 	*x = UserName{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[44]
+		mi := &file_gdb_proto_msgTypes[43]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2622,7 +2575,7 @@ func (x *UserName) String() string {
 func (*UserName) ProtoMessage() {}
 
 func (x *UserName) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[44]
+	mi := &file_gdb_proto_msgTypes[43]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2635,7 +2588,7 @@ func (x *UserName) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserName.ProtoReflect.Descriptor instead.
 func (*UserName) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{44}
+	return file_gdb_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *UserName) GetName() string {
@@ -2658,7 +2611,7 @@ type AddedUserInfo struct {
 func (x *AddedUserInfo) Reset() {
 	*x = AddedUserInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[45]
+		mi := &file_gdb_proto_msgTypes[44]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2671,7 +2624,7 @@ func (x *AddedUserInfo) String() string {
 func (*AddedUserInfo) ProtoMessage() {}
 
 func (x *AddedUserInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[45]
+	mi := &file_gdb_proto_msgTypes[44]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2684,7 +2637,7 @@ func (x *AddedUserInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddedUserInfo.ProtoReflect.Descriptor instead.
 func (*AddedUserInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{45}
+	return file_gdb_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *AddedUserInfo) GetName() string {
@@ -2722,7 +2675,7 @@ type UpdatedUserInfo struct {
 func (x *UpdatedUserInfo) Reset() {
 	*x = UpdatedUserInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[46]
+		mi := &file_gdb_proto_msgTypes[45]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2735,7 +2688,7 @@ func (x *UpdatedUserInfo) String() string {
 func (*UpdatedUserInfo) ProtoMessage() {}
 
 func (x *UpdatedUserInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[46]
+	mi := &file_gdb_proto_msgTypes[45]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2748,7 +2701,7 @@ func (x *UpdatedUserInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatedUserInfo.ProtoReflect.Descriptor instead.
 func (*UpdatedUserInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{46}
+	return file_gdb_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *UpdatedUserInfo) GetUserName() string {
@@ -2791,7 +2744,7 @@ type FileInfo struct {
 func (x *FileInfo) Reset() {
 	*x = FileInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[47]
+		mi := &file_gdb_proto_msgTypes[46]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2804,7 +2757,7 @@ func (x *FileInfo) String() string {
 func (*FileInfo) ProtoMessage() {}
 
 func (x *FileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[47]
+	mi := &file_gdb_proto_msgTypes[46]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2817,7 +2770,7 @@ func (x *FileInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileInfo.ProtoReflect.Descriptor instead.
 func (*FileInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{47}
+	return file_gdb_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *FileInfo) GetFileName() string {
@@ -2848,7 +2801,7 @@ type HistoryFileInfo struct {
 func (x *HistoryFileInfo) Reset() {
 	*x = HistoryFileInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[48]
+		mi := &file_gdb_proto_msgTypes[47]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2861,7 +2814,7 @@ func (x *HistoryFileInfo) String() string {
 func (*HistoryFileInfo) ProtoMessage() {}
 
 func (x *HistoryFileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[48]
+	mi := &file_gdb_proto_msgTypes[47]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2874,7 +2827,7 @@ func (x *HistoryFileInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HistoryFileInfo.ProtoReflect.Descriptor instead.
 func (*HistoryFileInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{48}
+	return file_gdb_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *HistoryFileInfo) GetGroupName() string {
@@ -2921,7 +2874,7 @@ type QueryLogsInfo struct {
 func (x *QueryLogsInfo) Reset() {
 	*x = QueryLogsInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[49]
+		mi := &file_gdb_proto_msgTypes[48]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2934,7 +2887,7 @@ func (x *QueryLogsInfo) String() string {
 func (*QueryLogsInfo) ProtoMessage() {}
 
 func (x *QueryLogsInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[49]
+	mi := &file_gdb_proto_msgTypes[48]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2947,7 +2900,7 @@ func (x *QueryLogsInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryLogsInfo.ProtoReflect.Descriptor instead.
 func (*QueryLogsInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{49}
+	return file_gdb_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *QueryLogsInfo) GetLevel() string {
@@ -3006,7 +2959,7 @@ type DeletedLogInfo struct {
 func (x *DeletedLogInfo) Reset() {
 	*x = DeletedLogInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[50]
+		mi := &file_gdb_proto_msgTypes[49]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3019,7 +2972,7 @@ func (x *DeletedLogInfo) String() string {
 func (*DeletedLogInfo) ProtoMessage() {}
 
 func (x *DeletedLogInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[50]
+	mi := &file_gdb_proto_msgTypes[49]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3032,7 +2985,7 @@ func (x *DeletedLogInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeletedLogInfo.ProtoReflect.Descriptor instead.
 func (*DeletedLogInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{50}
+	return file_gdb_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *DeletedLogInfo) GetId() string {
@@ -3078,7 +3031,7 @@ type QuerySpeedHistoryDataString struct {
 func (x *QuerySpeedHistoryDataString) Reset() {
 	*x = QuerySpeedHistoryDataString{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[51]
+		mi := &file_gdb_proto_msgTypes[50]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3091,7 +3044,7 @@ func (x *QuerySpeedHistoryDataString) String() string {
 func (*QuerySpeedHistoryDataString) ProtoMessage() {}
 
 func (x *QuerySpeedHistoryDataString) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[51]
+	mi := &file_gdb_proto_msgTypes[50]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3104,7 +3057,7 @@ func (x *QuerySpeedHistoryDataString) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QuerySpeedHistoryDataString.ProtoReflect.Descriptor instead.
 func (*QuerySpeedHistoryDataString) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{51}
+	return file_gdb_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *QuerySpeedHistoryDataString) GetInfoType() string {
@@ -3154,7 +3107,7 @@ type RoutesInfo struct {
 func (x *RoutesInfo) Reset() {
 	*x = RoutesInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[52]
+		mi := &file_gdb_proto_msgTypes[51]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3167,7 +3120,7 @@ func (x *RoutesInfo) String() string {
 func (*RoutesInfo) ProtoMessage() {}
 
 func (x *RoutesInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[52]
+	mi := &file_gdb_proto_msgTypes[51]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3180,7 +3133,7 @@ func (x *RoutesInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutesInfo.ProtoReflect.Descriptor instead.
 func (*RoutesInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{52}
+	return file_gdb_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *RoutesInfo) GetName() string {
@@ -3208,7 +3161,7 @@ type GdbInfoData struct {
 func (x *GdbInfoData) Reset() {
 	*x = GdbInfoData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[53]
+		mi := &file_gdb_proto_msgTypes[52]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3221,7 +3174,7 @@ func (x *GdbInfoData) String() string {
 func (*GdbInfoData) ProtoMessage() {}
 
 func (x *GdbInfoData) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[53]
+	mi := &file_gdb_proto_msgTypes[52]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3234,7 +3187,7 @@ func (x *GdbInfoData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GdbInfoData.ProtoReflect.Descriptor instead.
 func (*GdbInfoData) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{53}
+	return file_gdb_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *GdbInfoData) GetInfo() string {
@@ -3255,7 +3208,7 @@ type UserToken struct {
 func (x *UserToken) Reset() {
 	*x = UserToken{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[54]
+		mi := &file_gdb_proto_msgTypes[53]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3268,7 +3221,7 @@ func (x *UserToken) String() string {
 func (*UserToken) ProtoMessage() {}
 
 func (x *UserToken) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[54]
+	mi := &file_gdb_proto_msgTypes[53]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3281,7 +3234,7 @@ func (x *UserToken) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserToken.ProtoReflect.Descriptor instead.
 func (*UserToken) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{54}
+	return file_gdb_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *UserToken) GetToken() string {
@@ -3303,7 +3256,7 @@ type UserInfo struct {
 func (x *UserInfo) Reset() {
 	*x = UserInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[55]
+		mi := &file_gdb_proto_msgTypes[54]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3316,7 +3269,7 @@ func (x *UserInfo) String() string {
 func (*UserInfo) ProtoMessage() {}
 
 func (x *UserInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[55]
+	mi := &file_gdb_proto_msgTypes[54]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3329,7 +3282,7 @@ func (x *UserInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserInfo.ProtoReflect.Descriptor instead.
 func (*UserInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{55}
+	return file_gdb_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *UserInfo) GetUserName() string {
@@ -3358,7 +3311,7 @@ type LogsInfo struct {
 func (x *LogsInfo) Reset() {
 	*x = LogsInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[56]
+		mi := &file_gdb_proto_msgTypes[55]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3371,7 +3324,7 @@ func (x *LogsInfo) String() string {
 func (*LogsInfo) ProtoMessage() {}
 
 func (x *LogsInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[56]
+	mi := &file_gdb_proto_msgTypes[55]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3384,7 +3337,7 @@ func (x *LogsInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogsInfo.ProtoReflect.Descriptor instead.
 func (*LogsInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{56}
+	return file_gdb_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *LogsInfo) GetInfos() string {
@@ -3413,7 +3366,7 @@ type UploadedFileInfo struct {
 func (x *UploadedFileInfo) Reset() {
 	*x = UploadedFileInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[57]
+		mi := &file_gdb_proto_msgTypes[56]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3426,7 +3379,7 @@ func (x *UploadedFileInfo) String() string {
 func (*UploadedFileInfo) ProtoMessage() {}
 
 func (x *UploadedFileInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[57]
+	mi := &file_gdb_proto_msgTypes[56]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3439,7 +3392,7 @@ func (x *UploadedFileInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UploadedFileInfo.ProtoReflect.Descriptor instead.
 func (*UploadedFileInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{57}
+	return file_gdb_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *UploadedFileInfo) GetFileName() string {
@@ -3467,7 +3420,7 @@ type FileContents struct {
 func (x *FileContents) Reset() {
 	*x = FileContents{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[58]
+		mi := &file_gdb_proto_msgTypes[57]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3480,7 +3433,7 @@ func (x *FileContents) String() string {
 func (*FileContents) ProtoMessage() {}
 
 func (x *FileContents) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[58]
+	mi := &file_gdb_proto_msgTypes[57]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3493,7 +3446,7 @@ func (x *FileContents) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileContents.ProtoReflect.Descriptor instead.
 func (*FileContents) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{58}
+	return file_gdb_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *FileContents) GetContents() []int32 {
@@ -3514,7 +3467,7 @@ type FileSize struct {
 func (x *FileSize) Reset() {
 	*x = FileSize{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[59]
+		mi := &file_gdb_proto_msgTypes[58]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3527,7 +3480,7 @@ func (x *FileSize) String() string {
 func (*FileSize) ProtoMessage() {}
 
 func (x *FileSize) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[59]
+	mi := &file_gdb_proto_msgTypes[58]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3540,7 +3493,7 @@ func (x *FileSize) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FileSize.ProtoReflect.Descriptor instead.
 func (*FileSize) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{59}
+	return file_gdb_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *FileSize) GetFileSize() string {
@@ -3561,7 +3514,7 @@ type UserInfos struct {
 func (x *UserInfos) Reset() {
 	*x = UserInfos{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[60]
+		mi := &file_gdb_proto_msgTypes[59]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3574,7 +3527,7 @@ func (x *UserInfos) String() string {
 func (*UserInfos) ProtoMessage() {}
 
 func (x *UserInfos) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[60]
+	mi := &file_gdb_proto_msgTypes[59]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3587,7 +3540,7 @@ func (x *UserInfos) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserInfos.ProtoReflect.Descriptor instead.
 func (*UserInfos) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{60}
+	return file_gdb_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *UserInfos) GetUserInfos() string {
@@ -3608,7 +3561,7 @@ type Routes struct {
 func (x *Routes) Reset() {
 	*x = Routes{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[61]
+		mi := &file_gdb_proto_msgTypes[60]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3621,7 +3574,7 @@ func (x *Routes) String() string {
 func (*Routes) ProtoMessage() {}
 
 func (x *Routes) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[61]
+	mi := &file_gdb_proto_msgTypes[60]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3634,7 +3587,7 @@ func (x *Routes) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Routes.ProtoReflect.Descriptor instead.
 func (*Routes) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{61}
+	return file_gdb_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *Routes) GetRoutes() string {
@@ -3655,7 +3608,7 @@ type CheckResult struct {
 func (x *CheckResult) Reset() {
 	*x = CheckResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[62]
+		mi := &file_gdb_proto_msgTypes[61]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3668,7 +3621,7 @@ func (x *CheckResult) String() string {
 func (*CheckResult) ProtoMessage() {}
 
 func (x *CheckResult) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[62]
+	mi := &file_gdb_proto_msgTypes[61]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3681,7 +3634,7 @@ func (x *CheckResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckResult.ProtoReflect.Descriptor instead.
 func (*CheckResult) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{62}
+	return file_gdb_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *CheckResult) GetResult() []int32 {
@@ -3702,7 +3655,7 @@ type Code struct {
 func (x *Code) Reset() {
 	*x = Code{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[63]
+		mi := &file_gdb_proto_msgTypes[62]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3715,7 +3668,7 @@ func (x *Code) String() string {
 func (*Code) ProtoMessage() {}
 
 func (x *Code) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[63]
+	mi := &file_gdb_proto_msgTypes[62]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3728,7 +3681,7 @@ func (x *Code) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Code.ProtoReflect.Descriptor instead.
 func (*Code) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{63}
+	return file_gdb_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *Code) GetCode() string {
@@ -3752,7 +3705,7 @@ type AddedCalcItemInfo struct {
 func (x *AddedCalcItemInfo) Reset() {
 	*x = AddedCalcItemInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[64]
+		mi := &file_gdb_proto_msgTypes[63]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3765,7 +3718,7 @@ func (x *AddedCalcItemInfo) String() string {
 func (*AddedCalcItemInfo) ProtoMessage() {}
 
 func (x *AddedCalcItemInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[64]
+	mi := &file_gdb_proto_msgTypes[63]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3778,7 +3731,7 @@ func (x *AddedCalcItemInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddedCalcItemInfo.ProtoReflect.Descriptor instead.
 func (*AddedCalcItemInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{64}
+	return file_gdb_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *AddedCalcItemInfo) GetExpression() string {
@@ -3820,7 +3773,7 @@ type QueryCalcItemsInfo struct {
 func (x *QueryCalcItemsInfo) Reset() {
 	*x = QueryCalcItemsInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[65]
+		mi := &file_gdb_proto_msgTypes[64]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3833,7 +3786,7 @@ func (x *QueryCalcItemsInfo) String() string {
 func (*QueryCalcItemsInfo) ProtoMessage() {}
 
 func (x *QueryCalcItemsInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[65]
+	mi := &file_gdb_proto_msgTypes[64]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3846,7 +3799,7 @@ func (x *QueryCalcItemsInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryCalcItemsInfo.ProtoReflect.Descriptor instead.
 func (*QueryCalcItemsInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{65}
+	return file_gdb_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *QueryCalcItemsInfo) GetCondition() string {
@@ -3871,7 +3824,7 @@ type UpdatedCalcInfo struct {
 func (x *UpdatedCalcInfo) Reset() {
 	*x = UpdatedCalcInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[66]
+		mi := &file_gdb_proto_msgTypes[65]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3884,7 +3837,7 @@ func (x *UpdatedCalcInfo) String() string {
 func (*UpdatedCalcInfo) ProtoMessage() {}
 
 func (x *UpdatedCalcInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[66]
+	mi := &file_gdb_proto_msgTypes[65]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3897,7 +3850,7 @@ func (x *UpdatedCalcInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdatedCalcInfo.ProtoReflect.Descriptor instead.
 func (*UpdatedCalcInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{66}
+	return file_gdb_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *UpdatedCalcInfo) GetId() string {
@@ -3946,7 +3899,7 @@ type CalcId struct {
 func (x *CalcId) Reset() {
 	*x = CalcId{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[67]
+		mi := &file_gdb_proto_msgTypes[66]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -3959,7 +3912,7 @@ func (x *CalcId) String() string {
 func (*CalcId) ProtoMessage() {}
 
 func (x *CalcId) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[67]
+	mi := &file_gdb_proto_msgTypes[66]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3972,7 +3925,7 @@ func (x *CalcId) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CalcId.ProtoReflect.Descriptor instead.
 func (*CalcId) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{67}
+	return file_gdb_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *CalcId) GetId() []string {
@@ -3993,7 +3946,7 @@ type CalculationResult struct {
 func (x *CalculationResult) Reset() {
 	*x = CalculationResult{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[68]
+		mi := &file_gdb_proto_msgTypes[67]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4006,7 +3959,7 @@ func (x *CalculationResult) String() string {
 func (*CalculationResult) ProtoMessage() {}
 
 func (x *CalculationResult) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[68]
+	mi := &file_gdb_proto_msgTypes[67]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4019,7 +3972,7 @@ func (x *CalculationResult) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CalculationResult.ProtoReflect.Descriptor instead.
 func (*CalculationResult) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{68}
+	return file_gdb_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *CalculationResult) GetResult() string {
@@ -4040,7 +3993,7 @@ type CalcItemsInfo struct {
 func (x *CalcItemsInfo) Reset() {
 	*x = CalcItemsInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[69]
+		mi := &file_gdb_proto_msgTypes[68]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4053,7 +4006,7 @@ func (x *CalcItemsInfo) String() string {
 func (*CalcItemsInfo) ProtoMessage() {}
 
 func (x *CalcItemsInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[69]
+	mi := &file_gdb_proto_msgTypes[68]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4066,7 +4019,7 @@ func (x *CalcItemsInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CalcItemsInfo.ProtoReflect.Descriptor instead.
 func (*CalcItemsInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{69}
+	return file_gdb_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *CalcItemsInfo) GetInfos() string {
@@ -4087,7 +4040,7 @@ type CalculationResults struct {
 func (x *CalculationResults) Reset() {
 	*x = CalculationResults{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[70]
+		mi := &file_gdb_proto_msgTypes[69]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4100,7 +4053,7 @@ func (x *CalculationResults) String() string {
 func (*CalculationResults) ProtoMessage() {}
 
 func (x *CalculationResults) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[70]
+	mi := &file_gdb_proto_msgTypes[69]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4113,7 +4066,7 @@ func (x *CalculationResults) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CalculationResults.ProtoReflect.Descriptor instead.
 func (*CalculationResults) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{70}
+	return file_gdb_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *CalculationResults) GetResults() []*CalculationResult {
@@ -4134,7 +4087,7 @@ type TestCalcItemInfo struct {
 func (x *TestCalcItemInfo) Reset() {
 	*x = TestCalcItemInfo{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[71]
+		mi := &file_gdb_proto_msgTypes[70]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4147,7 +4100,7 @@ func (x *TestCalcItemInfo) String() string {
 func (*TestCalcItemInfo) ProtoMessage() {}
 
 func (x *TestCalcItemInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[71]
+	mi := &file_gdb_proto_msgTypes[70]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4160,7 +4113,7 @@ func (x *TestCalcItemInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TestCalcItemInfo.ProtoReflect.Descriptor instead.
 func (*TestCalcItemInfo) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{71}
+	return file_gdb_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *TestCalcItemInfo) GetExpression() string {
@@ -4183,7 +4136,7 @@ type FloatHistoricalData struct {
 func (x *FloatHistoricalData) Reset() {
 	*x = FloatHistoricalData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[72]
+		mi := &file_gdb_proto_msgTypes[71]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4196,7 +4149,7 @@ func (x *FloatHistoricalData) String() string {
 func (*FloatHistoricalData) ProtoMessage() {}
 
 func (x *FloatHistoricalData) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[72]
+	mi := &file_gdb_proto_msgTypes[71]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4209,7 +4162,7 @@ func (x *FloatHistoricalData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FloatHistoricalData.ProtoReflect.Descriptor instead.
 func (*FloatHistoricalData) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{72}
+	return file_gdb_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *FloatHistoricalData) GetValues() []float32 {
@@ -4238,7 +4191,7 @@ type IntHistoricalData struct {
 func (x *IntHistoricalData) Reset() {
 	*x = IntHistoricalData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[73]
+		mi := &file_gdb_proto_msgTypes[72]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4251,7 +4204,7 @@ func (x *IntHistoricalData) String() string {
 func (*IntHistoricalData) ProtoMessage() {}
 
 func (x *IntHistoricalData) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[73]
+	mi := &file_gdb_proto_msgTypes[72]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4264,7 +4217,7 @@ func (x *IntHistoricalData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use IntHistoricalData.ProtoReflect.Descriptor instead.
 func (*IntHistoricalData) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{73}
+	return file_gdb_proto_rawDescGZIP(), []int{72}
 }
 
 func (x *IntHistoricalData) GetValues() []int32 {
@@ -4293,7 +4246,7 @@ type StringHistoricalData struct {
 func (x *StringHistoricalData) Reset() {
 	*x = StringHistoricalData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[74]
+		mi := &file_gdb_proto_msgTypes[73]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4306,7 +4259,7 @@ func (x *StringHistoricalData) String() string {
 func (*StringHistoricalData) ProtoMessage() {}
 
 func (x *StringHistoricalData) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[74]
+	mi := &file_gdb_proto_msgTypes[73]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4319,7 +4272,7 @@ func (x *StringHistoricalData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StringHistoricalData.ProtoReflect.Descriptor instead.
 func (*StringHistoricalData) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{74}
+	return file_gdb_proto_rawDescGZIP(), []int{73}
 }
 
 func (x *StringHistoricalData) GetValues() []string {
@@ -4348,7 +4301,7 @@ type BoolHistoricalData struct {
 func (x *BoolHistoricalData) Reset() {
 	*x = BoolHistoricalData{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[75]
+		mi := &file_gdb_proto_msgTypes[74]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4361,7 +4314,7 @@ func (x *BoolHistoricalData) String() string {
 func (*BoolHistoricalData) ProtoMessage() {}
 
 func (x *BoolHistoricalData) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[75]
+	mi := &file_gdb_proto_msgTypes[74]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4374,7 +4327,7 @@ func (x *BoolHistoricalData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BoolHistoricalData.ProtoReflect.Descriptor instead.
 func (*BoolHistoricalData) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{75}
+	return file_gdb_proto_rawDescGZIP(), []int{74}
 }
 
 func (x *BoolHistoricalData) GetValues() []bool {
@@ -4402,7 +4355,7 @@ type FloatHistoricalDatas struct {
 func (x *FloatHistoricalDatas) Reset() {
 	*x = FloatHistoricalDatas{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_gdb_proto_msgTypes[76]
+		mi := &file_gdb_proto_msgTypes[75]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -4415,7 +4368,7 @@ func (x *FloatHistoricalDatas) String() string {
 func (*FloatHistoricalDatas) ProtoMessage() {}
 
 func (x *FloatHistoricalDatas) ProtoReflect() protoreflect.Message {
-	mi := &file_gdb_proto_msgTypes[76]
+	mi := &file_gdb_proto_msgTypes[75]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4428,7 +4381,7 @@ func (x *FloatHistoricalDatas) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FloatHistoricalDatas.ProtoReflect.Descriptor instead.
 func (*FloatHistoricalDatas) Descriptor() ([]byte, []int) {
-	return file_gdb_proto_rawDescGZIP(), []int{76}
+	return file_gdb_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *FloatHistoricalDatas) GetHistoryValues() map[string]*FloatHistoricalData {
@@ -4498,7 +4451,7 @@ var file_gdb_proto_rawDesc = []byte{
 	0x6c, 0x75, 0x6d, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x22, 0x5b, 0x0a, 0x11, 0x47, 0x72, 0x6f,
 	0x75, 0x70, 0x50, 0x72, 0x6f, 0x70, 0x65, 0x72, 0x74, 0x79, 0x49, 0x6e, 0x66, 0x6f, 0x12, 0x1c,
 	0x0a, 0x09, 0x69, 0x74, 0x65, 0x6d, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x09, 0x69, 0x74, 0x65, 0x6d, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x28, 0x0a, 0x0f,
+	0x03, 0x52, 0x09, 0x69, 0x74, 0x65, 0x6d, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x12, 0x28, 0x0a, 0x0f,
 	0x69, 0x74, 0x65, 0x6d, 0x43, 0x6f, 0x6c, 0x75, 0x6d, 0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x18,
 	0x02, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0f, 0x69, 0x74, 0x65, 0x6d, 0x43, 0x6f, 0x6c, 0x75, 0x6d,
 	0x6e, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x22, 0x8b, 0x01, 0x0a, 0x1b, 0x55, 0x70, 0x64, 0x61, 0x74,
@@ -4680,22 +4633,17 @@ var file_gdb_proto_rawDesc = []byte{
 	0x67, 0x72, 0x6f, 0x75, 0x70, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09,
 	0x52, 0x0a, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x12, 0x1c, 0x0a, 0x09,
 	0x69, 0x74, 0x65, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28, 0x09, 0x52,
-	0x09, 0x69, 0x74, 0x65, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x22, 0x78, 0x0a, 0x1c, 0x51, 0x75,
-	0x65, 0x72, 0x79, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x69, 0x63, 0x61, 0x6c, 0x44, 0x61, 0x74,
-	0x61, 0x57, 0x69, 0x74, 0x68, 0x53, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x1c, 0x0a, 0x09, 0x67, 0x72,
-	0x6f, 0x75, 0x70, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x67,
-	0x72, 0x6f, 0x75, 0x70, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08, 0x69, 0x74, 0x65, 0x6d,
-	0x4e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x69, 0x74, 0x65, 0x6d,
-	0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1e, 0x0a, 0x0a, 0x74, 0x69, 0x6d, 0x65, 0x53, 0x74, 0x61, 0x6d,
-	0x70, 0x73, 0x18, 0x03, 0x20, 0x03, 0x28, 0x05, 0x52, 0x0a, 0x74, 0x69, 0x6d, 0x65, 0x53, 0x74,
-	0x61, 0x6d, 0x70, 0x73, 0x22, 0x6b, 0x0a, 0x22, 0x51, 0x75, 0x65, 0x72, 0x79, 0x48, 0x69, 0x73,
-	0x74, 0x6f, 0x72, 0x69, 0x63, 0x61, 0x6c, 0x44, 0x61, 0x74, 0x61, 0x57, 0x69, 0x74, 0x68, 0x53,
-	0x74, 0x61, 0x6d, 0x70, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x12, 0x45, 0x0a, 0x0b, 0x71, 0x75,
-	0x65, 0x72, 0x79, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32,
-	0x23, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x51, 0x75, 0x65, 0x72, 0x79, 0x48, 0x69, 0x73,
-	0x74, 0x6f, 0x72, 0x69, 0x63, 0x61, 0x6c, 0x44, 0x61, 0x74, 0x61, 0x57, 0x69, 0x74, 0x68, 0x53,
-	0x74, 0x61, 0x6d, 0x70, 0x52, 0x0b, 0x71, 0x75, 0x65, 0x72, 0x79, 0x53, 0x74, 0x72, 0x69, 0x6e,
-	0x67, 0x22, 0x4c, 0x0a, 0x08, 0x44, 0x65, 0x61, 0x64, 0x5a, 0x6f, 0x6e, 0x65, 0x12, 0x1a, 0x0a,
+	0x09, 0x69, 0x74, 0x65, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x22, 0x94, 0x01, 0x0a, 0x22, 0x51,
+	0x75, 0x65, 0x72, 0x79, 0x48, 0x69, 0x73, 0x74, 0x6f, 0x72, 0x69, 0x63, 0x61, 0x6c, 0x44, 0x61,
+	0x74, 0x61, 0x57, 0x69, 0x74, 0x68, 0x53, 0x74, 0x61, 0x6d, 0x70, 0x53, 0x74, 0x72, 0x69, 0x6e,
+	0x67, 0x12, 0x1e, 0x0a, 0x0a, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x18,
+	0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0a, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x4e, 0x61, 0x6d, 0x65,
+	0x73, 0x12, 0x1c, 0x0a, 0x09, 0x69, 0x74, 0x65, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x18, 0x02,
+	0x20, 0x03, 0x28, 0x09, 0x52, 0x09, 0x69, 0x74, 0x65, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x12,
+	0x30, 0x0a, 0x0a, 0x74, 0x69, 0x6d, 0x65, 0x53, 0x74, 0x61, 0x6d, 0x70, 0x73, 0x18, 0x03, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x54, 0x69, 0x6d, 0x65,
+	0x53, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x0a, 0x74, 0x69, 0x6d, 0x65, 0x53, 0x74, 0x61, 0x6d, 0x70,
+	0x73, 0x22, 0x4c, 0x0a, 0x08, 0x44, 0x65, 0x61, 0x64, 0x5a, 0x6f, 0x6e, 0x65, 0x12, 0x1a, 0x0a,
 	0x08, 0x69, 0x74, 0x65, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x08, 0x69, 0x74, 0x65, 0x6d, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x24, 0x0a, 0x0d, 0x64, 0x65, 0x61,
 	0x64, 0x5a, 0x6f, 0x6e, 0x65, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
@@ -5310,7 +5258,7 @@ func file_gdb_proto_rawDescGZIP() []byte {
 	return file_gdb_proto_rawDescData
 }
 
-var file_gdb_proto_msgTypes = make([]protoimpl.MessageInfo, 79)
+var file_gdb_proto_msgTypes = make([]protoimpl.MessageInfo, 78)
 var file_gdb_proto_goTypes = []interface{}{
 	(*TimeRows)(nil),                               // 0: model.TimeRows
 	(*TimeCols)(nil),                               // 1: model.TimeCols
@@ -5348,56 +5296,55 @@ var file_gdb_proto_goTypes = []interface{}{
 	(*QueryRealTimeDataString)(nil),                // 33: model.QueryRealTimeDataString
 	(*QueryHistoricalDataString)(nil),              // 34: model.QueryHistoricalDataString
 	(*QueryRawHistoricalDataString)(nil),           // 35: model.QueryRawHistoricalDataString
-	(*QueryHistoricalDataWithStamp)(nil),           // 36: model.QueryHistoricalDataWithStamp
-	(*QueryHistoricalDataWithStampString)(nil),     // 37: model.QueryHistoricalDataWithStampString
-	(*DeadZone)(nil),                               // 38: model.DeadZone
-	(*QueryHistoricalDataWithConditionString)(nil), // 39: model.QueryHistoricalDataWithConditionString
-	(*DeleteHistoricalDataString)(nil),             // 40: model.DeleteHistoricalDataString
-	(*GdbRealTimeData)(nil),                        // 41: model.GdbRealTimeData
-	(*GdbHistoricalData)(nil),                      // 42: model.GdbHistoricalData
-	(*AuthInfo)(nil),                               // 43: model.AuthInfo
-	(*UserName)(nil),                               // 44: model.UserName
-	(*AddedUserInfo)(nil),                          // 45: model.AddedUserInfo
-	(*UpdatedUserInfo)(nil),                        // 46: model.UpdatedUserInfo
-	(*FileInfo)(nil),                               // 47: model.FileInfo
-	(*HistoryFileInfo)(nil),                        // 48: model.HistoryFileInfo
-	(*QueryLogsInfo)(nil),                          // 49: model.QueryLogsInfo
-	(*DeletedLogInfo)(nil),                         // 50: model.DeletedLogInfo
-	(*QuerySpeedHistoryDataString)(nil),            // 51: model.QuerySpeedHistoryDataString
-	(*RoutesInfo)(nil),                             // 52: model.RoutesInfo
-	(*GdbInfoData)(nil),                            // 53: model.GdbInfoData
-	(*UserToken)(nil),                              // 54: model.UserToken
-	(*UserInfo)(nil),                               // 55: model.UserInfo
-	(*LogsInfo)(nil),                               // 56: model.LogsInfo
-	(*UploadedFileInfo)(nil),                       // 57: model.UploadedFileInfo
-	(*FileContents)(nil),                           // 58: model.FileContents
-	(*FileSize)(nil),                               // 59: model.FileSize
-	(*UserInfos)(nil),                              // 60: model.UserInfos
-	(*Routes)(nil),                                 // 61: model.Routes
-	(*CheckResult)(nil),                            // 62: model.CheckResult
-	(*Code)(nil),                                   // 63: model.Code
-	(*AddedCalcItemInfo)(nil),                      // 64: model.AddedCalcItemInfo
-	(*QueryCalcItemsInfo)(nil),                     // 65: model.QueryCalcItemsInfo
-	(*UpdatedCalcInfo)(nil),                        // 66: model.UpdatedCalcInfo
-	(*CalcId)(nil),                                 // 67: model.CalcId
-	(*CalculationResult)(nil),                      // 68: model.CalculationResult
-	(*CalcItemsInfo)(nil),                          // 69: model.CalcItemsInfo
-	(*CalculationResults)(nil),                     // 70: model.CalculationResults
-	(*TestCalcItemInfo)(nil),                       // 71: model.TestCalcItemInfo
-	(*FloatHistoricalData)(nil),                    // 72: model.FloatHistoricalData
-	(*IntHistoricalData)(nil),                      // 73: model.IntHistoricalData
-	(*StringHistoricalData)(nil),                   // 74: model.StringHistoricalData
-	(*BoolHistoricalData)(nil),                     // 75: model.BoolHistoricalData
-	(*FloatHistoricalDatas)(nil),                   // 76: model.FloatHistoricalDatas
-	nil,                                            // 77: model.GdbItems.ItemsEntry
-	nil,                                            // 78: model.FloatHistoricalDatas.HistoryValuesEntry
-	(*emptypb.Empty)(nil),                          // 79: google.protobuf.Empty
+	(*QueryHistoricalDataWithStampString)(nil),     // 36: model.QueryHistoricalDataWithStampString
+	(*DeadZone)(nil),                               // 37: model.DeadZone
+	(*QueryHistoricalDataWithConditionString)(nil), // 38: model.QueryHistoricalDataWithConditionString
+	(*DeleteHistoricalDataString)(nil),             // 39: model.DeleteHistoricalDataString
+	(*GdbRealTimeData)(nil),                        // 40: model.GdbRealTimeData
+	(*GdbHistoricalData)(nil),                      // 41: model.GdbHistoricalData
+	(*AuthInfo)(nil),                               // 42: model.AuthInfo
+	(*UserName)(nil),                               // 43: model.UserName
+	(*AddedUserInfo)(nil),                          // 44: model.AddedUserInfo
+	(*UpdatedUserInfo)(nil),                        // 45: model.UpdatedUserInfo
+	(*FileInfo)(nil),                               // 46: model.FileInfo
+	(*HistoryFileInfo)(nil),                        // 47: model.HistoryFileInfo
+	(*QueryLogsInfo)(nil),                          // 48: model.QueryLogsInfo
+	(*DeletedLogInfo)(nil),                         // 49: model.DeletedLogInfo
+	(*QuerySpeedHistoryDataString)(nil),            // 50: model.QuerySpeedHistoryDataString
+	(*RoutesInfo)(nil),                             // 51: model.RoutesInfo
+	(*GdbInfoData)(nil),                            // 52: model.GdbInfoData
+	(*UserToken)(nil),                              // 53: model.UserToken
+	(*UserInfo)(nil),                               // 54: model.UserInfo
+	(*LogsInfo)(nil),                               // 55: model.LogsInfo
+	(*UploadedFileInfo)(nil),                       // 56: model.UploadedFileInfo
+	(*FileContents)(nil),                           // 57: model.FileContents
+	(*FileSize)(nil),                               // 58: model.FileSize
+	(*UserInfos)(nil),                              // 59: model.UserInfos
+	(*Routes)(nil),                                 // 60: model.Routes
+	(*CheckResult)(nil),                            // 61: model.CheckResult
+	(*Code)(nil),                                   // 62: model.Code
+	(*AddedCalcItemInfo)(nil),                      // 63: model.AddedCalcItemInfo
+	(*QueryCalcItemsInfo)(nil),                     // 64: model.QueryCalcItemsInfo
+	(*UpdatedCalcInfo)(nil),                        // 65: model.UpdatedCalcInfo
+	(*CalcId)(nil),                                 // 66: model.CalcId
+	(*CalculationResult)(nil),                      // 67: model.CalculationResult
+	(*CalcItemsInfo)(nil),                          // 68: model.CalcItemsInfo
+	(*CalculationResults)(nil),                     // 69: model.CalculationResults
+	(*TestCalcItemInfo)(nil),                       // 70: model.TestCalcItemInfo
+	(*FloatHistoricalData)(nil),                    // 71: model.FloatHistoricalData
+	(*IntHistoricalData)(nil),                      // 72: model.IntHistoricalData
+	(*StringHistoricalData)(nil),                   // 73: model.StringHistoricalData
+	(*BoolHistoricalData)(nil),                     // 74: model.BoolHistoricalData
+	(*FloatHistoricalDatas)(nil),                   // 75: model.FloatHistoricalDatas
+	nil,                                            // 76: model.GdbItems.ItemsEntry
+	nil,                                            // 77: model.FloatHistoricalDatas.HistoryValuesEntry
+	(*emptypb.Empty)(nil),                          // 78: google.protobuf.Empty
 }
 var file_gdb_proto_depIdxs = []int32{
 	2,   // 0: model.AddedGroupInfos.groupInfos:type_name -> model.AddedGroupInfo
 	6,   // 1: model.UpdatedGroupNamesInfo.infos:type_name -> model.UpdatedGroupNameInfo
 	16,  // 2: model.GdbItemsWithCount.itemValues:type_name -> model.GdbItems
-	77,  // 3: model.GdbItems.items:type_name -> model.GdbItems.ItemsEntry
+	76,  // 3: model.GdbItems.items:type_name -> model.GdbItems.ItemsEntry
 	19,  // 4: model.FloatItemValues.itemNames:type_name -> model.ItemName
 	20,  // 5: model.FloatItemValues.itemValues:type_name -> model.FloatItemValue
 	19,  // 6: model.IntItemValues.itemNames:type_name -> model.ItemName
@@ -5414,14 +5361,14 @@ var file_gdb_proto_depIdxs = []int32{
 	24,  // 17: model.StringHItemValues.timeStamps:type_name -> model.TimeStamp
 	23,  // 18: model.BoolHItemValues.itemValues:type_name -> model.BoolItemValue
 	24,  // 19: model.BoolHItemValues.timeStamps:type_name -> model.TimeStamp
-	36,  // 20: model.QueryHistoricalDataWithStampString.queryString:type_name -> model.QueryHistoricalDataWithStamp
-	38,  // 21: model.QueryHistoricalDataWithConditionString.deadZones:type_name -> model.DeadZone
-	68,  // 22: model.CalculationResults.results:type_name -> model.CalculationResult
-	78,  // 23: model.FloatHistoricalDatas.historyValues:type_name -> model.FloatHistoricalDatas.HistoryValuesEntry
-	72,  // 24: model.FloatHistoricalDatas.HistoryValuesEntry.value:type_name -> model.FloatHistoricalData
+	24,  // 20: model.QueryHistoricalDataWithStampString.timeStamps:type_name -> model.TimeStamp
+	37,  // 21: model.QueryHistoricalDataWithConditionString.deadZones:type_name -> model.DeadZone
+	67,  // 22: model.CalculationResults.results:type_name -> model.CalculationResult
+	77,  // 23: model.FloatHistoricalDatas.historyValues:type_name -> model.FloatHistoricalDatas.HistoryValuesEntry
+	71,  // 24: model.FloatHistoricalDatas.HistoryValuesEntry.value:type_name -> model.FloatHistoricalData
 	3,   // 25: model.Group.AddGroups:input_type -> model.AddedGroupInfos
 	4,   // 26: model.Group.DeleteGroups:input_type -> model.GroupNamesInfo
-	79,  // 27: model.Group.GetGroups:input_type -> google.protobuf.Empty
+	78,  // 27: model.Group.GetGroups:input_type -> google.protobuf.Empty
 	5,   // 28: model.Group.GetGroupProperty:input_type -> model.QueryGroupPropertyInfo
 	7,   // 29: model.Group.UpdateGroupNames:input_type -> model.UpdatedGroupNamesInfo
 	11,  // 30: model.Group.UpdateGroupColumnNames:input_type -> model.UpdatedGroupColumnNamesInfo
@@ -5458,53 +5405,53 @@ var file_gdb_proto_depIdxs = []int32{
 	35,  // 61: model.Data.GetIntRawHistoricalData:input_type -> model.QueryRawHistoricalDataString
 	35,  // 62: model.Data.GetStringRawHistoricalData:input_type -> model.QueryRawHistoricalDataString
 	35,  // 63: model.Data.GetBoolRawHistoricalData:input_type -> model.QueryRawHistoricalDataString
-	37,  // 64: model.Data.GetFloatHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
-	37,  // 65: model.Data.GetIntHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
-	37,  // 66: model.Data.GetStringHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
-	37,  // 67: model.Data.GetBoolHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
-	39,  // 68: model.Data.GetFloatHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
-	39,  // 69: model.Data.GetIntHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
-	39,  // 70: model.Data.GetStringHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
-	39,  // 71: model.Data.GetBoolHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
-	40,  // 72: model.Data.DeleteFloatHistoricalData:input_type -> model.DeleteHistoricalDataString
-	40,  // 73: model.Data.DeleteIntHistoricalData:input_type -> model.DeleteHistoricalDataString
-	40,  // 74: model.Data.DeleteStringHistoricalData:input_type -> model.DeleteHistoricalDataString
-	40,  // 75: model.Data.DeleteBoolHistoricalData:input_type -> model.DeleteHistoricalDataString
+	36,  // 64: model.Data.GetFloatHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
+	36,  // 65: model.Data.GetIntHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
+	36,  // 66: model.Data.GetStringHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
+	36,  // 67: model.Data.GetBoolHistoricalDataWithStamp:input_type -> model.QueryHistoricalDataWithStampString
+	38,  // 68: model.Data.GetFloatHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
+	38,  // 69: model.Data.GetIntHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
+	38,  // 70: model.Data.GetStringHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
+	38,  // 71: model.Data.GetBoolHistoricalDataWithCondition:input_type -> model.QueryHistoricalDataWithConditionString
+	39,  // 72: model.Data.DeleteFloatHistoricalData:input_type -> model.DeleteHistoricalDataString
+	39,  // 73: model.Data.DeleteIntHistoricalData:input_type -> model.DeleteHistoricalDataString
+	39,  // 74: model.Data.DeleteStringHistoricalData:input_type -> model.DeleteHistoricalDataString
+	39,  // 75: model.Data.DeleteBoolHistoricalData:input_type -> model.DeleteHistoricalDataString
 	13,  // 76: model.Data.CleanItemData:input_type -> model.DeletedItemsInfo
-	79,  // 77: model.Data.ReLoadDb:input_type -> google.protobuf.Empty
-	43,  // 78: model.Page.UserLogin:input_type -> model.AuthInfo
-	44,  // 79: model.Page.UserLogOut:input_type -> model.UserName
-	44,  // 80: model.Page.GetUserInfo:input_type -> model.UserName
-	79,  // 81: model.Page.GetUsers:input_type -> google.protobuf.Empty
-	45,  // 82: model.Page.AddUsers:input_type -> model.AddedUserInfo
-	44,  // 83: model.Page.DeleteUsers:input_type -> model.UserName
-	46,  // 84: model.Page.UpdateUsers:input_type -> model.UpdatedUserInfo
-	57,  // 85: model.Page.UploadFile:input_type -> model.UploadedFileInfo
-	57,  // 86: model.Page.UploadFileWithStream:input_type -> model.UploadedFileInfo
-	47,  // 87: model.Page.AddItemsByExcel:input_type -> model.FileInfo
-	48,  // 88: model.Page.ImportHistoryByExcel:input_type -> model.HistoryFileInfo
-	49,  // 89: model.Page.GetLogs:input_type -> model.QueryLogsInfo
-	47,  // 90: model.Page.GetJsCode:input_type -> model.FileInfo
-	50,  // 91: model.Page.DeleteLogs:input_type -> model.DeletedLogInfo
-	47,  // 92: model.Page.DownloadFile:input_type -> model.FileInfo
-	79,  // 93: model.Page.GetDbSize:input_type -> google.protobuf.Empty
-	79,  // 94: model.Page.GetDbInfo:input_type -> google.protobuf.Empty
-	51,  // 95: model.Page.GetDbInfoHistory:input_type -> model.QuerySpeedHistoryDataString
-	79,  // 96: model.Page.GetRoutes:input_type -> google.protobuf.Empty
-	52,  // 97: model.Page.DeleteRoutes:input_type -> model.RoutesInfo
-	52,  // 98: model.Page.AddRoutes:input_type -> model.RoutesInfo
-	52,  // 99: model.Page.AddUserRoutes:input_type -> model.RoutesInfo
-	44,  // 100: model.Page.DeleteUserRoutes:input_type -> model.UserName
-	79,  // 101: model.Page.GetAllRoutes:input_type -> google.protobuf.Empty
-	52,  // 102: model.Page.CheckRoutes:input_type -> model.RoutesInfo
-	71,  // 103: model.Calc.TestCalcItem:input_type -> model.TestCalcItemInfo
-	64,  // 104: model.Calc.AddCalcItem:input_type -> model.AddedCalcItemInfo
-	64,  // 105: model.Calc.AddCalcItemWithStream:input_type -> model.AddedCalcItemInfo
-	65,  // 106: model.Calc.GetCalcItems:input_type -> model.QueryCalcItemsInfo
-	66,  // 107: model.Calc.UpdateCalcItem:input_type -> model.UpdatedCalcInfo
-	67,  // 108: model.Calc.StartCalcItem:input_type -> model.CalcId
-	67,  // 109: model.Calc.StopCalcItem:input_type -> model.CalcId
-	67,  // 110: model.Calc.DeleteCalcItem:input_type -> model.CalcId
+	78,  // 77: model.Data.ReLoadDb:input_type -> google.protobuf.Empty
+	42,  // 78: model.Page.UserLogin:input_type -> model.AuthInfo
+	43,  // 79: model.Page.UserLogOut:input_type -> model.UserName
+	43,  // 80: model.Page.GetUserInfo:input_type -> model.UserName
+	78,  // 81: model.Page.GetUsers:input_type -> google.protobuf.Empty
+	44,  // 82: model.Page.AddUsers:input_type -> model.AddedUserInfo
+	43,  // 83: model.Page.DeleteUsers:input_type -> model.UserName
+	45,  // 84: model.Page.UpdateUsers:input_type -> model.UpdatedUserInfo
+	56,  // 85: model.Page.UploadFile:input_type -> model.UploadedFileInfo
+	56,  // 86: model.Page.UploadFileWithStream:input_type -> model.UploadedFileInfo
+	46,  // 87: model.Page.AddItemsByExcel:input_type -> model.FileInfo
+	47,  // 88: model.Page.ImportHistoryByExcel:input_type -> model.HistoryFileInfo
+	48,  // 89: model.Page.GetLogs:input_type -> model.QueryLogsInfo
+	46,  // 90: model.Page.GetJsCode:input_type -> model.FileInfo
+	49,  // 91: model.Page.DeleteLogs:input_type -> model.DeletedLogInfo
+	46,  // 92: model.Page.DownloadFile:input_type -> model.FileInfo
+	78,  // 93: model.Page.GetDbSize:input_type -> google.protobuf.Empty
+	78,  // 94: model.Page.GetDbInfo:input_type -> google.protobuf.Empty
+	50,  // 95: model.Page.GetDbInfoHistory:input_type -> model.QuerySpeedHistoryDataString
+	78,  // 96: model.Page.GetRoutes:input_type -> google.protobuf.Empty
+	51,  // 97: model.Page.DeleteRoutes:input_type -> model.RoutesInfo
+	51,  // 98: model.Page.AddRoutes:input_type -> model.RoutesInfo
+	51,  // 99: model.Page.AddUserRoutes:input_type -> model.RoutesInfo
+	43,  // 100: model.Page.DeleteUserRoutes:input_type -> model.UserName
+	78,  // 101: model.Page.GetAllRoutes:input_type -> google.protobuf.Empty
+	51,  // 102: model.Page.CheckRoutes:input_type -> model.RoutesInfo
+	70,  // 103: model.Calc.TestCalcItem:input_type -> model.TestCalcItemInfo
+	63,  // 104: model.Calc.AddCalcItem:input_type -> model.AddedCalcItemInfo
+	63,  // 105: model.Calc.AddCalcItemWithStream:input_type -> model.AddedCalcItemInfo
+	64,  // 106: model.Calc.GetCalcItems:input_type -> model.QueryCalcItemsInfo
+	65,  // 107: model.Calc.UpdateCalcItem:input_type -> model.UpdatedCalcInfo
+	66,  // 108: model.Calc.StartCalcItem:input_type -> model.CalcId
+	66,  // 109: model.Calc.StopCalcItem:input_type -> model.CalcId
+	66,  // 110: model.Calc.DeleteCalcItem:input_type -> model.CalcId
 	0,   // 111: model.Group.AddGroups:output_type -> model.TimeRows
 	0,   // 112: model.Group.DeleteGroups:output_type -> model.TimeRows
 	4,   // 113: model.Group.GetGroups:output_type -> model.GroupNamesInfo
@@ -5517,7 +5464,7 @@ var file_gdb_proto_depIdxs = []int32{
 	0,   // 120: model.Item.DeleteItems:output_type -> model.TimeRows
 	15,  // 121: model.Item.GetItemsWithCount:output_type -> model.GdbItemsWithCount
 	0,   // 122: model.Item.UpdateItems:output_type -> model.TimeRows
-	79,  // 123: model.Item.CheckItems:output_type -> google.protobuf.Empty
+	78,  // 123: model.Item.CheckItems:output_type -> google.protobuf.Empty
 	0,   // 124: model.Item.CleanGroupItems:output_type -> model.TimeRows
 	0,   // 125: model.Data.BatchWriteFloatData:output_type -> model.TimeRows
 	0,   // 126: model.Data.BatchWriteFloatDataWithStream:output_type -> model.TimeRows
@@ -5535,59 +5482,59 @@ var file_gdb_proto_depIdxs = []int32{
 	0,   // 138: model.Data.BatchWriteStringHistoricalDataWithStream:output_type -> model.TimeRows
 	0,   // 139: model.Data.BatchWriteBoolHistoricalData:output_type -> model.TimeRows
 	0,   // 140: model.Data.BatchWriteBoolHistoricalDataWithStream:output_type -> model.TimeRows
-	41,  // 141: model.Data.GetRealTimeData:output_type -> model.GdbRealTimeData
-	42,  // 142: model.Data.GetFloatHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 143: model.Data.GetIntHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 144: model.Data.GetStringHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 145: model.Data.GetBoolHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 146: model.Data.GetFloatRawHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 147: model.Data.GetIntRawHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 148: model.Data.GetStringRawHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 149: model.Data.GetBoolRawHistoricalData:output_type -> model.GdbHistoricalData
-	42,  // 150: model.Data.GetFloatHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
-	42,  // 151: model.Data.GetIntHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
-	42,  // 152: model.Data.GetStringHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
-	42,  // 153: model.Data.GetBoolHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
-	42,  // 154: model.Data.GetFloatHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
-	42,  // 155: model.Data.GetIntHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
-	42,  // 156: model.Data.GetStringHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
-	42,  // 157: model.Data.GetBoolHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
+	40,  // 141: model.Data.GetRealTimeData:output_type -> model.GdbRealTimeData
+	41,  // 142: model.Data.GetFloatHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 143: model.Data.GetIntHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 144: model.Data.GetStringHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 145: model.Data.GetBoolHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 146: model.Data.GetFloatRawHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 147: model.Data.GetIntRawHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 148: model.Data.GetStringRawHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 149: model.Data.GetBoolRawHistoricalData:output_type -> model.GdbHistoricalData
+	41,  // 150: model.Data.GetFloatHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
+	41,  // 151: model.Data.GetIntHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
+	41,  // 152: model.Data.GetStringHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
+	41,  // 153: model.Data.GetBoolHistoricalDataWithStamp:output_type -> model.GdbHistoricalData
+	41,  // 154: model.Data.GetFloatHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
+	41,  // 155: model.Data.GetIntHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
+	41,  // 156: model.Data.GetStringHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
+	41,  // 157: model.Data.GetBoolHistoricalDataWithCondition:output_type -> model.GdbHistoricalData
 	0,   // 158: model.Data.DeleteFloatHistoricalData:output_type -> model.TimeRows
 	0,   // 159: model.Data.DeleteIntHistoricalData:output_type -> model.TimeRows
 	0,   // 160: model.Data.DeleteStringHistoricalData:output_type -> model.TimeRows
 	0,   // 161: model.Data.DeleteBoolHistoricalData:output_type -> model.TimeRows
 	0,   // 162: model.Data.CleanItemData:output_type -> model.TimeRows
 	0,   // 163: model.Data.ReLoadDb:output_type -> model.TimeRows
-	54,  // 164: model.Page.UserLogin:output_type -> model.UserToken
-	79,  // 165: model.Page.UserLogOut:output_type -> google.protobuf.Empty
-	55,  // 166: model.Page.GetUserInfo:output_type -> model.UserInfo
-	60,  // 167: model.Page.GetUsers:output_type -> model.UserInfos
+	53,  // 164: model.Page.UserLogin:output_type -> model.UserToken
+	78,  // 165: model.Page.UserLogOut:output_type -> google.protobuf.Empty
+	54,  // 166: model.Page.GetUserInfo:output_type -> model.UserInfo
+	59,  // 167: model.Page.GetUsers:output_type -> model.UserInfos
 	0,   // 168: model.Page.AddUsers:output_type -> model.TimeRows
 	0,   // 169: model.Page.DeleteUsers:output_type -> model.TimeRows
 	0,   // 170: model.Page.UpdateUsers:output_type -> model.TimeRows
-	79,  // 171: model.Page.UploadFile:output_type -> google.protobuf.Empty
-	79,  // 172: model.Page.UploadFileWithStream:output_type -> google.protobuf.Empty
+	78,  // 171: model.Page.UploadFile:output_type -> google.protobuf.Empty
+	78,  // 172: model.Page.UploadFileWithStream:output_type -> google.protobuf.Empty
 	0,   // 173: model.Page.AddItemsByExcel:output_type -> model.TimeRows
 	0,   // 174: model.Page.ImportHistoryByExcel:output_type -> model.TimeRows
-	56,  // 175: model.Page.GetLogs:output_type -> model.LogsInfo
-	63,  // 176: model.Page.GetJsCode:output_type -> model.Code
+	55,  // 175: model.Page.GetLogs:output_type -> model.LogsInfo
+	62,  // 176: model.Page.GetJsCode:output_type -> model.Code
 	0,   // 177: model.Page.DeleteLogs:output_type -> model.TimeRows
-	58,  // 178: model.Page.DownloadFile:output_type -> model.FileContents
-	59,  // 179: model.Page.GetDbSize:output_type -> model.FileSize
-	53,  // 180: model.Page.GetDbInfo:output_type -> model.GdbInfoData
-	42,  // 181: model.Page.GetDbInfoHistory:output_type -> model.GdbHistoricalData
-	61,  // 182: model.Page.GetRoutes:output_type -> model.Routes
+	57,  // 178: model.Page.DownloadFile:output_type -> model.FileContents
+	58,  // 179: model.Page.GetDbSize:output_type -> model.FileSize
+	52,  // 180: model.Page.GetDbInfo:output_type -> model.GdbInfoData
+	41,  // 181: model.Page.GetDbInfoHistory:output_type -> model.GdbHistoricalData
+	60,  // 182: model.Page.GetRoutes:output_type -> model.Routes
 	0,   // 183: model.Page.DeleteRoutes:output_type -> model.TimeRows
 	0,   // 184: model.Page.AddRoutes:output_type -> model.TimeRows
 	0,   // 185: model.Page.AddUserRoutes:output_type -> model.TimeRows
 	0,   // 186: model.Page.DeleteUserRoutes:output_type -> model.TimeRows
-	61,  // 187: model.Page.GetAllRoutes:output_type -> model.Routes
-	62,  // 188: model.Page.CheckRoutes:output_type -> model.CheckResult
-	68,  // 189: model.Calc.TestCalcItem:output_type -> model.CalculationResult
-	68,  // 190: model.Calc.AddCalcItem:output_type -> model.CalculationResult
-	70,  // 191: model.Calc.AddCalcItemWithStream:output_type -> model.CalculationResults
-	69,  // 192: model.Calc.GetCalcItems:output_type -> model.CalcItemsInfo
-	68,  // 193: model.Calc.UpdateCalcItem:output_type -> model.CalculationResult
+	60,  // 187: model.Page.GetAllRoutes:output_type -> model.Routes
+	61,  // 188: model.Page.CheckRoutes:output_type -> model.CheckResult
+	67,  // 189: model.Calc.TestCalcItem:output_type -> model.CalculationResult
+	67,  // 190: model.Calc.AddCalcItem:output_type -> model.CalculationResult
+	69,  // 191: model.Calc.AddCalcItemWithStream:output_type -> model.CalculationResults
+	68,  // 192: model.Calc.GetCalcItems:output_type -> model.CalcItemsInfo
+	67,  // 193: model.Calc.UpdateCalcItem:output_type -> model.CalculationResult
 	0,   // 194: model.Calc.StartCalcItem:output_type -> model.TimeRows
 	0,   // 195: model.Calc.StopCalcItem:output_type -> model.TimeRows
 	0,   // 196: model.Calc.DeleteCalcItem:output_type -> model.TimeRows
@@ -6037,18 +5984,6 @@ func file_gdb_proto_init() {
 			}
 		}
 		file_gdb_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*QueryHistoricalDataWithStamp); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_gdb_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QueryHistoricalDataWithStampString); i {
 			case 0:
 				return &v.state
@@ -6060,7 +5995,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeadZone); i {
 			case 0:
 				return &v.state
@@ -6072,7 +6007,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QueryHistoricalDataWithConditionString); i {
 			case 0:
 				return &v.state
@@ -6084,7 +6019,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteHistoricalDataString); i {
 			case 0:
 				return &v.state
@@ -6096,7 +6031,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GdbRealTimeData); i {
 			case 0:
 				return &v.state
@@ -6108,7 +6043,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GdbHistoricalData); i {
 			case 0:
 				return &v.state
@@ -6120,7 +6055,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[42].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AuthInfo); i {
 			case 0:
 				return &v.state
@@ -6132,7 +6067,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[43].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UserName); i {
 			case 0:
 				return &v.state
@@ -6144,7 +6079,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[44].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AddedUserInfo); i {
 			case 0:
 				return &v.state
@@ -6156,7 +6091,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[45].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdatedUserInfo); i {
 			case 0:
 				return &v.state
@@ -6168,7 +6103,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[46].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FileInfo); i {
 			case 0:
 				return &v.state
@@ -6180,7 +6115,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[47].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*HistoryFileInfo); i {
 			case 0:
 				return &v.state
@@ -6192,7 +6127,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[48].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QueryLogsInfo); i {
 			case 0:
 				return &v.state
@@ -6204,7 +6139,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[49].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeletedLogInfo); i {
 			case 0:
 				return &v.state
@@ -6216,7 +6151,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[50].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QuerySpeedHistoryDataString); i {
 			case 0:
 				return &v.state
@@ -6228,7 +6163,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[51].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*RoutesInfo); i {
 			case 0:
 				return &v.state
@@ -6240,7 +6175,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[52].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*GdbInfoData); i {
 			case 0:
 				return &v.state
@@ -6252,7 +6187,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[53].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UserToken); i {
 			case 0:
 				return &v.state
@@ -6264,7 +6199,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[54].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UserInfo); i {
 			case 0:
 				return &v.state
@@ -6276,7 +6211,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[55].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*LogsInfo); i {
 			case 0:
 				return &v.state
@@ -6288,7 +6223,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[56].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UploadedFileInfo); i {
 			case 0:
 				return &v.state
@@ -6300,7 +6235,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[57].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FileContents); i {
 			case 0:
 				return &v.state
@@ -6312,7 +6247,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[58].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FileSize); i {
 			case 0:
 				return &v.state
@@ -6324,7 +6259,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[59].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UserInfos); i {
 			case 0:
 				return &v.state
@@ -6336,7 +6271,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[60].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Routes); i {
 			case 0:
 				return &v.state
@@ -6348,7 +6283,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[61].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CheckResult); i {
 			case 0:
 				return &v.state
@@ -6360,7 +6295,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[62].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Code); i {
 			case 0:
 				return &v.state
@@ -6372,7 +6307,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[63].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*AddedCalcItemInfo); i {
 			case 0:
 				return &v.state
@@ -6384,7 +6319,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[64].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*QueryCalcItemsInfo); i {
 			case 0:
 				return &v.state
@@ -6396,7 +6331,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[65].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*UpdatedCalcInfo); i {
 			case 0:
 				return &v.state
@@ -6408,7 +6343,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[66].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CalcId); i {
 			case 0:
 				return &v.state
@@ -6420,7 +6355,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[67].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CalculationResult); i {
 			case 0:
 				return &v.state
@@ -6432,7 +6367,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[68].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CalcItemsInfo); i {
 			case 0:
 				return &v.state
@@ -6444,7 +6379,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[69].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*CalculationResults); i {
 			case 0:
 				return &v.state
@@ -6456,7 +6391,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[70].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*TestCalcItemInfo); i {
 			case 0:
 				return &v.state
@@ -6468,7 +6403,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[71].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FloatHistoricalData); i {
 			case 0:
 				return &v.state
@@ -6480,7 +6415,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[72].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*IntHistoricalData); i {
 			case 0:
 				return &v.state
@@ -6492,7 +6427,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[73].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*StringHistoricalData); i {
 			case 0:
 				return &v.state
@@ -6504,7 +6439,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[74].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*BoolHistoricalData); i {
 			case 0:
 				return &v.state
@@ -6516,7 +6451,7 @@ func file_gdb_proto_init() {
 				return nil
 			}
 		}
-		file_gdb_proto_msgTypes[76].Exporter = func(v interface{}, i int) interface{} {
+		file_gdb_proto_msgTypes[75].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*FloatHistoricalDatas); i {
 			case 0:
 				return &v.state
@@ -6535,7 +6470,7 @@ func file_gdb_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_gdb_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   79,
+			NumMessages:   78,
 			NumExtensions: 0,
 			NumServices:   5,
 		},

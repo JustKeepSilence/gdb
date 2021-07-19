@@ -48,7 +48,7 @@ type DeletedGroupColumnNamesInfo struct {
 }
 
 type GroupPropertyInfo struct {
-	ItemCount       string   `json:"itemCount"`
+	ItemCount       int64    `json:"itemCount"`
 	ItemColumnNames []string `json:"itemColumnNames"`
 }
 
