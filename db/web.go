@@ -647,7 +647,7 @@ func (gdb *Gdb) getFloatHistoricalDataWithConditionHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&g); err != nil {
 		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		if responseData, err := gdb.GetFloatHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+		if responseData, err := gdb.GetFloatHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTime, g.EndTime, g.Interval, g.FilterCondition, g.DeadZones); err != nil {
 			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
@@ -666,7 +666,7 @@ func (gdb *Gdb) getIntHistoricalDataWithConditionHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&g); err != nil {
 		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		if responseData, err := gdb.GetIntHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+		if responseData, err := gdb.GetIntHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTime, g.EndTime, g.Interval, g.FilterCondition, g.DeadZones); err != nil {
 			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
@@ -685,7 +685,7 @@ func (gdb *Gdb) getStringHistoricalDataWithConditionHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&g); err != nil {
 		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		if responseData, err := gdb.GetStringHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+		if responseData, err := gdb.GetStringHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTime, g.EndTime, g.Interval, g.FilterCondition, g.DeadZones); err != nil {
 			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
@@ -704,7 +704,7 @@ func (gdb *Gdb) getBoolHistoricalDataWithConditionHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&g); err != nil {
 		gdb.string(c, 500, "%s", convertStringToByte(fmt.Sprintf("fail parsing string: %s", err)), g)
 	} else {
-		if responseData, err := gdb.GetBoolHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTimes, g.EndTimes, g.Intervals, g.FilterCondition, g.DeadZones); err != nil {
+		if responseData, err := gdb.GetBoolHistoricalDataWithCondition(g.GroupName, g.ItemNames, g.StartTime, g.EndTime, g.Interval, g.FilterCondition, g.DeadZones); err != nil {
 			gdb.string(c, 500, "%s", convertStringToByte(err.Error()), g)
 		} else {
 			if r, err := json.Marshal(ResponseData{200, "", responseData}); err != nil {
