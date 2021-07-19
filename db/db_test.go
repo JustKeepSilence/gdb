@@ -634,7 +634,7 @@ func ExampleGdb_GetFloatHistoricalDataWithCondition() {
 	} else {
 		st, et := int32(1626201902), int32(1626288302)
 		// without deadZone condition
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `item["xFloat"]>= 1 && item["yFloat"]<= 4`, nil); err != nil {
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `item["xFloat"]>= 1 && item["yFloat"]<= 4`, nil); err != nil {
 			log.Fatal(err)
 		} else {
 			fmt.Println(r.Times)
@@ -642,7 +642,7 @@ func ExampleGdb_GetFloatHistoricalDataWithCondition() {
 			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
 		}
 		// with deadZone condition
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `item["xFloat"]>= 1 && item["yFloat"]<= 4`, []DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}}); err != nil {
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `item["xFloat"]>= 1 && item["yFloat"]<= 4`, []DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}}); err != nil {
 			log.Fatal(err)
 		} else {
 			fmt.Println(r.Times)
@@ -650,7 +650,7 @@ func ExampleGdb_GetFloatHistoricalDataWithCondition() {
 			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
 		}
 		// withOut filterCondition
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `true`, []DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}}); err != nil {
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `true`, []DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}}); err != nil {
 			log.Fatal(err)
 		} else {
 			fmt.Println(r.Times)
@@ -658,7 +658,7 @@ func ExampleGdb_GetFloatHistoricalDataWithCondition() {
 			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
 		}
 		// withOut filterCondition and deadZone condition == GetFloatHistoricalData
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et}, []int32{10, 10}, `true`, nil); err != nil {
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `true`, nil); err != nil {
 			log.Fatal(err)
 		} else {
 			fmt.Println(r.Times)

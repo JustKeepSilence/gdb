@@ -95,9 +95,9 @@ type DeadZone struct {
 type queryHistoricalDataWithConditionString struct {
 	GroupName       string     `json:"groupName" binding:"required"`
 	ItemNames       []string   `json:"itemNames" binding:"required"`
-	StartTimes      []int32    `json:"startTimes" binding:"required"`
-	EndTimes        []int32    `json:"endTimes" binding:"required"`
-	Intervals       []int32    `json:"intervals" binding:"required"`
+	StartTime       int32      `json:"startTime" binding:"required"`
+	EndTime         int32      `json:"endTime" binding:"required"`
+	Interval        int32      `json:"interval" binding:"required"`
 	FilterCondition string     `json:"filterCondition" binding:"required"`
 	DeadZones       []DeadZone `json:"deadZones" binding:"required"`
 }

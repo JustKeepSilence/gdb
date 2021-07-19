@@ -806,8 +806,8 @@ func (s *server) GetFloatHistoricalDataWithCondition(_ context.Context, r *pb.Qu
 			DeadZoneCount: zone.DeadZoneCount,
 		})
 	}
-	if result, err := s.gdb.GetFloatHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTimes(),
-		r.GetEndTimes(), r.GetIntervals(), r.GetFilterCondition(), dz); err != nil {
+	if result, err := s.gdb.GetFloatHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTime(),
+		r.GetEndTime(), r.GetInterval(), r.GetFilterCondition(), dz); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)
@@ -823,8 +823,8 @@ func (s *server) GetIntHistoricalDataWithCondition(_ context.Context, r *pb.Quer
 			DeadZoneCount: zone.DeadZoneCount,
 		})
 	}
-	if result, err := s.gdb.GetIntHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTimes(),
-		r.GetEndTimes(), r.GetIntervals(), r.GetFilterCondition(), dz); err != nil {
+	if result, err := s.gdb.GetIntHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTime(),
+		r.GetEndTime(), r.GetInterval(), r.GetFilterCondition(), dz); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)
@@ -840,8 +840,8 @@ func (s *server) GetStringHistoricalDataWithCondition(_ context.Context, r *pb.Q
 			DeadZoneCount: zone.DeadZoneCount,
 		})
 	}
-	if result, err := s.gdb.GetStringHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTimes(),
-		r.GetEndTimes(), r.GetIntervals(), r.GetFilterCondition(), dz); err != nil {
+	if result, err := s.gdb.GetStringHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTime(),
+		r.GetEndTime(), r.GetInterval(), r.GetFilterCondition(), dz); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)
@@ -857,8 +857,8 @@ func (s *server) GetBoolHistoricalDataWithCondition(_ context.Context, r *pb.Que
 			DeadZoneCount: zone.DeadZoneCount,
 		})
 	}
-	if result, err := s.gdb.GetBoolHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTimes(),
-		r.GetEndTimes(), r.GetIntervals(), r.GetFilterCondition(), dz); err != nil {
+	if result, err := s.gdb.GetBoolHistoricalDataWithCondition(r.GetGroupName(), r.GetItemNames(), r.GetStartTime(),
+		r.GetEndTime(), r.GetInterval(), r.GetFilterCondition(), dz); err != nil {
 		return &pb.GdbHistoricalData{}, err
 	} else {
 		v, _ := json.Marshal(result.HistoricalData)
