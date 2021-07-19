@@ -38,14 +38,14 @@ const {ip} = require('./utils')
  */
 axios.post(`${ip}/item/addItems`, {
     groupName: '5DCS',
-    itemValues: [{itemName: 'xFloat', 'dataType': 'float32'}, {itemName: 'yFloat', 'dataType': 'float32'},
-        {itemName: 'xInt', 'dataType': 'int32'}, {itemName: 'yInt', 'dataType': 'int32'}, {
+    itemValues: [{itemName: 'xFloat', dataType: 'float32'}, {itemName: 'yFloat', dataType: 'float32'},
+        {itemName: 'xInt', dataType: 'int32'}, {itemName: 'yInt', dataType: 'int32'}, {
             itemName: 'xString',
-            'dataType': 'string'
+            dataType: 'string'
         },
-        {itemName: 'yString', 'dataType': 'string'}, {itemName: 'xBool', 'dataType': 'bool'}, {
+        {itemName: 'yString', dataType: 'string'}, {itemName: 'xBool', dataType: 'bool'}, {
             itemName: 'yBool',
-            'dataType': 'bool'
+            dataType: 'bool'
         }]
 }, configs).then(({data: {data}}) => {
     console.log(data)

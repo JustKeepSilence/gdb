@@ -76,7 +76,7 @@ axios.post(`${ip}/group/getGroups`, {}, configs).then(({data: {data}}) => {
  */
 axios.post(`${ip}/group/getGroupProperty`, {groupName: '4DCS', condition: '1=1'}, configs).then(({data: {data}}) => {
     console.log(data)
-    // { itemCount: '0', itemColumnNames: [ 'itemName', 'dataType' ] }
+    // { itemCount: 0, itemColumnNames: [ 'itemName', 'dataType' ] }
 })
 
 /**
