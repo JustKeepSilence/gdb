@@ -15,8 +15,8 @@ type AddedItemsInfo struct {
 }
 
 type DeletedItemsInfo struct {
-	GroupName string `json:"groupName"`
-	Condition string `json:"condition"`
+	GroupName string `json:"groupName" binding:"required"`
+	Condition string `json:"condition" binding:"required"`
 }
 
 type ItemsInfo struct {

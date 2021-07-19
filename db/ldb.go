@@ -416,8 +416,8 @@ func (gdb *Gdb) BatchWriteIntHistoricalData(groupNames []string, itemNames []str
 					sn.Release()
 				}
 				if err := gdb.hisDb["int32"][groupName].Write(batch, nil); err != nil {
+					return TimeRows{}, err
 				}
-				return TimeRows{}, err
 			}
 			return TimeRows{EffectedRows: count, Times: time.Now().Sub(st).Milliseconds()}, nil
 		}
@@ -904,65 +904,48 @@ func (gdb *Gdb) GetBoolHistoricalDataWithStamp(groupNames, itemNames []string, t
 }
 
 // GetFloatHistoricalDataWithCondition filter condition must be correct js expression,itemName should be startedWith by item.
-// eg: item["itemName1"]>10 && item["itemName2"] > 30 ....
-// It should be noted that the entire judgment is based on the itemName with less historical value in the condition.
-// If the longest itemName is used as the benchmark, we cannot make an accurate judgment on the AND logic in it.
-// Just imagine the history of Item1 It is [3,4,5], and item2 is [10,11]. If item1 is used as the benchmark,
-// we cannot determine how much other elements of item2 should be expanded, because the condition may have complicated
-// logic about item1 and item2 And or logic, no matter what the number is expanded, there may be a judgment error.
+// eg: item["itemName1"]>10 && item["itemName2"] > 30, if you don't want to use filterCondition, you should set it "true"
 // DeadZone is used to define the maximum number of continuous data allowed by itemName.eg,the deadZoneCount of item x
 // is 2, that is all data in x whose number of continuous > 2 will be filtered, itemNames and itemName in filterCondition and zones
-// MUST be in the same group
-func (gdb *Gdb) GetFloatHistoricalDataWithCondition(groupName string, itemNames []string, startTimes, endTimes, intervals []int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
+// eg history of item1 is [1,1,1,1], if deadZoneCount of item1 is 2 after filter, the result will be [1,1]
+//
+//itemNames and itemName in filterCondition and zones MUST be in the same group, itemNames in filterCondition may be different dataType
+//
+// judgment priority is startTime, endTime, interval > filterCondition > deadZone condition
+func (gdb *Gdb) GetFloatHistoricalDataWithCondition(groupName string, itemNames []string, startTime, endTime, interval int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
 	st := time.Now()
 	// groupName string, itemNames []string, startTimes, endTimes, intervals []int32, filterCondition string, zones ...DeadZone
-	if len(itemNames) == len(startTimes) && len(startTimes) == len(endTimes) && len(endTimes) == len(intervals) {
-		if m, err := gdb.getHistoricalDataWithCondition("float32", groupName, itemNames, startTimes, endTimes, intervals, filterCondition, zones...); err != nil {
-			return GdbHistoricalData{}, err
-		} else {
-			return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
-		}
+	if m, err := gdb.getHistoricalDataWithCondition("float32", groupName, itemNames, startTime, endTime, interval, filterCondition, zones...); err != nil {
+		return GdbHistoricalData{}, err
 	} else {
-		return GdbHistoricalData{}, fmt.Errorf("inconsistent length of parameters")
+		return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
 	}
 }
 
-func (gdb *Gdb) GetIntHistoricalDataWithCondition(groupName string, itemNames []string, startTimes, endTimes, intervals []int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
+func (gdb *Gdb) GetIntHistoricalDataWithCondition(groupName string, itemNames []string, startTime, endTime, interval int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
 	st := time.Now()
-	if len(itemNames) == len(startTimes) && len(startTimes) == len(endTimes) && len(endTimes) == len(intervals) {
-		if m, err := gdb.getHistoricalDataWithCondition("int32", groupName, itemNames, startTimes, endTimes, intervals, filterCondition, zones...); err != nil {
-			return GdbHistoricalData{}, err
-		} else {
-			return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
-		}
+	if m, err := gdb.getHistoricalDataWithCondition("int32", groupName, itemNames, startTime, endTime, interval, filterCondition, zones...); err != nil {
+		return GdbHistoricalData{}, err
 	} else {
-		return GdbHistoricalData{}, fmt.Errorf("inconsistent length of parameters")
+		return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
 	}
 }
 
-func (gdb *Gdb) GetStringHistoricalDataWithCondition(groupName string, itemNames []string, startTimes, endTimes, intervals []int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
+func (gdb *Gdb) GetStringHistoricalDataWithCondition(groupName string, itemNames []string, startTime, endTime, interval int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
 	st := time.Now()
-	if len(itemNames) == len(startTimes) && len(startTimes) == len(endTimes) && len(endTimes) == len(intervals) {
-		if m, err := gdb.getHistoricalDataWithCondition("string", groupName, itemNames, startTimes, endTimes, intervals, filterCondition, zones...); err != nil {
-			return GdbHistoricalData{}, err
-		} else {
-			return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
-		}
+	if m, err := gdb.getHistoricalDataWithCondition("string", groupName, itemNames, startTime, endTime, interval, filterCondition, zones...); err != nil {
+		return GdbHistoricalData{}, err
 	} else {
-		return GdbHistoricalData{}, fmt.Errorf("inconsistent length of parameters")
+		return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
 	}
 }
 
-func (gdb *Gdb) GetBoolHistoricalDataWithCondition(groupName string, itemNames []string, startTimes, endTimes, intervals []int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
+func (gdb *Gdb) GetBoolHistoricalDataWithCondition(groupName string, itemNames []string, startTime, endTime, interval int32, filterCondition string, zones []DeadZone) (GdbHistoricalData, error) {
 	st := time.Now()
-	if len(itemNames) == len(startTimes) && len(startTimes) == len(endTimes) && len(endTimes) == len(intervals) {
-		if m, err := gdb.getHistoricalDataWithCondition("bool", groupName, itemNames, startTimes, endTimes, intervals, filterCondition, zones...); err != nil {
-			return GdbHistoricalData{}, err
-		} else {
-			return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
-		}
+	if m, err := gdb.getHistoricalDataWithCondition("bool", groupName, itemNames, startTime, endTime, interval, filterCondition, zones...); err != nil {
+		return GdbHistoricalData{}, err
 	} else {
-		return GdbHistoricalData{}, fmt.Errorf("inconsistent length of parameters")
+		return GdbHistoricalData{HistoricalData: m, Times: time.Now().Sub(st).Milliseconds()}, nil
 	}
 }
 
@@ -1055,11 +1038,8 @@ func (gdb *Gdb) CleanItemData(itemInfo DeletedItemsInfo) (TimeRows, error) {
 		return TimeRows{}, err
 	}
 	dataTypes := map[string][]string{} // key is dataType, value is itemNames
-	var startTimeStamp, endTimeStamp []int32
 	for _, item := range items {
 		itemName := item["itemName"] + joiner + groupName
-		startTimeStamp = append(startTimeStamp, -1)
-		endTimeStamp = append(endTimeStamp, -1)
 		dataType, _ := gdb.rtDbFilter.Get(itemName)
 		{
 			switch dataType.(string) {
@@ -1107,32 +1087,51 @@ func (gdb *Gdb) CleanItemData(itemInfo DeletedItemsInfo) (TimeRows, error) {
 		}
 	}
 next:
-	groupNames := strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(items)), ","), ",")
 	g := errgroup.Group{}
 	g.Go(func() error {
 		if itemNames := dataTypes["float32"]; itemNames != nil {
-			_, err := gdb.DeleteFloatHistoricalData(groupNames, dataTypes["float32"], startTimeStamp, endTimeStamp)
+			var startTimes []int32
+			for i := 0; i < len(dataTypes["float32"]); i++ {
+				startTimes = append(startTimes, -1)
+			}
+			groupNames := strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(dataTypes["float32"])), ","), ",")
+			_, err := gdb.DeleteFloatHistoricalData(groupNames, dataTypes["float32"], startTimes, startTimes)
 			return err
 		}
 		return nil
 	})
 	g.Go(func() error {
 		if itemNames := dataTypes["int32"]; itemNames != nil {
-			_, err := gdb.DeleteIntHistoricalData(groupNames, itemNames, startTimeStamp, endTimeStamp)
+			var startTimes []int32
+			for i := 0; i < len(dataTypes["int32"]); i++ {
+				startTimes = append(startTimes, -1)
+			}
+			groupNames := strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(dataTypes["int32"])), ","), ",")
+			_, err := gdb.DeleteIntHistoricalData(groupNames, itemNames, startTimes, startTimes)
 			return err
 		}
 		return nil
 	})
 	g.Go(func() error {
 		if itemNames := dataTypes["string"]; itemNames != nil {
-			_, err := gdb.DeleteStringHistoricalData(groupNames, itemNames, startTimeStamp, endTimeStamp)
+			var startTimes []int32
+			for i := 0; i < len(dataTypes["string"]); i++ {
+				startTimes = append(startTimes, -1)
+			}
+			groupNames := strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(dataTypes["string"])), ","), ",")
+			_, err := gdb.DeleteStringHistoricalData(groupNames, itemNames, startTimes, startTimes)
 			return err
 		}
 		return nil
 	})
 	g.Go(func() error {
 		if itemNames := dataTypes["bool"]; itemNames != nil {
-			_, err := gdb.DeleteBoolHistoricalData(groupNames, itemNames, startTimeStamp, endTimeStamp)
+			var startTimes []int32
+			for i := 0; i < len(dataTypes["bool"]); i++ {
+				startTimes = append(startTimes, -1)
+			}
+			groupNames := strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(dataTypes["bool"])), ","), ",")
+			_, err := gdb.DeleteBoolHistoricalData(groupNames, itemNames, startTimes, startTimes)
 			return err
 		}
 		return nil
@@ -1337,73 +1336,70 @@ float32:
 						md, ok := gdb.floatRmHisDb.Get(groupItemNames[index]) // itemName is memory is itemName + joiner + groupName, in leveldb is itemName + joiner + startTimeStamp
 						var leveldbHis, memHis []float32
 						var leveldbTs, memTs []int32
-						for j := 0; j < len(startTimeStamps); j++ {
-							if startTimeStamps[j] >= endTimeStamps[j] {
-								continue
-							}
-							jj := j
-							g1 := errgroup.Group{}
-							// get history data in leveldb, historical data in the database can not be repeated
-							g1.Go(func() error {
-								var st int32 // start time stamp of data
-								s := groupItemNames[index] + joiner + strconv.Itoa(int(startTimeStamps[jj])-int(gdb.hisTimeDuration.Seconds()))
-								e := groupItemNames[index] + joiner + strconv.Itoa(int(endTimeStamps[jj])+int(gdb.hisTimeDuration.Seconds()))
-								it := sn.NewIterator(&util.Range{Start: convertStringToByte(s), Limit: convertStringToByte(e)}, nil)
-								defer it.Release()
-								count := 0
-								for it.Next() {
-									d := &pb.FloatHistoricalData{}
-									iv := it.Value()
-									if len(iv) == 0 {
-										continue
-									}
-									if err := proto.Unmarshal(iv, d); err != nil {
-										return err
-									}
-									ts, values := d.GetTimeStamps(), d.GetValues()
-									startIndex, endIndex := getIndex(startTimeStamps[jj], endTimeStamps[jj], ts)
-									if startIndex == -1 || endIndex == -1 {
-										continue
-									}
-									if count == 0 {
-										st = ts[startIndex]
-										count++
-									}
-									for k := startIndex; k < endIndex; k++ {
-										if (ts[k]-st)%intervals[index] == 0 {
-											leveldbHis = append(leveldbHis, values[k])
-											leveldbTs = append(leveldbTs, ts[k])
-										}
+						if startTimeStamps[index] >= endTimeStamps[index] {
+							return nil
+						}
+						g1 := errgroup.Group{}
+						// get history data in leveldb, historical data in the database can not be repeated
+						g1.Go(func() error {
+							var st int32 // start time stamp of data
+							s := groupItemNames[index] + joiner + strconv.Itoa(int(startTimeStamps[index])-int(gdb.hisTimeDuration.Seconds()))
+							e := groupItemNames[index] + joiner + strconv.Itoa(int(endTimeStamps[index])+int(gdb.hisTimeDuration.Seconds()))
+							it := sn.NewIterator(&util.Range{Start: convertStringToByte(s), Limit: convertStringToByte(e)}, nil)
+							defer it.Release()
+							count := 0
+							for it.Next() {
+								d := &pb.FloatHistoricalData{}
+								iv := it.Value()
+								if len(iv) == 0 {
+									continue
+								}
+								if err := proto.Unmarshal(iv, d); err != nil {
+									return err
+								}
+								ts, values := d.GetTimeStamps(), d.GetValues()
+								startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], ts)
+								if startIndex == -1 || endIndex == -1 {
+									continue
+								}
+								if count == 0 {
+									st = ts[startIndex]
+									count++
+								}
+								for k := startIndex; k < endIndex; k++ {
+									if (ts[k]-st)%intervals[index] == 0 {
+										leveldbHis = append(leveldbHis, values[k])
+										leveldbTs = append(leveldbTs, ts[k])
 									}
 								}
-								return nil
-							})
-							if ok {
-								// get history data in memory
-								if len(md.TimeStamps) != 0 {
-									if endTimeStamps[jj] <= md.TimeStamps[0] || startTimeStamps[jj] >= md.TimeStamps[len(md.TimeStamps)-1] {
-									} else {
-										g1.Go(func() error {
-											var st int32 // start time stamp of data
-											startIndex, endIndex := getIndex(startTimeStamps[jj], endTimeStamps[jj], md.TimeStamps)
-											if startIndex == -1 || endIndex == -1 {
-												return nil
-											}
-											st = md.TimeStamps[startIndex]
-											for k := startIndex; k < endIndex; k++ {
-												if (md.TimeStamps[k]-st)%intervals[index] == 0 {
-													memHis = append(memHis, md.Values[k])
-													memTs = append(memTs, md.TimeStamps[k])
-												}
-											}
+							}
+							return nil
+						})
+						if ok {
+							// get history data in memory
+							if len(md.TimeStamps) != 0 {
+								if endTimeStamps[index] <= md.TimeStamps[0] || startTimeStamps[index] >= md.TimeStamps[len(md.TimeStamps)-1] {
+								} else {
+									g1.Go(func() error {
+										var st int32 // start time stamp of data
+										startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], md.TimeStamps)
+										if startIndex == -1 || endIndex == -1 {
 											return nil
-										})
-									}
+										}
+										st = md.TimeStamps[startIndex]
+										for k := startIndex; k < endIndex; k++ {
+											if (md.TimeStamps[k]-st)%intervals[index] == 0 {
+												memHis = append(memHis, md.Values[k])
+												memTs = append(memTs, md.TimeStamps[k])
+											}
+										}
+										return nil
+									})
 								}
 							}
-							if err := g1.Wait(); err != nil {
-								return err
-							}
+						}
+						if err := g1.Wait(); err != nil {
+							return err
 						}
 						leveldbHis = append(leveldbHis, memHis...) // history data
 						leveldbTs = append(leveldbTs, memTs...)    // ts
@@ -1423,6 +1419,460 @@ float32:
 					if flags[0] {
 						m.Set("minLength", From(lengthMap).Min().(int))
 					}
+				}
+				return nil
+			}
+		})
+	}
+	return m, dg.Wait()
+int32:
+	for groupName, groupItemNames := range namesMap {
+		groupName := groupName
+		groupItemNames := groupItemNames
+		rawItemNames := rawNamesMap[groupName]
+		dg.Go(func() error {
+			if sn, err := gdb.hisDb["int32"][groupName].GetSnapshot(); err != nil {
+				return err
+			} else {
+				// get history
+				defer sn.Release()
+				g := errgroup.Group{}
+				for i := 0; i < len(groupItemNames); i++ {
+					index := i
+					g.Go(func() error {
+						md, ok := gdb.intRmHisDb.Get(groupItemNames[index]) // itemName is memory is itemName + joiner + groupName, in leveldb is itemName + joiner + startTimeStamp
+						var leveldbHis, memHis []int32
+						var leveldbTs, memTs []int32
+						if startTimeStamps[index] >= endTimeStamps[index] {
+							return nil
+						}
+						g1 := errgroup.Group{}
+						// get history data in leveldb, historical data in the database can not be repeated
+						g1.Go(func() error {
+							var st int32 // start time stamp of data
+							s := groupItemNames[index] + joiner + strconv.Itoa(int(startTimeStamps[index])-int(gdb.hisTimeDuration.Seconds()))
+							e := groupItemNames[index] + joiner + strconv.Itoa(int(endTimeStamps[index])+int(gdb.hisTimeDuration.Seconds()))
+							it := sn.NewIterator(&util.Range{Start: convertStringToByte(s), Limit: convertStringToByte(e)}, nil)
+							defer it.Release()
+							count := 0
+							for it.Next() {
+								d := &pb.IntHistoricalData{}
+								iv := it.Value()
+								if len(iv) == 0 {
+									continue
+								}
+								if err := proto.Unmarshal(iv, d); err != nil {
+									return err
+								}
+								ts, values := d.GetTimeStamps(), d.GetValues()
+								startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], ts)
+								if startIndex == -1 || endIndex == -1 {
+									continue
+								}
+								if count == 0 {
+									st = ts[startIndex]
+									count++
+								}
+								for k := startIndex; k < endIndex; k++ {
+									if (ts[k]-st)%intervals[index] == 0 {
+										leveldbHis = append(leveldbHis, values[k])
+										leveldbTs = append(leveldbTs, ts[k])
+									}
+								}
+							}
+							return nil
+						})
+						if ok {
+							// get history data in memory
+							if len(md.TimeStamps) != 0 {
+								if endTimeStamps[index] <= md.TimeStamps[0] || startTimeStamps[index] >= md.TimeStamps[len(md.TimeStamps)-1] {
+								} else {
+									g1.Go(func() error {
+										var st int32 // start time stamp of data
+										startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], md.TimeStamps)
+										if startIndex == -1 || endIndex == -1 {
+											return nil
+										}
+										st = md.TimeStamps[startIndex]
+										for k := startIndex; k < endIndex; k++ {
+											if (md.TimeStamps[k]-st)%intervals[index] == 0 {
+												memHis = append(memHis, md.Values[k])
+												memTs = append(memTs, md.TimeStamps[k])
+											}
+										}
+										return nil
+									})
+								}
+							}
+						}
+						if err := g1.Wait(); err != nil {
+							return err
+						}
+						leveldbHis = append(leveldbHis, memHis...) // history data
+						leveldbTs = append(leveldbTs, memTs...)    // ts
+						if len(flags) != 0 {
+							if flags[0] {
+								lengthMap[index] = len(leveldbTs)
+							}
+						}
+						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						return nil
+					})
+				}
+				if err := g.Wait(); err != nil {
+					return err
+				}
+				if len(flags) != 0 {
+					if flags[0] {
+						m.Set("minLength", From(lengthMap).Min().(int))
+					}
+				}
+				return nil
+			}
+		})
+	}
+	return m, dg.Wait()
+string32:
+	for groupName, groupItemNames := range namesMap {
+		groupName := groupName
+		groupItemNames := groupItemNames
+		rawItemNames := rawNamesMap[groupName]
+		dg.Go(func() error {
+			if sn, err := gdb.hisDb["string"][groupName].GetSnapshot(); err != nil {
+				return err
+			} else {
+				// get history
+				defer sn.Release()
+				g := errgroup.Group{}
+				for i := 0; i < len(groupItemNames); i++ {
+					index := i
+					g.Go(func() error {
+						md, ok := gdb.stringRmHisDb.Get(groupItemNames[index]) // itemName is memory is itemName + joiner + groupName, in leveldb is itemName + joiner + startTimeStamp
+						var leveldbHis, memHis []string
+						var leveldbTs, memTs []int32
+						if startTimeStamps[index] >= endTimeStamps[index] {
+							return nil
+						}
+						g1 := errgroup.Group{}
+						// get history data in leveldb, historical data in the database can not be repeated
+						g1.Go(func() error {
+							var st int32 // start time stamp of data
+							s := groupItemNames[index] + joiner + strconv.Itoa(int(startTimeStamps[index])-int(gdb.hisTimeDuration.Seconds()))
+							e := groupItemNames[index] + joiner + strconv.Itoa(int(endTimeStamps[index])+int(gdb.hisTimeDuration.Seconds()))
+							it := sn.NewIterator(&util.Range{Start: convertStringToByte(s), Limit: convertStringToByte(e)}, nil)
+							defer it.Release()
+							count := 0
+							for it.Next() {
+								d := &pb.StringHistoricalData{}
+								iv := it.Value()
+								if len(iv) == 0 {
+									continue
+								}
+								if err := proto.Unmarshal(iv, d); err != nil {
+									return err
+								}
+								ts, values := d.GetTimeStamps(), d.GetValues()
+								startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], ts)
+								if startIndex == -1 || endIndex == -1 {
+									continue
+								}
+								if count == 0 {
+									st = ts[startIndex]
+									count++
+								}
+								for k := startIndex; k < endIndex; k++ {
+									if (ts[k]-st)%intervals[index] == 0 {
+										leveldbHis = append(leveldbHis, values[k])
+										leveldbTs = append(leveldbTs, ts[k])
+									}
+								}
+							}
+							return nil
+						})
+						if ok {
+							// get history data in memory
+							if len(md.TimeStamps) != 0 {
+								if endTimeStamps[index] <= md.TimeStamps[0] || startTimeStamps[index] >= md.TimeStamps[len(md.TimeStamps)-1] {
+								} else {
+									g1.Go(func() error {
+										var st int32 // start time stamp of data
+										startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], md.TimeStamps)
+										if startIndex == -1 || endIndex == -1 {
+											return nil
+										}
+										st = md.TimeStamps[startIndex]
+										for k := startIndex; k < endIndex; k++ {
+											if (md.TimeStamps[k]-st)%intervals[index] == 0 {
+												memHis = append(memHis, md.Values[k])
+												memTs = append(memTs, md.TimeStamps[k])
+											}
+										}
+										return nil
+									})
+								}
+							}
+						}
+						if err := g1.Wait(); err != nil {
+							return err
+						}
+						leveldbHis = append(leveldbHis, memHis...) // history data
+						leveldbTs = append(leveldbTs, memTs...)    // ts
+						if len(flags) != 0 {
+							if flags[0] {
+								lengthMap[index] = len(leveldbTs)
+							}
+						}
+						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						return nil
+					})
+				}
+				if err := g.Wait(); err != nil {
+					return err
+				}
+				if len(flags) != 0 {
+					if flags[0] {
+						m.Set("minLength", From(lengthMap).Min().(int))
+					}
+				}
+				return nil
+			}
+		})
+	}
+	return m, dg.Wait()
+bool32:
+	for groupName, groupItemNames := range namesMap {
+		groupName := groupName
+		groupItemNames := groupItemNames
+		rawItemNames := rawNamesMap[groupName]
+		dg.Go(func() error {
+			if sn, err := gdb.hisDb["bool"][groupName].GetSnapshot(); err != nil {
+				return err
+			} else {
+				// get history
+				defer sn.Release()
+				g := errgroup.Group{}
+				for i := 0; i < len(groupItemNames); i++ {
+					index := i
+					g.Go(func() error {
+						md, ok := gdb.boolRmHisDb.Get(groupItemNames[index]) // itemName is memory is itemName + joiner + groupName, in leveldb is itemName + joiner + startTimeStamp
+						var leveldbHis, memHis []bool
+						var leveldbTs, memTs []int32
+						if startTimeStamps[index] >= endTimeStamps[index] {
+							return nil
+						}
+						g1 := errgroup.Group{}
+						// get history data in leveldb, historical data in the database can not be repeated
+						g1.Go(func() error {
+							var st int32 // start time stamp of data
+							s := groupItemNames[index] + joiner + strconv.Itoa(int(startTimeStamps[index])-int(gdb.hisTimeDuration.Seconds()))
+							e := groupItemNames[index] + joiner + strconv.Itoa(int(endTimeStamps[index])+int(gdb.hisTimeDuration.Seconds()))
+							it := sn.NewIterator(&util.Range{Start: convertStringToByte(s), Limit: convertStringToByte(e)}, nil)
+							defer it.Release()
+							count := 0
+							for it.Next() {
+								d := &pb.BoolHistoricalData{}
+								iv := it.Value()
+								if len(iv) == 0 {
+									continue
+								}
+								if err := proto.Unmarshal(iv, d); err != nil {
+									return err
+								}
+								ts, values := d.GetTimeStamps(), d.GetValues()
+								startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], ts)
+								if startIndex == -1 || endIndex == -1 {
+									continue
+								}
+								if count == 0 {
+									st = ts[startIndex]
+									count++
+								}
+								for k := startIndex; k < endIndex; k++ {
+									if (ts[k]-st)%intervals[index] == 0 {
+										leveldbHis = append(leveldbHis, values[k])
+										leveldbTs = append(leveldbTs, ts[k])
+									}
+								}
+							}
+							return nil
+						})
+						if ok {
+							// get history data in memory
+							if len(md.TimeStamps) != 0 {
+								if endTimeStamps[index] <= md.TimeStamps[0] || startTimeStamps[index] >= md.TimeStamps[len(md.TimeStamps)-1] {
+								} else {
+									g1.Go(func() error {
+										var st int32 // start time stamp of data
+										startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], md.TimeStamps)
+										if startIndex == -1 || endIndex == -1 {
+											return nil
+										}
+										st = md.TimeStamps[startIndex]
+										for k := startIndex; k < endIndex; k++ {
+											if (md.TimeStamps[k]-st)%intervals[index] == 0 {
+												memHis = append(memHis, md.Values[k])
+												memTs = append(memTs, md.TimeStamps[k])
+											}
+										}
+										return nil
+									})
+								}
+							}
+						}
+						if err := g1.Wait(); err != nil {
+							return err
+						}
+						leveldbHis = append(leveldbHis, memHis...) // history data
+						leveldbTs = append(leveldbTs, memTs...)    // ts
+						if len(flags) != 0 {
+							if flags[0] {
+								lengthMap[index] = len(leveldbTs)
+							}
+						}
+						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						return nil
+					})
+				}
+				if err := g.Wait(); err != nil {
+					return err
+				}
+				if len(flags) != 0 {
+					if flags[0] {
+						m.Set("minLength", From(lengthMap).Min().(int))
+					}
+				}
+				return nil
+			}
+		})
+	}
+	return m, dg.Wait()
+}
+
+func (gdb *Gdb) getHistoricalDataWithTsAndIntervals(dataType string, rawNamesMap map[string][]string, namesMap map[string][]string, startTimeStamps, endTimeStamps, intervals []int32, timeStamps ...[]int32) (cmap.ConcurrentMap, error) {
+	m := cmap.New()
+	dg := errgroup.Group{}
+	switch dataType {
+	case "float32":
+		goto float32
+	case "int32":
+		goto int32
+	case "string":
+		goto string32
+	case "bool":
+		goto bool32
+	default:
+		return nil, fmt.Errorf("unknown dataType " + dataType)
+	}
+float32:
+	for groupName, groupItemNames := range namesMap {
+		groupName := groupName
+		groupItemNames := groupItemNames       // itemName in memory, that is itemName + joiner + groupName
+		rawItemNames := rawNamesMap[groupName] // origin itemName
+		dg.Go(func() error {
+			if sn, err := gdb.hisDb["float32"][groupName].GetSnapshot(); err != nil {
+				return err
+			} else {
+				// get history
+				defer sn.Release()
+				g := errgroup.Group{}
+				for i := 0; i < len(groupItemNames); i++ {
+					index := i
+					g.Go(func() error {
+						md, ok := gdb.floatRmHisDb.Get(groupItemNames[index]) // itemName is memory is itemName + joiner + groupName, in leveldb is itemName + joiner + startTimeStamp
+						var leveldbHis, memHis []float32
+						var leveldbTs, memTs []int32
+						if startTimeStamps[index] >= endTimeStamps[index] {
+							return nil
+						}
+						g1 := errgroup.Group{}
+						// get history data in leveldb, historical data in the database can not be repeated
+						g1.Go(func() error {
+							var st int32 // start time stamp of data
+							s := groupItemNames[index] + joiner + strconv.Itoa(int(startTimeStamps[index])-int(gdb.hisTimeDuration.Seconds()))
+							e := groupItemNames[index] + joiner + strconv.Itoa(int(endTimeStamps[index])+int(gdb.hisTimeDuration.Seconds()))
+							it := sn.NewIterator(&util.Range{Start: convertStringToByte(s), Limit: convertStringToByte(e)}, nil)
+							defer it.Release()
+							count := 0
+							for it.Next() {
+								d := &pb.FloatHistoricalData{}
+								iv := it.Value()
+								if len(iv) == 0 {
+									continue
+								}
+								if err := proto.Unmarshal(iv, d); err != nil {
+									return err
+								}
+								ts, values := d.GetTimeStamps(), d.GetValues()
+								startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], ts)
+								if startIndex == -1 || endIndex == -1 {
+									continue
+								}
+								if count == 0 {
+									st = ts[startIndex]
+									count++
+								}
+								for k := startIndex; k < endIndex; k++ {
+									if (ts[k]-st)%intervals[index] == 0 {
+										leveldbHis = append(leveldbHis, values[k])
+										leveldbTs = append(leveldbTs, ts[k])
+									}
+								}
+							}
+							return nil
+						})
+						if ok {
+							// get history data in memory
+							if len(md.TimeStamps) != 0 {
+								if endTimeStamps[index] <= md.TimeStamps[0] || startTimeStamps[index] >= md.TimeStamps[len(md.TimeStamps)-1] {
+								} else {
+									g1.Go(func() error {
+										var st int32 // start time stamp of data
+										startIndex, endIndex := getIndex(startTimeStamps[index], endTimeStamps[index], md.TimeStamps)
+										if startIndex == -1 || endIndex == -1 {
+											return nil
+										}
+										st = md.TimeStamps[startIndex]
+										for k := startIndex; k < endIndex; k++ {
+											if (md.TimeStamps[k]-st)%intervals[index] == 0 {
+												memHis = append(memHis, md.Values[k])
+												memTs = append(memTs, md.TimeStamps[k])
+											}
+										}
+										return nil
+									})
+								}
+							}
+						}
+						if err := g1.Wait(); err != nil {
+							return err
+						}
+						leveldbHis = append(leveldbHis, memHis...) // history data
+						leveldbTs = append(leveldbTs, memTs...)    // ts
+						// find timeStamps in ts
+						tsIndex := make([]int, len(timeStamps[index]))
+						g2 := sync.WaitGroup{}
+						g2.Add(len(timeStamps[index]))
+						for j := 0; j < len(timeStamps[index]); j++ {
+							j := j
+							go func() {
+								defer g2.Done()
+								tsIndex[j] = getMiddleIndex(timeStamps[index][j], leveldbTs)
+							}()
+						}
+						g2.Wait()
+						lastLeveldbHis, lastLeveldbTs := []float32{}, []int32{}
+						for _, k := range tsIndex {
+							if k != -1 {
+								lastLeveldbHis = append(lastLeveldbHis, leveldbHis[k])
+								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
+							}
+						}
+						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
+						return nil
+					})
+				}
+				if err := g.Wait(); err != nil {
+					return err
 				}
 				return nil
 			}
@@ -1517,22 +1967,31 @@ int32:
 						}
 						leveldbHis = append(leveldbHis, memHis...) // history data
 						leveldbTs = append(leveldbTs, memTs...)    // ts
-						if len(flags) != 0 {
-							if flags[0] {
-								lengthMap[index] = len(leveldbTs)
+						// find timeStamps in ts
+						tsIndex := make([]int, len(timeStamps[index]))
+						g2 := sync.WaitGroup{}
+						g2.Add(len(timeStamps[index]))
+						for j := 0; j < len(timeStamps[index]); j++ {
+							j := j
+							go func() {
+								defer g2.Done()
+								tsIndex[j] = getMiddleIndex(timeStamps[index][j], leveldbTs)
+							}()
+						}
+						g2.Wait()
+						lastLeveldbHis, lastLeveldbTs := []int32{}, []int32{}
+						for _, k := range tsIndex {
+							if k != -1 {
+								lastLeveldbHis = append(lastLeveldbHis, leveldbHis[k])
+								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
 						return nil
 					})
 				}
 				if err := g.Wait(); err != nil {
 					return err
-				}
-				if len(flags) != 0 {
-					if flags[0] {
-						m.Set("minLength", From(lengthMap).Min().(int))
-					}
 				}
 				return nil
 			}
@@ -1625,24 +2084,31 @@ string32:
 								return err
 							}
 						}
-						leveldbHis = append(leveldbHis, memHis...) // history data
-						leveldbTs = append(leveldbTs, memTs...)    // ts
-						if len(flags) != 0 {
-							if flags[0] {
-								lengthMap[index] = len(leveldbTs)
+						// find timeStamps in ts
+						tsIndex := make([]int, len(timeStamps[index]))
+						g2 := sync.WaitGroup{}
+						g2.Add(len(timeStamps[index]))
+						for j := 0; j < len(timeStamps[index]); j++ {
+							j := j
+							go func() {
+								defer g2.Done()
+								tsIndex[j] = getMiddleIndex(timeStamps[index][j], leveldbTs)
+							}()
+						}
+						g2.Wait()
+						lastLeveldbHis, lastLeveldbTs := []string{}, []int32{}
+						for _, k := range tsIndex {
+							if k != -1 {
+								lastLeveldbHis = append(lastLeveldbHis, leveldbHis[k])
+								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
 						return nil
 					})
 				}
 				if err := g.Wait(); err != nil {
 					return err
-				}
-				if len(flags) != 0 {
-					if flags[0] {
-						m.Set("minLength", From(lengthMap).Min().(int))
-					}
 				}
 				return nil
 			}
@@ -1735,24 +2201,31 @@ bool32:
 								return err
 							}
 						}
-						leveldbHis = append(leveldbHis, memHis...) // history data
-						leveldbTs = append(leveldbTs, memTs...)    // ts
-						if len(flags) != 0 {
-							if flags[0] {
-								lengthMap[index] = len(leveldbTs)
+						// find timeStamps in ts
+						tsIndex := make([]int, len(timeStamps[index]))
+						g2 := sync.WaitGroup{}
+						g2.Add(len(timeStamps[index]))
+						for j := 0; j < len(timeStamps[index]); j++ {
+							j := j
+							go func() {
+								defer g2.Done()
+								tsIndex[j] = getMiddleIndex(timeStamps[index][j], leveldbTs)
+							}()
+						}
+						g2.Wait()
+						lastLeveldbHis, lastLeveldbTs := []bool{}, []int32{}
+						for _, k := range tsIndex {
+							if k != -1 {
+								lastLeveldbHis = append(lastLeveldbHis, leveldbHis[k])
+								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
 						return nil
 					})
 				}
 				if err := g.Wait(); err != nil {
 					return err
-				}
-				if len(flags) != 0 {
-					if flags[0] {
-						m.Set("minLength", From(lengthMap).Min().(int))
-					}
 				}
 				return nil
 			}
@@ -2407,148 +2880,181 @@ bool32:
 	return m, dg.Wait()
 }
 
-func (gdb *Gdb) getHistoricalDataWithMinLength(dataType string, rawNamesMap, namesMap map[string][]string, startTimes, endTimes, intervals []int32) ([]map[string]interface{}, error) {
+func (gdb *Gdb) getHistoricalDataWithMinLength(groupName string, rawNamesMap, namesMap map[string][]string, startTime, endTime, interval int32) ([]map[string]interface{}, error) {
 	itemNames := []string{}
 	for _, groupItemNames := range rawNamesMap {
 		itemNames = append(itemNames, groupItemNames...)
 	}
-	m, err := gdb.getHistoricalData(dataType, rawNamesMap, namesMap, startTimes, endTimes, intervals, true)
-	if err != nil {
+	g := errgroup.Group{}
+	m := cmap.New()
+	l := [4]int{}
+	for index, dataType := range dataTypes {
+		dt, index := dataType, index
+		g.Go(func() error {
+			if _, ok := rawNamesMap[dt]; ok {
+				var startTimes, endTimes, intervals []int32
+				for i := 0; i < len(rawNamesMap[dt]); i++ {
+					startTimes = append(startTimes, startTime)
+					endTimes = append(endTimes, endTime)
+					intervals = append(intervals, interval)
+				}
+				if rm, err := gdb.getHistoricalData(dt, map[string][]string{groupName: rawNamesMap[dt]}, map[string][]string{groupName: namesMap[dt]}, startTimes, endTimes, intervals, true); err != nil {
+					return err
+				} else {
+					for _, name := range rawNamesMap[dt] {
+						d, _ := rm.Get(name)
+						m.Set(name, d)
+					}
+					ll, _ := rm.Get("minLength")
+					l[index] = ll.(int)
+					return nil
+				}
+			} else {
+				return nil
+			}
+		})
+	}
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
+	minLength := From(l).Where(func(item interface{}) bool {
+		return item.(int) != 0
+	}).Min().(int)
 	result := []map[string]interface{}{}
 	floatItemValues := map[string]memap.RmHisDbFloatItems{}   // historical values
 	intItemValues := map[string]memap.RmHisDbIntItems{}       // historical values
 	stringItemValues := map[string]memap.RmHisDbStringItems{} // historical values
 	boolItemValues := map[string]memap.RmHisDbBoolItems{}     // historical values
-	l, _ := m.Get("minLength")
-	minLength := l.(int)
-	switch dataType {
-	case "float32":
-		goto float32
-	case "int32":
-		goto int32
-	case "string":
-		goto string32
-	case "bool":
-		goto bool32
-	default:
-		return nil, fmt.Errorf("unknown dataType " + dataType)
-	}
-float32:
+	dtMap := map[string]string{}
 	for _, itemName := range itemNames {
-		v, _ := m.Get(itemName) // get history data of item
-		vs := v.([]interface{}) // convert historicalData
-		floatItemValues[itemName] = memap.RmHisDbFloatItems{TimeStamps: vs[0].([]int32), Values: vs[1].([]float32)}
+		v, _ := m.Get(itemName)
+		vs := v.([]interface{})
+		switch dt, _ := gdb.rtDbFilter.Get(itemName + joiner + groupName); dt.(string) {
+		case "float32":
+			if ts := vs[0].([]int32); ts == nil {
+				return nil, fmt.Errorf("history data of item: " + itemName + " not exist between " + strconv.Itoa(int(startTime)) + " and " + strconv.Itoa(int(endTime)))
+			} else {
+				floatItemValues[itemName] = memap.RmHisDbFloatItems{TimeStamps: ts, Values: vs[1].([]float32)}
+				dtMap[itemName] = dt.(string)
+				break
+			}
+		case "int32":
+			if ts := vs[0].([]int32); ts == nil {
+				return nil, fmt.Errorf("history data of item: " + itemName + " not exist between " + strconv.Itoa(int(startTime)) + " and " + strconv.Itoa(int(endTime)))
+			} else {
+				intItemValues[itemName] = memap.RmHisDbIntItems{TimeStamps: ts, Values: vs[1].([]int32)}
+				dtMap[itemName] = dt.(string)
+				break
+			}
+		case "string":
+			if ts := vs[0].([]int32); ts == nil {
+				return nil, fmt.Errorf("history data of item: " + itemName + " not exist between " + strconv.Itoa(int(startTime)) + " and " + strconv.Itoa(int(endTime)))
+			} else {
+				stringItemValues[itemName] = memap.RmHisDbStringItems{TimeStamps: ts, Values: vs[1].([]string)}
+				dtMap[itemName] = dt.(string)
+				break
+			}
+		default:
+			if ts := vs[0].([]int32); ts == nil {
+				return nil, fmt.Errorf("history data of item: " + itemName + " not exist between " + strconv.Itoa(int(startTime)) + " and " + strconv.Itoa(int(endTime)))
+			} else {
+				boolItemValues[itemName] = memap.RmHisDbBoolItems{TimeStamps: ts, Values: vs[1].([]bool)}
+				dtMap[itemName] = dt.(string)
+				break
+			}
+		}
 	}
 	for i := 0; i < minLength; i++ {
 		t := map[string]interface{}{}
 		if len(itemNames) == 1 {
-			t["timeStamp"] = floatItemValues[itemNames[0]].TimeStamps[i] // ts
-			t[itemNames[0]] = floatItemValues[itemNames[0]].Values[i]
+			switch dt, _ := dtMap[itemNames[0]]; dt {
+			case "float32":
+				t["timeStamp"] = floatItemValues[itemNames[0]].TimeStamps[i] // ts
+				t[itemNames[0]] = floatItemValues[itemNames[0]].Values[i]
+				break
+			case "int32":
+				t["timeStamp"] = intItemValues[itemNames[0]].TimeStamps[i] // ts
+				t[itemNames[0]] = intItemValues[itemNames[0]].Values[i]
+				break
+			case "string":
+				t["timeStamp"] = stringItemValues[itemNames[0]].TimeStamps[i] // ts
+				t[itemNames[0]] = stringItemValues[itemNames[0]].Values[i]
+				break
+			default:
+				t["timeStamp"] = boolItemValues[itemNames[0]].TimeStamps[i] // ts
+				t[itemNames[0]] = boolItemValues[itemNames[0]].Values[i]
+				break
+			}
 		} else {
 			for index, itemName := range itemNames {
 				if index == 0 {
 					// first
-					t["timeStamp"] = floatItemValues[itemName].TimeStamps[i] // ts
-					t[itemName] = floatItemValues[itemName].Values[i]        // value
-				} else {
-					if t["timeStamp"] != floatItemValues[itemName].TimeStamps[i] {
-						// inconsistent timeStamp
+					switch dt, _ := dtMap[itemName]; dt {
+					case "float32":
+						t["timeStamp"] = floatItemValues[itemNames[0]].TimeStamps[i] // ts
+						t[itemNames[0]] = floatItemValues[itemNames[0]].Values[i]
 						break
-					} else {
-						t[itemName] = floatItemValues[itemName].Values[i] // value
+					case "int32":
+						t["timeStamp"] = intItemValues[itemNames[0]].TimeStamps[i] // ts
+						t[itemNames[0]] = intItemValues[itemNames[0]].Values[i]
+						break
+					case "string":
+						t["timeStamp"] = stringItemValues[itemNames[0]].TimeStamps[i] // ts
+						t[itemNames[0]] = stringItemValues[itemNames[0]].Values[i]
+						break
+					default:
+						t["timeStamp"] = boolItemValues[itemNames[0]].TimeStamps[i] // ts
+						t[itemNames[0]] = boolItemValues[itemNames[0]].Values[i]
+						break
+					}
+				} else {
+					switch dt, _ := dtMap[itemName]; dt {
+					case "float32":
+						if t["timeStamp"] != floatItemValues[itemName].TimeStamps[i] {
+							// inconsistent timeStamp
+							goto next
+						} else {
+							t[itemName] = floatItemValues[itemName].Values[i] // value
+						}
+						break
+					case "int32":
+						if t["timeStamp"] != intItemValues[itemName].TimeStamps[i] {
+							// inconsistent timeStamp
+							goto next
+						} else {
+							t[itemName] = intItemValues[itemName].Values[i] // value
+						}
+						break
+					case "string":
+						if t["timeStamp"] != stringItemValues[itemName].TimeStamps[i] {
+							// inconsistent timeStamp
+							goto next
+						} else {
+							t[itemName] = stringItemValues[itemName].Values[i] // value
+						}
+						break
+					default:
+						if t["timeStamp"] != boolItemValues[itemName].TimeStamps[i] {
+							// inconsistent timeStamp
+							goto next
+						} else {
+							t[itemName] = boolItemValues[itemName].Values[i] // value
+						}
+						break
 					}
 				}
 			}
+			result = append(result, t)
+		next:
+			continue
 		}
-		result = append(result, t)
-	}
-	return result, nil
-int32:
-	for _, itemName := range itemNames {
-		v, _ := m.Get(itemName) // get history data of item
-		vs := v.([]interface{}) // convert historicalData
-		intItemValues[itemName] = memap.RmHisDbIntItems{TimeStamps: vs[0].([]int32), Values: vs[1].([]int32)}
-	}
-	for i := 0; i < minLength; i++ {
-		t := map[string]interface{}{}
-		for index, itemName := range itemNames {
-			if index == 0 {
-				// first
-				t["timeStamp"] = intItemValues[itemName].TimeStamps[i] // ts
-				t[itemName] = floatItemValues[itemName].Values[i]      // value
-			} else {
-				if t["timeStamp"] != intItemValues[itemName].TimeStamps[i] {
-					// inconsistent timeStamp
-					break
-				} else {
-					t[itemName] = intItemValues[itemName].Values[i] // value
-				}
-			}
-		}
-		result = append(result, t)
-	}
-	return result, nil
-string32:
-	for _, itemName := range itemNames {
-		v, _ := m.Get(itemName) // get history data of item
-		vs := v.([]interface{}) // convert historicalData
-		stringItemValues[itemName] = memap.RmHisDbStringItems{TimeStamps: vs[0].([]int32), Values: vs[1].([]string)}
-	}
-	for i := 0; i < minLength; i++ {
-		t := map[string]interface{}{}
-		for index, itemName := range itemNames {
-			if index == 0 {
-				// first
-				t["timeStamp"] = stringItemValues[itemName].TimeStamps[i] // ts
-				t[itemName] = floatItemValues[itemName].Values[i]         // value
-			} else {
-				if t["timeStamp"] != stringItemValues[itemName].TimeStamps[i] {
-					// inconsistent timeStamp
-					break
-				} else {
-					t[itemName] = stringItemValues[itemName].Values[i] // value
-				}
-			}
-		}
-		result = append(result, t)
-	}
-	return result, nil
-bool32:
-	for _, itemName := range itemNames {
-		v, _ := m.Get(itemName) // get history data of item
-		vs := v.([]interface{}) // convert historicalData
-		boolItemValues[itemName] = memap.RmHisDbBoolItems{TimeStamps: vs[0].([]int32), Values: vs[1].([]bool)}
-	}
-	for i := 0; i < minLength; i++ {
-		t := map[string]interface{}{}
-		for index, itemName := range itemNames {
-			if index == 0 {
-				// first
-				t["timeStamp"] = boolItemValues[itemName].TimeStamps[i] // ts
-				t[itemName] = floatItemValues[itemName].Values[i]       // value
-			} else {
-				if t["timeStamp"] != boolItemValues[itemName].TimeStamps[i] {
-					// inconsistent timeStamp
-					break
-				} else {
-					t[itemName] = boolItemValues[itemName].Values[i] // value
-				}
-			}
-		}
-		result = append(result, t)
 	}
 	return result, nil
 }
 
-func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(dataType string, rawItemNames []string, rawNamesMap, namesMap map[string][]string, timeStamps [][]int32, zones []DeadZone) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getHistoricalDataWithStampAndDeadZoneCount(dataType string, rawItemNames []string, dd cmap.ConcurrentMap, zones []DeadZone) (cmap.ConcurrentMap, error) {
 	m := cmap.New()
 	g := errgroup.Group{}
-	dd, err := gdb.getHistoricalDataWithTs(dataType, rawNamesMap, namesMap, timeStamps...)
-	if err != nil {
-		return nil, err
-	}
 	switch dataType {
 	case "float32":
 		goto float32
@@ -2578,48 +3084,35 @@ float32:
 				goto doNotFilter
 			} else {
 				// get filter data
-				var values, lastValues []float32
+				var values []float32
 				var lastValue float32
 				var tts []int32
-				tLastValues := []int32{}
 				data, _ := dd.Get(name)                   // get data
 				ts := data.([]interface{})[0].([]int32)   // ts
 				hs := data.([]interface{})[1].([]float32) // values
+				flags := map[float32]int32{}
 				for k := 0; k < len(ts); k++ {
-					vs := hs[k] // value
 					if k == 0 {
-						// first
-						for index, lv := range lastValues {
-							values = append(values, lv)
-							tts = append(tts, tLastValues[index])
-						}
-						lastValue = vs
-						lastValues = []float32{}
-						tLastValues = []int32{} // timeStamps
-						values = append(values, vs)
+						// initial
+						lastValue = hs[k]
+						flags[hs[k]] = 1
+						values = append(values, hs[k])
 						tts = append(tts, ts[k])
 					} else {
-						if lastValue != vs {
-							// not repeated
-							for index, lv := range lastValues {
-								values = append(values, lv)
-								tts = append(tts, tLastValues[index])
+						if c, ok := flags[hs[k]]; ok {
+							if c < deadZoneCounts {
+								values = append(values, hs[k])
+								tts = append(tts, ts[k])
+								c++
+								flags[hs[k]] = c
+								lastValue = hs[k]
 							}
-							lastValue = vs
-							lastValues = []float32{}
-							tLastValues = []int32{}
-							values = append(values, vs)
-							tts = append(tts, ts[k])
 						} else {
-							// repeated
-							lastValues = append(lastValues, lastValue)
-							tLastValues = append(tLastValues, ts[k])
-							if len(lastValues) == int(deadZoneCounts) {
-								values = append(values, lastValues[:int(deadZoneCounts)-1]...)
-								tts = append(tts, tLastValues[:int(deadZoneCounts)-1]...)
-								lastValues = []float32{}
-								tLastValues = []int32{}
-							}
+							values = append(values, hs[k])
+							tts = append(tts, ts[k])
+							flags[hs[k]] = 1
+							flags[lastValue] = 0
+							lastValue = hs[k]
 						}
 					}
 				}
@@ -2654,48 +3147,35 @@ int32:
 				goto doNotFilter
 			} else {
 				// get filter data
-				var values, lastValues []int32
+				var values []int32
 				var lastValue int32
 				var tts []int32
-				tLastValues := []int32{}
 				data, _ := dd.Get(name)                 // get data
 				ts := data.([]interface{})[0].([]int32) // ts
 				hs := data.([]interface{})[1].([]int32) // values
+				flags := map[int32]int32{}
 				for k := 0; k < len(ts); k++ {
-					vs := hs[k] // value
 					if k == 0 {
-						// first
-						for index, lv := range lastValues {
-							values = append(values, lv)
-							tts = append(tts, tLastValues[index])
-						}
-						lastValue = vs
-						lastValues = []int32{}
-						tLastValues = []int32{} // timeStamps
-						values = append(values, vs)
+						// initial
+						lastValue = hs[k]
+						flags[hs[k]] = 1
+						values = append(values, hs[k])
 						tts = append(tts, ts[k])
 					} else {
-						if lastValue != vs {
-							// not repeated
-							for index, lv := range lastValues {
-								values = append(values, lv)
-								tts = append(tts, tLastValues[index])
+						if c, ok := flags[hs[k]]; ok {
+							if c < deadZoneCounts {
+								values = append(values, hs[k])
+								tts = append(tts, ts[k])
+								c++
+								flags[hs[k]] = c
+								lastValue = hs[k]
 							}
-							lastValue = vs
-							lastValues = []int32{}
-							tLastValues = []int32{}
-							values = append(values, vs)
-							tts = append(tts, ts[k])
 						} else {
-							// repeated
-							lastValues = append(lastValues, lastValue)
-							tLastValues = append(tLastValues, ts[k])
-							if len(lastValues) == int(deadZoneCounts) {
-								values = append(values, lastValues[:int(deadZoneCounts)-1]...)
-								tts = append(tts, tLastValues[:int(deadZoneCounts)-1]...)
-								lastValues = []int32{}
-								tLastValues = []int32{}
-							}
+							values = append(values, hs[k])
+							tts = append(tts, ts[k])
+							flags[hs[k]] = 1
+							flags[lastValue] = 0
+							lastValue = hs[k]
 						}
 					}
 				}
@@ -2730,48 +3210,35 @@ string32:
 				goto doNotFilter
 			} else {
 				// get filter data
-				var values, lastValues []string
+				var values []string
 				var lastValue string
 				var tts []int32
-				tLastValues := []int32{}
 				data, _ := dd.Get(name)                  // get data
 				ts := data.([]interface{})[0].([]int32)  // ts
 				hs := data.([]interface{})[1].([]string) // values
+				flags := map[string]int32{}
 				for k := 0; k < len(ts); k++ {
-					vs := hs[k] // value
 					if k == 0 {
-						// first
-						for index, lv := range lastValues {
-							values = append(values, lv)
-							tts = append(tts, tLastValues[index])
-						}
-						lastValue = vs
-						lastValues = []string{}
-						tLastValues = []int32{} // timeStamps
-						values = append(values, vs)
+						// initial
+						lastValue = hs[k]
+						flags[hs[k]] = 1
+						values = append(values, hs[k])
 						tts = append(tts, ts[k])
 					} else {
-						if lastValue != vs {
-							// not repeated
-							for index, lv := range lastValues {
-								values = append(values, lv)
-								tts = append(tts, tLastValues[index])
+						if c, ok := flags[hs[k]]; ok {
+							if c < deadZoneCounts {
+								values = append(values, hs[k])
+								tts = append(tts, ts[k])
+								c++
+								flags[hs[k]] = c
+								lastValue = hs[k]
 							}
-							lastValue = vs
-							lastValues = []string{}
-							tLastValues = []int32{}
-							values = append(values, vs)
-							tts = append(tts, ts[k])
 						} else {
-							// repeated
-							lastValues = append(lastValues, lastValue)
-							tLastValues = append(tLastValues, ts[k])
-							if len(lastValues) == int(deadZoneCounts) {
-								values = append(values, lastValues[:int(deadZoneCounts)-1]...)
-								tts = append(tts, tLastValues[:int(deadZoneCounts)-1]...)
-								lastValues = []string{}
-								tLastValues = []int32{}
-							}
+							values = append(values, hs[k])
+							tts = append(tts, ts[k])
+							flags[hs[k]] = 1
+							flags[lastValue] = 0
+							lastValue = hs[k]
 						}
 					}
 				}
@@ -2806,48 +3273,35 @@ bool32:
 				goto doNotFilter
 			} else {
 				// get filter data
-				var values, lastValues []bool
+				var values []bool
 				var lastValue bool
 				var tts []int32
-				tLastValues := []int32{}
 				data, _ := dd.Get(name)                 // get data
 				ts := data.([]interface{})[0].([]int32) // ts
 				hs := data.([]interface{})[1].([]bool)  // values
+				flags := map[bool]int32{}
 				for k := 0; k < len(ts); k++ {
-					vs := hs[k] // value
 					if k == 0 {
-						// first
-						for index, lv := range lastValues {
-							values = append(values, lv)
-							tts = append(tts, tLastValues[index])
-						}
-						lastValue = vs
-						lastValues = []bool{}
-						tLastValues = []int32{} // timeStamps
-						values = append(values, vs)
+						// initial
+						lastValue = hs[k]
+						flags[hs[k]] = 1
+						values = append(values, hs[k])
 						tts = append(tts, ts[k])
 					} else {
-						if lastValue != vs {
-							// not repeated
-							for index, lv := range lastValues {
-								values = append(values, lv)
-								tts = append(tts, tLastValues[index])
+						if c, ok := flags[hs[k]]; ok {
+							if c < deadZoneCounts {
+								values = append(values, hs[k])
+								tts = append(tts, ts[k])
+								c++
+								flags[hs[k]] = c
+								lastValue = hs[k]
 							}
-							lastValue = vs
-							lastValues = []bool{}
-							tLastValues = []int32{}
-							values = append(values, vs)
-							tts = append(tts, ts[k])
 						} else {
-							// repeated
-							lastValues = append(lastValues, lastValue)
-							tLastValues = append(tLastValues, ts[k])
-							if len(lastValues) == int(deadZoneCounts) {
-								values = append(values, lastValues[:int(deadZoneCounts)-1]...)
-								tts = append(tts, tLastValues[:int(deadZoneCounts)-1]...)
-								lastValues = []bool{}
-								tLastValues = []int32{}
-							}
+							values = append(values, hs[k])
+							tts = append(tts, ts[k])
+							flags[hs[k]] = 1
+							flags[lastValue] = 0
+							lastValue = hs[k]
 						}
 					}
 				}
@@ -2866,7 +3320,8 @@ bool32:
 	return m, nil
 }
 
-func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemNames []string, startTimes, endTimes, intervals []int32, filterCondition string, zones ...DeadZone) (cmap.ConcurrentMap, error) {
+func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemNames []string, startTime, endTime, interval int32, filterCondition string, zones ...DeadZone) (cmap.ConcurrentMap, error) {
+	st := time.Now()
 	if rawNamesMap, namesMap, err := gdb.checkSingleItemDataTypeWithMap(strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(itemNames)), ","), ","), itemNames, dataType); err != nil {
 		return nil, err
 	} else {
@@ -2902,13 +3357,16 @@ func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemN
 			}
 		}
 		// check filterItemNames
-		if rawFilterNamesMap, filterNamesMap, err := gdb.checkSingleItemDataTypeWithMap(strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(filterItemNames)), ","), ","), filterItemNames, dataType); err != nil {
+		// strings.Split(strings.TrimRight(strings.Repeat(groupName+",", len(filterItemNames)), ","), ",")
+		if rawFilterNamesMap, filterNamesMap, err := gdb.getItemDataType(groupName, filterItemNames); err != nil {
 			return nil, err
 		} else {
 			// pass check
-			if filterHistoryData, err := gdb.getHistoricalDataWithMinLength(dataType, rawFilterNamesMap, filterNamesMap, startTimes, endTimes, intervals); err != nil {
+			et := time.Now()
+			if filterHistoryData, err := gdb.getHistoricalDataWithMinLength(groupName, rawFilterNamesMap, filterNamesMap, startTime, endTime, interval); err != nil {
 				return nil, err
 			} else {
+				et1 := time.Now()
 				vm := goja.New()
 				f := `function filterData(s){return s.filter(function(item){return ` + filterCondition + `})}`
 				if _, err := vm.RunString(f); err != nil {
@@ -2931,22 +3389,35 @@ func (gdb *Gdb) getHistoricalDataWithCondition(dataType, groupName string, itemN
 						for i := 0; i < len(itemNames); i++ {
 							tts[i] = timeStamps
 						}
+						et2 := time.Now()
+						var startTimes, endTimes, intervals []int32
+						for k := 0; k < len(rawNamesMap[groupName]); k++ {
+							startTimes = append(startTimes, startTime)
+							endTimes = append(endTimes, endTime)
+							intervals = append(intervals, interval)
+						}
 						if len(zones) == 0 {
 							// get data without zones
 							if len(timeStamps) == 0 {
 								return cmap.New(), nil
 							}
-							if m, err := gdb.getHistoricalDataWithTs(dataType, rawNamesMap, namesMap, tts...); err != nil {
+							if m, err := gdb.getHistoricalDataWithTsAndIntervals(dataType, rawNamesMap, namesMap, startTimes, endTimes, intervals, tts...); err != nil {
 								return nil, err
 							} else {
+								et3 := time.Now()
+								fmt.Println("读取配置耗时:", et.Sub(st).Milliseconds(), ", 获取条件历史耗时:", et1.Sub(et).Milliseconds(), ", 解析condition并获取数据耗时:", et2.Sub(et1).Milliseconds(), ", 获取历史耗时:", et3.Sub(et2).Milliseconds())
 								return m, nil
 							}
 						} else {
 							// get history data with zones
-							if m, err := gdb.getHistoricalDataWithStampAndDeadZoneCount(dataType, itemNames, rawNamesMap, namesMap, tts, zones); err != nil {
+							if m, err := gdb.getHistoricalDataWithTsAndIntervals(dataType, rawNamesMap, namesMap, startTimes, endTimes, intervals, tts...); err != nil {
 								return nil, err
 							} else {
-								return m, nil
+								if rm, err := gdb.getHistoricalDataWithStampAndDeadZoneCount(dataType, itemNames, m, zones); err != nil {
+									return nil, err
+								} else {
+									return rm, nil
+								}
 							}
 						}
 					}
@@ -4265,7 +4736,7 @@ func (gdb *Gdb) checkItemDataType(groupNames []string, itemNames [][]string, dat
 	return names, nil
 }
 
-// returned itemName = itemName + joiner + groupName
+// returned itemName = itemName + joiner + groupName, {"groupName": []rawItemName}, {"groupName": []itemName}
 func (gdb *Gdb) checkSingleItemDataTypeWithMap(groupNames []string, itemNames []string, dataType string) (map[string][]string, map[string][]string, error) {
 	namesMap := map[string][]string{}
 	rawNamesMap := map[string][]string{}
@@ -4290,7 +4761,7 @@ func (gdb *Gdb) checkSingleItemDataTypeWithMap(groupNames []string, itemNames []
 	return rawNamesMap, namesMap, nil
 }
 
-// returned itemName = itemName + joiner + groupName
+// returned itemName = itemName + joiner + groupName, {"groupName": []itemName}
 func (gdb *Gdb) checkItemDataTypeWithMap(groupNames []string, itemNames [][]string, dataType string) (map[string][]string, error) {
 	namesMap := map[string][]string{}
 	for i := 0; i < len(groupNames); i++ {
@@ -4309,6 +4780,27 @@ func (gdb *Gdb) checkItemDataTypeWithMap(groupNames []string, itemNames [][]stri
 		namesMap[groupNames[i]] = names
 	}
 	return namesMap, nil
+}
+
+// itemName = itemName + joiner + groupName, {"dataType": []rawItemName}, {"dataType": []itemName}
+func (gdb *Gdb) getItemDataType(groupName string, itemNames []string) (map[string][]string, map[string][]string, error) {
+	namesMap := map[string][]string{}
+	rawNamesMap := map[string][]string{}
+	for _, name := range itemNames {
+		itemName := name + joiner + groupName
+		if dt, ok := gdb.rtDbFilter.Get(itemName); ok {
+			if _, o := namesMap[dt.(string)]; o {
+				namesMap[dt.(string)] = append(namesMap[dt.(string)], itemName)
+				rawNamesMap[dt.(string)] = append(rawNamesMap[dt.(string)], name)
+			} else {
+				namesMap[dt.(string)] = []string{itemName}
+				rawNamesMap[dt.(string)] = []string{name}
+			}
+		} else {
+			return nil, nil, fmt.Errorf("item " + name + "not exist")
+		}
+	}
+	return rawNamesMap, namesMap, nil
 }
 
 // ensure that historical data in the database will not be repeated
