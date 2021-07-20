@@ -476,7 +476,7 @@ func (gdb *Gdb) StopService(_ ...interface{}) error {
 //
 // DriverName: sqlite3
 //
-// Dsn: ./itemDb.db
+// Dsn: file:itemDB.db?_auth_user=seu&_auth_pass=admin@123&_auth_crypt=SHA1@_vacuum=1
 //
 // UseInnerStop: true
 //
@@ -484,7 +484,7 @@ func (gdb *Gdb) StopService(_ ...interface{}) error {
 func DefaultOptions() *Options {
 	return &Options{
 		DriverName:   "sqlite3",
-		Dsn:          "./itemDb.db",
+		Dsn:          "file:itemDB.db?_auth_user=seu&_auth_pass=admin@123&_auth_crypt=SHA1@_vacuum=1",
 		UseInnerStop: true,
 		RtGdb:        &FastCacheRt{RealTimePath: "./realTimeDb"},
 	}
