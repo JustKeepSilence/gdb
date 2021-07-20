@@ -114,13 +114,14 @@ func main()  {
 	} else {
 		fmt.Println(gdb.hisTimeDuration)
 	}
-	if gdb, err := NewGdb("./historyDb", time.Hour, time.Minute*5, db.DefaultOptions()); err != nil {
+	
+	if gdb, err := db.NewGdb("./historyDb", time.Hour, time.Minute*5, db.DefaultOptions()); err != nil {
 		fmt.Println(err)
 	} else {
 		// add groups
 		if r, err := gdb.AddGroups(db.AddedGroupInfo{
 			GroupName:   "3DCS",
-			ColumnNames: []string{"unit", "descriptions"},
+			ColumnNames: []string{"unit", "description"},
 		}, db.AddedGroupInfo{
 			GroupName:   "4DCS",
 			ColumnNames: nil,
@@ -129,25 +130,35 @@ func main()  {
 		} else {
 			fmt.Println(r.EffectedRows, r.Times)
 		}
-		
+
 		// add items to group
 		if r, err := gdb.AddItems(db.AddedItemsInfo{
 			GroupName: "3DCS",
 			ItemValues: []map[string]string{{"itemName": "X", "dataType": "float32", "description": "", "unit": ""},
-				{"itemName": "Y", "dataType": "float32", "description": "", "unit": ""}},
+				{"itemName": "Y", "dataType": "float32", "description": "", "unit": ""},{"itemName": "Z", "dataType": "float32", "description": "", "unit": ""}},
 		}); err != nil {
 			log.Fatal(err)
 		} else {
 			fmt.Println(r.Times, r.EffectedRows)
 		}
-		
+
+		if r, err := gdb.AddItems(db.AddedItemsInfo{
+			GroupName: "4DCS",
+			ItemValues: []map[string]string{{"itemName": "X1", "dataType": "float32"},
+				{"itemName": "Y1", "dataType": "float32"},{"itemName": "Z1", "dataType": "float32"}},
+		}); err != nil {
+			log.Fatal(err)
+		} else {
+			fmt.Println(r.Times, r.EffectedRows)
+		}
+
 		// batchWriteFloatRealTimeData
 		if r, err := gdb.BatchWriteFloatData([]string{"3DCS", "4DCS"}, [][]string{{"X", "Y", "Z"}, {"X1", "Y1", "Z1"}}, [][]float32{{1.0, 2.0, 3.0}, {4.0, 5.0, 6.0}}); err != nil {
 			log.Fatal(err)
 		} else {
 			fmt.Println(r.Times, r.EffectedRows)
 		}
-		
+
 		// getRealTimeData
 		if r, err := gdb.GetRealTimeData([]string{"3DCS", "4DCS", "3DCS"}, []string{"X", "X1", "Y"});err!=nil{
 			log.Fatal(err)
@@ -155,27 +166,27 @@ func main()  {
 			r1,_ := json.Marshal(r.RealTimeData)
 			fmt.Println(string(r1))
 		}
-		
-		// writeFloatHistoryData 
+
+		// writeFloatHistoryData
 		//generate history data of month
 		seconds := 24 * 3600 * 30
 		now := time.Now()
-		groupNames := []string{"3DCS", "4DCS"}
-		itemNames := []string{"X", "X1"}
+		groupNames := []string{"4DCS", "4DCS"}
+		itemNames := []string{"X1", "Y1"}
 		var timeStamp []int32
 		var xItemValue []float32
-		var x1ItemValue []float32
+		var yItemValue []float32
 		for i := 0; i < seconds; i++ {
 			timeStamp = append(timeStamp, int32(now.Add(time.Duration(i) * time.Second).Unix() + 8 * 3600))
 			xItemValue = append(xItemValue, rand.Float32()*math.Pi)
-			x1ItemValue = append(x1ItemValue, rand.Float32()*math.E)
+			yItemValue = append(yItemValue, rand.Float32()*math.E)
 		}
-		if r, err := gdb.BatchWriteFloatHistoricalData(groupNames, itemNames, [][]int32{timeStamp, timeStamp}, [][]float32{xItemValue, x1ItemValue});err!=nil{
+		if r, err := gdb.BatchWriteFloatHistoricalData(groupNames, itemNames, [][]int32{timeStamp, timeStamp}, [][]float32{xItemValue, yItemValue});err!=nil{
 			log.Fatal(err)
 		}else{
 			fmt.Println(r.Times, r.EffectedRows)
 		}
-		
+
 		// getFloatHistoryData
 		st := int32(time.Now().Add( time.Hour * 9 * 24).Unix() + 8 * 3600)
 		et := int32(time.Now().Add(time.Hour * 10 * 24).Unix() + 8 * 3600)
@@ -185,7 +196,7 @@ func main()  {
 			r1, _ := json.Marshal(r.HistoricalData)
 			fmt.Println(string(r1))
 		}
-		
+
 		// getFloatRawHistoryData==>all history data
 		if r, err := gdb.GetFloatRawHistoricalData([]string{"4DCS"}, []string{"X1"});err!=nil{
 			log.Fatal(err)
@@ -195,9 +206,8 @@ func main()  {
 			_ = ioutil.WriteFile("./h.txt", r1, 0766)
 			fmt.Println(len(v.([]interface{})[0].([]int32)))
 		}
-		
+
 		// getFloatHistory data with given timeStamps
-		now := time.Now()
 		ts := []int32{int32(now.Add(time.Hour * 24 * -30).Unix() + 8 * 3600)}
 		for i := 0; i < 5; i++ {
 			ts = append(ts, int32(now.Add(time.Hour * 24 * time.Duration(i)).Unix() + 8 * 3600))
@@ -210,11 +220,11 @@ func main()  {
 			r1, _ := json.Marshal(r.HistoricalData)
 			fmt.Println(string(r1))
 		}
-		
+
 		// getFloatHistoryData with given condition
-		st, et := int32(1626201902), int32(1626288302)
+		st, et = int32(now.Add(time.Hour * 2).Unix() + 8 * 3600), int32(now.Add(time.Hour * 6).Unix() + 8 * 3600)
 		// without deadZone condition
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `item["xFloat"]>= 1 && item["yFloat"]<= 4` ,nil);err!=nil{
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"X1", "Y1"}, st, et, 10, `item["X1"]>= 1 && item["Y1"]<= 4` ,nil);err!=nil{
 			log.Fatal(err)
 		}else{
 			fmt.Println(r.Times)
@@ -222,7 +232,7 @@ func main()  {
 			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
 		}
 		// with deadZone condition
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `item["xFloat"]>= 1 && item["yFloat"]<= 4` ,[]db.DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}});err!=nil{
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"X1", "Y1"}, st, et, 10, `item["X1"]>= 1 && item["Y1"]<= 4` ,[]db.DeadZone{{ItemName: "X1", DeadZoneCount: 3}});err!=nil{
 			log.Fatal(err)
 		}else{
 			fmt.Println(r.Times)
@@ -230,7 +240,7 @@ func main()  {
 			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
 		}
 		// withOut filterCondition
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `true` ,[]db.DeadZone{{ItemName: "xFloat", DeadZoneCount: 3}});err!=nil{
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"X1", "Y1"}, st, et, 10, `true` ,[]db.DeadZone{{ItemName: "X1", DeadZoneCount: 3}});err!=nil{
 			log.Fatal(err)
 		}else{
 			fmt.Println(r.Times)
@@ -238,17 +248,16 @@ func main()  {
 			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
 		}
 		// withOut filterCondition and deadZone condition == GetFloatHistoricalData
-		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"xFloat", "yFloat"}, st, et, 10, `true` ,nil);err!=nil{
+		if r, err := gdb.GetFloatHistoricalDataWithCondition("4DCS", []string{"X1", "Y1"}, st, et, 10, `true` ,nil);err!=nil{
 			log.Fatal(err)
 		}else{
 			fmt.Println(r.Times)
 			r1, _ := json.Marshal(r.HistoricalData)
 			_ = ioutil.WriteFile("./hf2.json", r1, 0766)
 		}
-		
+
 		// deleteFloatHistoryData
-		st, et := int32(1626201902), int32(1626288302)
-		if r, err := gdb.DeleteFloatHistoricalData([]string{"4DCS", "4DCS"}, []string{"xFloat", "yFloat"}, []int32{st, st}, []int32{et, et});err!=nil{
+		if r, err := gdb.DeleteFloatHistoricalData([]string{"4DCS", "4DCS"}, []string{"X1", "Y1"}, []int32{st, st}, []int32{et, et});err!=nil{
 			log.Fatal(err)
 		}else{
 			fmt.Println(r.Times, r.EffectedRows)
