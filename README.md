@@ -1,4 +1,6 @@
 ## GDB
+English | [简体中文](README-zh.md)
+
 GDB is a historical database  based on [goleveldb](https://pkg.go.dev/github.com/syndtr/goleveldb/leveldb) with high performance.
 It uses goLevelDb to store historical Data, use memory or Redis to store realTime Data and part history data.
 It supports restful and gRPC protocol.If you want to need to store large amount of history data, you will love it. 
