@@ -1,1 +1,0 @@
-grpc_tools_node_protoc -I=../model --js_out=import_style=commonjs,binary:. --grpc_out=generate_package_definition:. ../model/gdb.proto
