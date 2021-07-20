@@ -265,7 +265,7 @@ grpcRequest('/data/getBoolHistoricalData', {
     })
 })
 
-// get all float32 history data, unlike restful,the returned data of gRPC is string
+// // get all float32 history data, unlike restful,the returned data of gRPC is string
 grpcRequest('/data/getFloatRawHistoricalData', {
     groupNames: ['5DCS'],
     itemNames: ['xFloat']
@@ -416,4 +416,21 @@ grpcRequest('/data/getFloatHistoricalDataWithCondition', {
             console.log('ok')
         }
     })
+})
+
+// delete item and history data of the given item
+grpcRequest('/data/cleanItemData', {groupName: '5DCS', condition: '1=1'}).then(({data}) => {
+    console.log(data)
+    // { effectedRows: 8, times: '5062' }
+}).catch(({message}) => {
+    console.log(message)
+})
+
+// reLoadDb: delete keys in db whose value is nil, then compact db again, during this time, all write operation will failed
+// so you should not write data to db during reload
+grpcRequest('/data/reLoadDb', {}).then(({data}) => {
+    console.log(data)
+    // { effectedRows: 11520, times: '308' }
+}).catch(({message}) => {
+    console.log(message)
 })

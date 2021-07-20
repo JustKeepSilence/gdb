@@ -13,7 +13,7 @@ const Base64 = require('js-base64')
 const fs = require('fs')
 const async = require('async')
 
-const ip = '192.168.0.129:8086'
+const ip = '192.168.0.103:8086'
 const userName = 'admin'
 const userToken = '7cb19c60ff6345c96aa723a406335389'  // you should login and then get the token
 const token = 'Basic ' + Base64.encode(`${userName}:${userToken}`)

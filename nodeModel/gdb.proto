@@ -9,7 +9,7 @@ syntax = "proto3";
 package model;
 option go_package="model";
 
-import "/empty.proto";
+message Empty {}
 
 message TimeRows{
   int32 effectedRows = 1;
@@ -75,7 +75,7 @@ message UpdatedGroupColumnNamesInfo {
 service Group {
   rpc AddGroups(AddedGroupInfos) returns (TimeRows){}
   rpc DeleteGroups(GroupNamesInfo) returns (TimeRows){}
-  rpc GetGroups(google.protobuf.Empty) returns (GroupNamesInfo) {}
+  rpc GetGroups(Empty) returns (GroupNamesInfo) {}
   rpc GetGroupProperty(QueryGroupPropertyInfo) returns (GroupPropertyInfo){}
   rpc UpdateGroupNames(UpdatedGroupNamesInfo) returns (TimeRows){}
   rpc UpdateGroupColumnNames(UpdatedGroupColumnNamesInfo) returns (TimeCols){}
@@ -128,7 +128,7 @@ service Item {
   rpc DeleteItems(DeletedItemsInfo) returns (TimeRows){}
   rpc GetItemsWithCount(ItemsInfo) returns (GdbItemsWithCount){}
   rpc UpdateItems(UpdatedItemsInfo) returns (TimeRows){}
-  rpc CheckItems(CheckItemsInfo) returns (google.protobuf.Empty){}
+  rpc CheckItems(CheckItemsInfo) returns (Empty){}
   rpc CleanGroupItems(GroupNamesInfo) returns (TimeRows){}
 }
 
@@ -307,7 +307,7 @@ service Data {
   rpc DeleteStringHistoricalData(DeleteHistoricalDataString) returns (TimeRows){}
   rpc DeleteBoolHistoricalData(DeleteHistoricalDataString) returns (TimeRows){}
   rpc CleanItemData(DeletedItemsInfo) returns (TimeRows){}
-  rpc ReLoadDb(google.protobuf.Empty) returns (TimeRows){}
+  rpc ReLoadDb(Empty) returns (TimeRows){}
 }
 
 // page model
@@ -424,29 +424,29 @@ message Code {
 
 service Page {
   rpc UserLogin(AuthInfo) returns (UserToken){}
-  rpc UserLogOut(UserName) returns (google.protobuf.Empty){}
+  rpc UserLogOut(UserName) returns (Empty){}
   rpc GetUserInfo(UserName) returns (UserInfo){}
-  rpc GetUsers(google.protobuf.Empty) returns (UserInfos) {}
+  rpc GetUsers(Empty) returns (UserInfos) {}
   rpc AddUsers(AddedUserInfo) returns (TimeRows){}
   rpc DeleteUsers(UserName) returns (TimeRows){}
   rpc UpdateUsers(UpdatedUserInfo) returns (TimeRows){}
-  rpc UploadFile(UploadedFileInfo) returns (google.protobuf.Empty){}
-  rpc UploadFileWithStream(stream UploadedFileInfo) returns (google.protobuf.Empty){}  // for file > 4194304, or you can set MaxCallRecvMsgSize
+  rpc UploadFile(UploadedFileInfo) returns (Empty){}
+  rpc UploadFileWithStream(stream UploadedFileInfo) returns (Empty){}  // for file > 4194304, or you can set MaxCallRecvMsgSize
   rpc AddItemsByExcel(FileInfo) returns (TimeRows){}
   rpc ImportHistoryByExcel(HistoryFileInfo) returns (TimeRows){}
   rpc GetLogs(QueryLogsInfo) returns (LogsInfo){}
   rpc GetJsCode(FileInfo) returns (Code){}
   rpc DeleteLogs(DeletedLogInfo) returns (TimeRows){}
   rpc DownloadFile(FileInfo) returns (FileContents){}
-  rpc GetDbSize(google.protobuf.Empty) returns (FileSize){}
-  rpc GetDbInfo(google.protobuf.Empty) returns (GdbInfoData){}
+  rpc GetDbSize(Empty) returns (FileSize){}
+  rpc GetDbInfo(Empty) returns (GdbInfoData){}
   rpc GetDbInfoHistory(QuerySpeedHistoryDataString) returns (GdbHistoricalData){}
-  rpc GetRoutes(google.protobuf.Empty) returns (Routes){}
+  rpc GetRoutes(Empty) returns (Routes){}
   rpc DeleteRoutes(RoutesInfo) returns (TimeRows){}
   rpc AddRoutes(RoutesInfo) returns (TimeRows){}
   rpc AddUserRoutes(RoutesInfo) returns (TimeRows){}
   rpc DeleteUserRoutes(UserName) returns (TimeRows){}
-  rpc GetAllRoutes(google.protobuf.Empty) returns (Routes){}
+  rpc GetAllRoutes(Empty) returns (Routes){}
   rpc CheckRoutes(RoutesInfo) returns (CheckResult){}
 }
 
