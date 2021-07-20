@@ -5,12 +5,12 @@
     // ip address of gdb service, if empty, we will use local ip of machine
     "ip": "",
     // port of gdb service
-    "port": 8082,
+    "port": 8086,
     // path of gdb service to store historical, info data
-    "dbPath": "./historyData",
+    "dbPath": "./hData",
     // name of gdb service to get runTime info of gdb, should be the same
     // as the name of the compiled executable file
-    "applicationName": "gdb",
+    "applicationName": "gdb.exe",
     // whether to open authorization mode, if true, when use restful or rpc
     // user need to token authorization authentication
     "authorization": true,
@@ -19,7 +19,7 @@
     // if mode is "", mode is http
     "mode": "http",
     // whether use redis as realTime database, default is false, which will use fast cache as realTime database
-    "useRedis": false,
+    "useRedis": true,
     // time durations to sync RealTime data in memory to other database or file system,unit is second
     "rtTimeDuration": 3600,
     //time durations to sync history data in memory to leveldb, unit is second
@@ -32,8 +32,8 @@
     "driverName": "sqlite3",
     // dsn to connect to database
     // mysql:"root:admin@123@tcp(192.168.0.166:3306)/itemDb"
-    // sqlite3: "./leveldb/item.db"
-    "dsn": "./itemDb.db"
+    // sqlite3: file:test.db?_auth_user=seu&_auth_pass=admin@123&_auth_crypt=SHA1@_vacuum=1
+    "dsn": "file:itemDb.db?_auth_user=seu&_auth_pass=admin@123&_auth_crypt=SHA1@_vacuum=1"
   },
   // configs of https mode
   "httpsConfigs": {
@@ -55,7 +55,7 @@
     // whether write log for gdb
     "logWriting": true,
     // loglevel of gdb, Info or Error
-    "Level": "Error",
+    "Level": "Info",
     // expiredTime of gdb, unit is seconds
     "expiredTime": 3600
   },
