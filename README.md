@@ -14,7 +14,7 @@ It supports restful and gRPC protocol.If you want to need to store large amount 
 
 ## Features
 - High writing and reading performance
-- Multiple ways to access history data
+- Multiple ways to access history data(batchGet, conditionFilter...)
 - Simulate data based on existing data with js code.
 - Support restful ,gRPC, https protocol.
 - Fine permission control(tokenBased permission control + casbinBased route permission control)
@@ -29,11 +29,12 @@ It supports restful and gRPC protocol.If you want to need to store large amount 
 - [GdbServer](#GdbServer)
     - [Build GDB](#build-gdb)
     - [Download GDB](#download-gdb)
-    - [Run With HTTPS Mode](#run-with-https-mode)
-    - [Run With Authorization Mode](#run-with-authorization-mode)
+    - [HTTPS Mode](#https-mode)
+    - [Authorization Mode](#authorization-mode)
+    - [Route Permission](#route-permission)
 - [Restful API Examples](#restful-api-examples)
 - [gRPC API Examples](#grpc-api-examples)
-- [GdbUI](#desktop-application)
+- [GdbUI](#gdbUI)
 - [FAQ](#faq)
 
 ## Design Ideas
@@ -50,7 +51,7 @@ add your own groups and items!
 DataDb is used to store data of items, data in gdb can be divided into realTimeData and history Data.
 when you write data to database, on the one hand, we will write data to realTime
 database, for realTimeDataBase, we provide memory dataBase and redis to store realTimeData, 
-if you use gdb in your own Go project, you can also implement RtGdb interface to custom your own 
+if you use gdb in your own Go project, you can also implement [RtGdb](https://github.com/JustKeepSilence/gdb/blob/9047c12a6d592f60d51c7d7ab3292048340360aa/db/db_type.go#L347) interface to custom your own 
 way to store realTimeData.On the other hand, we will write data to history dataBase in memory, 
 and we will batchSync these data to disk period.
 
@@ -65,7 +66,6 @@ Then import gdb in your own code
 ```go
 import "github.com/JustKeepSilence/gdb/db"
 ```
-
 
 ```go
 import (
@@ -274,7 +274,7 @@ unless you use gdbServer tags when compiling
 If you are not familiar with go, and want to use gdb as back-end database only, you can [build-gdb](#build-gdb), then run 
 gdb in your server.Also, you can [download](#download-gdb) the compiled installer and run it directly.
 In this way, you can't customize your own behavior, but you can use restful or grpc api provided by gdb, as well as 
-token-control for every api we provided.For more details you can see [restful-examples](#restful-api-examples) or [grpc-examples](#grpc-api-examples) or [documents](https://app.gitbook.com/@justkeepsilence/s/gdb/~/settings/share)
+token-control for every api we provided.For more details you can see [restful-examples](#restful-api-examples) or [grpc-examples](#grpc-api-examples) 
 
 
 ### Build GDB
@@ -282,12 +282,12 @@ First, you need to clone gdb using the following command:
 ```shell
 git clone https://github.com/JustKeepSilence/gdb.git
 ```
-Then change to gdb/gdbServer directory, run the following command:
+Then change to gdb/gdbServer directory, run the following command(need Go evn):
 ```shell
 go build -tags=jsoniter -tags=gdbServer -o ../gdb
 ```
 Notes: you must add gdbServer tags when building gdb Client, otherWise only core function without client will be compiled.
-After that, you can customize your own config in config.json.For more details about config you can see https://github.com/JustKeepSilence/gdb/blob/master/config.json
+After that, you can customize your own config in config.json.For more details about config you can see [configFiles](#https://github.com/JustKeepSilence/gdb/blob/master/config.json)
 ```json
 // Notes: you can use // single line comments in json file
 {
@@ -304,7 +304,7 @@ After that, you can customize your own config in config.json.For more details ab
   },
   "itemDbConfigs": {
     "driverName": "sqlite3",
-    "dsn": "./item.db"
+    "dsn": "file:itemDb.db?_auth_user=seu&_auth_pass=admin@123&_auth_crypt=SHA1@_vacuum=1"
   },
   "httpsConfigs": {
     "ca": false,
@@ -330,10 +330,11 @@ After that, you can customize your own config in config.json.For more details ab
 Notes: you need set gdb,config.json, and ssl folder in the same path to sure gdb work normally.
 
 ### Download Gdb
+
 if you are not familiar with go at all, you can also directly download the compiled installer we provided,
 the download url is: https://wws.lanzoui.com/icUGzpojb5e, download passWord is bwst
 
-### Run With HTTPS Mode
+### HTTPS Mode
 
 gdb support https mode for restful nad gRPC,if you want to run with https mode, you need to set 
 mode filed in configs.json to https, and customize your own https configs.Then put your own certificate
@@ -343,23 +344,43 @@ we provided without ca root.
 Notes: selfSignedCa is not allowed on windows at moment.And if you want to use ca root, you need 
 to set ca field to true and set the caCertificateName field in config.json
 
-### Run With Authorization Mode
+### Authorization Mode
 
-gdb support token authorization mode, if you want to run with authorization mode,
-you need to set authorization field to true.Then you need to add Authorization field to
-header if you use restful, or to context if you use gRPC.For more details, you can see
-[document](https://blog.csdn.net/qq_39778055/article/details/114844756)
+gdb support token authorization mode, if you want to run with authorization mode, you need to set authorization field to
+true.Then you need to add Authorization field to header for all requests, only under authorization mode, routes permission
+will work.
+
+### Route Permission
+When the GDB service is running in the authorization mode, the routing permission control will work. The users of the 
+GDB service are divided into three categories: super users, ordinary users and tourists. User management can be done 
+through [Client](#gdbUI) to finish. For the routing permissions of the group interface and item interface, 
+each type of user is fixed, and you cannot modify it. But for the data interface, that is, the routing interface 
+permissions related to reading data, you can modify it on the client.For the routing permissions of each type of user, 
+you can check here [details](#https://github.com/JustKeepSilence/gdb/blob/master/examples/restfulExamples/groupExamples.js)
 
 ## Restful API Examples
-If you use other language to access gdb, you can use restful interface, before use
-you need [build gdb](#build-gdb) or [download](#download-gdb), and after running the application,you can interact with 
-gdb by the restful interface easily.For more details, you can see [RestFulExamples](https://github.com/JustKeepSilence/gdb/tree/master/examples/restfulExamples)
+The GDB service supports a standard restful interface, and the returned data format is
+```json
+{
+  "code": 200,
+  "message": "",
+  "data": {}
+}
+```
+code is the status code of the request, 200 is success, 500 is failure, and 403 is unauthorized.
+
+The message is the information in the request process, the code is 500 is the request failure information, and the 200 is the empty string.
+
+data is the response data, the type is object
+
+For restful use cases, please check [RestFulExamples](https://github.com/JustKeepSilence/gdb/tree/master/examples/restfulExamples)
 
 ## gRPC API Examples
 We recommend you to interact with gdb by gRPC.For more details, you can see [gRPCExamples](https://github.com/JustKeepSilence/gdb/tree/master/examples/gRPCExamples)
 
-## Desktop Application
-see [gdbUI](https://github.com/JustKeepSilence/gdbUI) for more details or see [document](https://github.com/JustKeepSilence/gdb/blob/master/db/templateFiles/document.pdf)
+## GdbUI
+The GDB service can be easily operated through the GDB client. For specific download and use
+please see [gdbUI](https://github.com/JustKeepSilence/gdbUI)
 
 ## FAQ
 1. How to obtain the timeStamp consistent with gdb
