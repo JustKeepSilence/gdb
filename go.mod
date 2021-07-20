@@ -18,13 +18,13 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/protobuf v1.4.2
 	github.com/json-iterator/go v1.1.10
-	github.com/mattn/go-sqlite3 v1.10.0
+	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/shirou/gopsutil/v3 v3.20.12
+	github.com/shopspring/decimal v1.2.0
 	github.com/spf13/cobra v1.1.3
 	github.com/syndtr/goleveldb v1.0.0
 	golang.org/x/net v0.0.0-20201202161906-c7110b5ffcbb
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.25.0
-	github.com/shopspring/decimal v1.2.0
 )
