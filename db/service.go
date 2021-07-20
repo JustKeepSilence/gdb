@@ -1,4 +1,4 @@
-// +build gdbClient
+// +build gdbServer
 
 /*
 creatTime: 2021/2/7

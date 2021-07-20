@@ -1,4 +1,4 @@
-// +build gdbClient
+// +build gdbServer
 
 package main
 

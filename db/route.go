@@ -1,3 +1,5 @@
+// +build gdbServer
+
 /*
 createTime: 2021/5/29
 creator: JustKeepSilence
@@ -105,11 +107,4 @@ func (gdb *Gdb) RemovePolicy(_ string, _ string, actions []string) error {
 
 func (gdb *Gdb) RemoveFilteredPolicy(_ string, _ string, _ int, _ ...string) error {
 	return nil
-}
-
-
-func toTitle(s string) string {
-	r := []rune(s)
-	r[0] -= 32
-	return string(r)
 }

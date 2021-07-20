@@ -257,7 +257,7 @@ func main()  {
 }
 ```
 Notes: In order to reduce the size of the entire project, in this case only the core functions of gdb are included, 
-unless you use gdbClient tags when compiling
+unless you use gdbServer tags when compiling
 
 ## GdbServer
 If you are not familiar with go, and want to use gdb as back-end database only, you can [build-gdb](#build-gdb), then run 
@@ -271,11 +271,11 @@ First, you need to clone gdb using the following command:
 ```shell
 git clone https://github.com/JustKeepSilence/gdb.git
 ```
-Then change to gdb/main directory, run the following command:
+Then change to gdb/gdbServer directory, run the following command:
 ```shell
-go build -tags=jsoniter -tags=gdbClient -o ../gdb
+go build -tags=jsoniter -tags=gdbServer -o ../gdb
 ```
-Notes: you must add gdbClient tags when building gdb Client, otherWise only core function without client will be compiled.
+Notes: you must add gdbServer tags when building gdb Client, otherWise only core function without client will be compiled.
 After that, you can customize your own config in config.json.For more details about config you can see https://github.com/JustKeepSilence/gdb/blob/master/config.json
 ```json
 // Notes: you can use // single line comments in json file
