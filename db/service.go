@@ -97,6 +97,13 @@ func appRouter(g *Gdb, authorization, logWriting bool, level string) http.Handle
 	if logWriting {
 		router.Use(g.setLogHeaderMiddleware(level))
 	}
+	if gin.Mode() == gin.ReleaseMode {
+		// use custom recovery
+		router.Use(gin.CustomRecoveryWithWriter(nil, func(c *gin.Context, recovered interface{}) {
+			message := fmt.Sprintf("%v", recovered)
+			g.string(c, 500, "%s", convertStringToByte(message), nil)
+		}))
+	}
 	group := router.Group("/group") // group handler
 	{
 		group.POST("/addGroups", g.addGroupsHandler)               // add

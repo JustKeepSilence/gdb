@@ -37,10 +37,11 @@ func (gdb *Gdb) testCalculation(expression string) (calculationResult, error) {
 		vm.Set("writeIntRtData", gdb.writeIntRtData)
 		vm.Set("writeStringRtData", gdb.writeStringRtData)
 		vm.Set("writeBoolRtData", gdb.writeBoolRtData)
+		vm.Set("getTimeDuration", gdb.getTimeDuration)
 		vm.Set("getTimeStamp", gdb.getUnixTimeStamp)
 		vm.Set("getNowTime", gdb.getNowTime)
 		vm.Set("console", gdb.console)
-		p, runError = goja.Compile("main.js", expression, false)
+		p, runError = goja.Compile(time.Now().Format(timeFormatString)+".js", expression, false)
 		if p == nil {
 			return
 		}

@@ -21,6 +21,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"golang.org/x/sync/errgroup"
+	"math"
 	"os"
 	"regexp"
 	"strconv"
@@ -53,6 +54,9 @@ func (gdb *Gdb) BatchWriteFloatData(groupNames []string, itemNames [][]string, i
 				var keys, values [][]byte
 				for i := 0; i < len(names); i++ {
 					for j := 0; j < len(names[i]); j++ {
+						if math.IsNaN(float64(itemValues[i][j])) {
+							return fmt.Errorf("you can't write NaN to gdb")
+						}
 						keys = append(keys, convertStringToByte(names[i][j]))
 						values = append(values, convertStringToByte(strconv.FormatFloat(float64(itemValues[i][j]), 'f', -1, 64)))
 					}
@@ -67,6 +71,9 @@ func (gdb *Gdb) BatchWriteFloatData(groupNames []string, itemNames [][]string, i
 				for i := 0; i < len(names); i++ {
 					// itemName = itemName + joiner + groupName
 					for j := 0; j < len(names[i]); j++ {
+						if math.IsNaN(float64(itemValues[i][j])) {
+							return fmt.Errorf("you can't write NaN to gdb")
+						}
 						gdb.floatRmHisDb.Upsert(names[i][j], groupNames[i], memap.RmHisDbFloatItem{TimeStamp: int32(currentTimeStamp), Value: itemValues[i][j]})
 					}
 				}
@@ -4592,6 +4599,10 @@ func (gdb *Gdb) console(v interface{}) {
 }
 
 // following method is used by calc
+func (gdb *Gdb) getTimeDuration(duration int) int64 {
+	return time.Now().Add(time.Duration(duration)*time.Second).Unix() + 8*3600
+}
+
 // get unix timestamp of the given time,t should b yyyy-mm-dd hh:mm:ss
 func (gdb *Gdb) getUnixTimeStamp(t string, d int) (int64, error) {
 	if st, err := time.Parse(timeFormatString, t); err != nil {
@@ -4601,8 +4612,8 @@ func (gdb *Gdb) getUnixTimeStamp(t string, d int) (int64, error) {
 	}
 }
 
-func (gdb *Gdb) getRtData(itemNames, groupNames []string) (string, error) {
-	if v, err := gdb.GetRealTimeData(itemNames, groupNames); err != nil {
+func (gdb *Gdb) getRtData(groupNames, itemNames []string) (string, error) {
+	if v, err := gdb.GetRealTimeData(groupNames, itemNames); err != nil {
 		return "", err
 	} else {
 		if r, err := json.Marshal(v); err != nil {
@@ -4825,51 +4836,19 @@ func (gdb *Gdb) checkTimeStampsInDb(itemName string, startTime, endTime int, sn 
 	return nil
 }
 
-func (gdb *Gdb) writeFloatRtData(infos []map[string]interface{}) (TimeRows, error) {
-	var groupNames []string
-	var itemNames [][]string
-	var itemValues [][]float32
-	for _, info := range infos {
-		groupNames = append(groupNames, info["groupName"].(string))
-		itemNames = append(itemNames, info["itemName"].([]string))
-		itemValues = append(itemValues, info["itemValue"].([]float32))
-	}
+func (gdb *Gdb) writeFloatRtData(groupNames []string, itemNames [][]string, itemValues [][]float32) (TimeRows, error) {
 	return gdb.BatchWriteFloatData(groupNames, itemNames, itemValues)
 }
 
-func (gdb *Gdb) writeIntRtData(infos []map[string]interface{}) (TimeRows, error) {
-	var groupNames []string
-	var itemNames [][]string
-	var itemValues [][]int32
-	for _, info := range infos {
-		groupNames = append(groupNames, info["groupName"].(string))
-		itemNames = append(itemNames, info["itemName"].([]string))
-		itemValues = append(itemValues, info["itemValue"].([]int32))
-	}
+func (gdb *Gdb) writeIntRtData(groupNames []string, itemNames [][]string, itemValues [][]int32) (TimeRows, error) {
 	return gdb.BatchWriteIntData(groupNames, itemNames, itemValues)
 }
 
-func (gdb *Gdb) writeStringRtData(infos []map[string]interface{}) (TimeRows, error) {
-	var groupNames []string
-	var itemNames [][]string
-	var itemValues [][]string
-	for _, info := range infos {
-		groupNames = append(groupNames, info["groupName"].(string))
-		itemNames = append(itemNames, info["itemName"].([]string))
-		itemValues = append(itemValues, info["itemValue"].([]string))
-	}
+func (gdb *Gdb) writeStringRtData(groupNames []string, itemNames [][]string, itemValues [][]string) (TimeRows, error) {
 	return gdb.BatchWriteStringData(groupNames, itemNames, itemValues)
 }
 
-func (gdb *Gdb) writeBoolRtData(infos []map[string]interface{}) (TimeRows, error) {
-	var groupNames []string
-	var itemNames [][]string
-	var itemValues [][]bool
-	for _, info := range infos {
-		groupNames = append(groupNames, info["groupName"].(string))
-		itemNames = append(itemNames, info["itemName"].([]string))
-		itemValues = append(itemValues, info["itemValue"].([]bool))
-	}
+func (gdb *Gdb) writeBoolRtData(groupNames []string, itemNames [][]string, itemValues [][]bool) (TimeRows, error) {
 	return gdb.BatchWriteBoolData(groupNames, itemNames, itemValues)
 }
 

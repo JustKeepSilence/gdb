@@ -1667,18 +1667,14 @@ func (gdb *Gdb) getJsFunction(expression, id string) func() error {
 			vm.Set("writeIntRtData", gdb.writeIntRtData)
 			vm.Set("writeStringRtData", gdb.writeStringRtData)
 			vm.Set("writeBoolRtData", gdb.writeBoolRtData)
+			vm.Set("getTimeDuration", gdb.getTimeDuration)
 			vm.Set("getTimeStamp", gdb.getUnixTimeStamp)
 			vm.Set("getNowTime", gdb.getNowTime)
 			vm.Set("console", gdb.console)
 			program, _ := goja.Compile(id+".js", expression, false)
 			_, err = vm.RunProgram(program)
 		})
-		if err != nil {
-			return err
-			//_, _ = updateItem("update calc_cfg set errorMessage='"+err.Error()+"' where id="+r["id"])
-		} else {
-			return nil
-		}
+		return err
 	}
 }
 
