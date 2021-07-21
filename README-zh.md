@@ -319,7 +319,7 @@ go build -tags=jsoniter -tags=gdbServer -o ../gdb
 你可以选择我们默认的配置进行gdb服务的启动.但是你必须要将配置文件,gdb服务程序以及ssl文件夹放在同一个路径下才可以保gdb服务的成功运行.
 
 ### 下载GDB服务
-如果你对go语言不熟悉或者没有安装go环境,你可以直接下载我们编译好的二进制文件,下载地址为:https://wws.lanzoui.com/icUGzpojb5e,下载密码是bwst
+如果你对go语言不熟悉或者没有安装go环境,你可以直接下载我们编译好的二进制文件,下载地址为:https://wws.lanzoui.com/irUJ0rowr8d,下载密码是7659
 
 ### HTTPS模式
 GDB服务支持以https模式运行,如何你自己有证书文件,你只需要将证书文件放置到ssl文件夹中,并在配置文件中指定证书的名称即可.gdb默认的https模式使用的是
