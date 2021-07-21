@@ -1,5 +1,5 @@
 ## GDB
-English | [简体中文](README-zh.md)
+English | [Chinese](README-zh.md)
 
 GDB is a historical database  based on [goleveldb](https://pkg.go.dev/github.com/syndtr/goleveldb/leveldb) with high performance.
 It uses goLevelDb to store historical Data, use memory or Redis to store realTime Data and part history data.
@@ -367,7 +367,7 @@ The GDB service supports a standard restful interface, and the returned data for
   "data": {}
 }
 ```
-code is the status code of the request, 200 is success, 500 is failure, and 403 is unauthorized.
+code is the status code of the request, 200 is success, 500 is failure, and 401 is unauthorized.
 
 The message is the information in the request process, the code is 500 is the request failure information, and the 200 is the empty string.
 
