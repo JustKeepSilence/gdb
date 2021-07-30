@@ -59,7 +59,7 @@ func (gdb *Gdb) string(c *gin.Context, code int, formatter string, responseData 
 			RequestMethod: c.Request.Proto,
 			UserAgent:     c.Request.UserAgent(),
 			RequestBody:   fmt.Sprintf("%s", b),
-			RemoteAddress: c.Request.RemoteAddr,
+			RemoteAddress: c.ClientIP(),
 			Message:       "",
 		}
 		if level[0] == "Info" {
