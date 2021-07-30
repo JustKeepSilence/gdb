@@ -10,6 +10,7 @@ It supports restful and gRPC protocol.If you want to need to store large amount 
 [![Release](https://img.shields.io/github/v/release/JustKeepSilence/gdb)](https://github.com/JustKeepSilence/gdb/releases)
 [![go-version](https://img.shields.io/github/go-mod/go-version/JustKeepSilence/gdb)]()
 [![count](https://img.shields.io/github/languages/count/JustKeepSilence/gdb)]()
+[![GdbClient on fuget.org](https://www.fuget.org/packages/GdbClient/badge.svg)](https://www.fuget.org/packages/GdbClient)
 
 
 ## Features
