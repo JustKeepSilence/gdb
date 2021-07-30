@@ -203,7 +203,7 @@ axios.post(`${ip}/data/getFloatHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xFloat: [ [Array](timeStamp array), [Array](value array) ], yFloat: [ [Array], [Array] ] },
+    //   historicalData: { xFloat: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yFloat: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 111  // operation times, scale is millionSecond
     // }
     //
@@ -226,7 +226,7 @@ axios.post(`${ip}/data/getIntHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xInt: [ [Array](timeStamp array), [Array](value array) ], yInt: [ [Array], [Array] ] },
+    //   historicalData: { xInt: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yInt: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 111  // operation times, scale is millionSecond
     // }
     //
@@ -249,7 +249,7 @@ axios.post(`${ip}/data/getStringHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xString: [ [Array](timeStamp array), [Array](value array) ], yString: [ [Array], [Array] ] },
+    //   historicalData: { xString: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yString: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 111  // operation times, scale is millionSecond
     // }
     //
@@ -272,7 +272,7 @@ axios.post(`${ip}/data/getBoolHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xBool: [ [Array](timeStamp array), [Array](value array) ], yBool: [ [Array], [Array] ] },
+    //   historicalData: { xBool: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yBool: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 111  // operation times, scale is millionSecond
     // }
     //
@@ -303,7 +303,7 @@ axios.post(`${ip}/data/getFloatRawHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     //{
-    //   historicalData: { xFloat: [ [Array](timeStamp array), [Array](value array) ], yFloat: [ [Array], [Array] ] },
+    //   historicalData: { xFloat: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yFloat: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 381
     // }
     fs.writeFile('./fr.json', JSON.stringify(data), err => {
@@ -322,7 +322,7 @@ axios.post(`${ip}/data/getIntRawHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     //{
-    //   historicalData: { xInt: [ [Array](timeStamp array), [Array](value array) ], yInt: [ [Array], [Array] ] },
+    //   historicalData: { xInt: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yInt: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 381
     // }
     fs.writeFile('./fr.json', JSON.stringify(data), err => {
@@ -341,7 +341,7 @@ axios.post(`${ip}/data/getStringRawHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     //{
-    //   historicalData: { xString: [ [Array](timeStamp array), [Array](value array) ], yString: [ [Array], [Array] ] },
+    //   historicalData: { xString: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yString: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 381
     // }
     fs.writeFile('./fr.json', JSON.stringify(data), err => {
@@ -360,7 +360,7 @@ axios.post(`${ip}/data/getBoolRawHistoricalData`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     //{
-    //   historicalData: { xBool: [ [Array](timeStamp array), [Array](value array) ], yBool: [ [Array], [Array] ] },
+    //   historicalData: { xBool: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yBool: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 381
     // }
     fs.writeFile('./fr.json', JSON.stringify(data), err => {
@@ -391,11 +391,11 @@ axios.post(`${ip}/data/getFloatHistoricalDataWithStamp`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xFloat: [ [Array](timeStamp), [Array](value) ], yFloat: [ [Array], [Array] ] },
+    //   historicalData: { xFloat: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yFloat: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 0
     // }
     console.log(JSON.stringify(data))
-    // {"historicalData":{"xFloat":[[1627157580,1628021580],[2.4523265,1.0813193]],"yFloat":[[1627157580,1628021580],[1.7954874,0.5654516]]},"times":0}
+    // {historicalData:{xFloat:{timeStamps: [1627157580,1628021580], itemValues: [2.4523265,1.0813193]},yFloat:{timeStamps: [1627157580,1628021580],itemValues: [1.7954874,0.5654516]}},times:0}
 })
 
 // get int32 history data with ts
@@ -405,11 +405,11 @@ axios.post(`${ip}/data/getIntHistoricalDataWithStamp`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xInt: [ [Array](timeStamp), [Array](value) ], yInt: [ [Array], [Array] ] },
+    //   historicalData: { xInt: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yInt: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 0
     // }
     console.log(JSON.stringify(data))
-    // {"historicalData":{"xInt":[[1627157734],[105]],"yInt":[[1627157734],[95]]},"times":0}
+    // {historicalData:{xInt:{timeStamps: [1627157734],itemValues: [105]},yInt:{timeStamps: [1627157734],itemValues: [95]}},times:0}
 })
 
 // get string history data with ts
@@ -419,11 +419,11 @@ axios.post(`${ip}/data/getStringHistoricalDataWithStamp`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xString: [ [Array](timeStamp), [Array](value) ], yString: [ [Array], [Array] ] },
+    //   historicalData: { xString: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yString: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 0
     // }
     console.log(JSON.stringify(data))
-    // {"historicalData":{"xString":[[1627157788],["2"]],"yString":[[1627157788],["5"]]},"times":0}
+    // {historicalData:{xString:{timeStamps: [1627157788],itemValues: ["2"]},yString:{timeStamps: [1627157788],itemValues: ["5"]}},times:0}
 })
 
 // get bool history data with ts
@@ -433,11 +433,11 @@ axios.post(`${ip}/data/getBoolHistoricalDataWithStamp`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xBool: [ [Array](timeStamp), [Array](value) ], xBool: [ [Array], [Array] ] },
+    //   historicalData: { xBool: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yBool: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 0
     // }
     console.log(JSON.stringify(data))
-    // {"historicalData":{"xBool":[[1627157824],[true]],"yBool":[[1627157824],[false]]},"times":0}
+    // {historicalData:{xBool:{timeStamps: [1627157824], itemValues: [true]},yBool:{timeStamps: [1627157824],itemValues: [false]}},times:0}
 })
 
 /**
@@ -490,7 +490,7 @@ axios.post(`${ip}/data/getFloatHistoricalDataWithCondition`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xFloat: [ [Array](timeStamp), [Array](values) ], yFloat: [ [Array], [Array] ] },
+    //   historicalData: { xFloat: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yFloat: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 35
     // }
     fs.writeFile('./fcd.json', JSON.stringify(data), err => {
@@ -512,7 +512,7 @@ axios.post(`${ip}/data/getFloatHistoricalDataWithCondition`, {
 }, configs).then(({data: {data}}) => {
     console.log(data)
     // {
-    //   historicalData: { xFloat: [ [Array](timeStamp), [Array](values) ], yFloat: [ [Array], [Array] ] },
+    //   historicalData: { xFloat: {timeStamps: [Array](timeStamp array), itemValues: [Array](value array) }, yFloat: { timeStamps: [Array], itemValues: [Array] } },
     //   times: 28
     // }
     fs.writeFile('./fd.json', JSON.stringify(data), err => {

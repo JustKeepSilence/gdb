@@ -443,8 +443,11 @@ func (s *server) BatchWriteFloatHistoricalDataWithStream(stream pb.Data_BatchWri
 	bs := []floatHItemValues{}
 	st := time.Now()
 	counts := 0
+	ic := 0
 	for {
 		b, err := stream.Recv()
+		fmt.Println(ic)
+		ic++
 		if err == io.EOF {
 			eg := errgroup.Group{}
 			for _, ss := range bs {
@@ -466,14 +469,21 @@ func (s *server) BatchWriteFloatHistoricalDataWithStream(stream pb.Data_BatchWri
 		} else {
 			timeStamps := [][]int32{}
 			itemValues := [][]float32{}
+			var groupNames, itemNames []string
 			for i := 0; i < len(b.TimeStamps); i++ {
+				if b.TimeStamps[i].TimeStamps == nil {
+					// no value
+					continue
+				}
 				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
+				groupNames = append(groupNames, b.GroupNames[i])
+				itemNames = append(itemNames, b.ItemNames[i])
 			}
 			bs = append(bs, floatHItemValues{
-				GroupNames: b.GroupNames,
-				ItemNames:  b.ItemNames,
+				GroupNames: groupNames,
+				ItemNames:  itemNames,
 				ItemValues: itemValues,
 				TimeStamps: timeStamps,
 			})
@@ -522,14 +532,21 @@ func (s *server) BatchWriteIntHistoricalDataWithStream(stream pb.Data_BatchWrite
 		} else {
 			timeStamps := [][]int32{}
 			itemValues := [][]int32{}
+			var groupNames, itemNames []string
 			for i := 0; i < len(b.TimeStamps); i++ {
+				if b.TimeStamps[i].TimeStamps == nil {
+					// no value
+					continue
+				}
 				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
+				groupNames = append(groupNames, b.GroupNames[i])
+				itemNames = append(itemNames, b.ItemNames[i])
 			}
 			bs = append(bs, intHItemValues{
-				GroupNames: b.GroupNames,
-				ItemNames:  b.ItemNames,
+				GroupNames: groupNames,
+				ItemNames:  itemNames,
 				ItemValues: itemValues,
 				TimeStamps: timeStamps,
 			})
@@ -578,14 +595,21 @@ func (s *server) BatchWriteStringHistoricalDataWithStream(stream pb.Data_BatchWr
 		} else {
 			timeStamps := [][]int32{}
 			itemValues := [][]string{}
+			var groupNames, itemNames []string
 			for i := 0; i < len(b.TimeStamps); i++ {
+				if b.TimeStamps[i].TimeStamps == nil {
+					// no value
+					continue
+				}
 				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
+				groupNames = append(groupNames, b.GroupNames[i])
+				itemNames = append(itemNames, b.ItemNames[i])
 			}
 			bs = append(bs, stringHItemValues{
-				GroupNames: b.GroupNames,
-				ItemNames:  b.ItemNames,
+				GroupNames: groupNames,
+				ItemNames:  itemNames,
 				ItemValues: itemValues,
 				TimeStamps: timeStamps,
 			})
@@ -634,14 +658,21 @@ func (s *server) BatchWriteBoolHistoricalDataWithStream(stream pb.Data_BatchWrit
 		} else {
 			timeStamps := [][]int32{}
 			itemValues := [][]bool{}
+			var groupNames, itemNames []string
 			for i := 0; i < len(b.TimeStamps); i++ {
+				if b.TimeStamps[i].TimeStamps == nil {
+					// no value
+					continue
+				}
 				counts += len(b.TimeStamps[i].TimeStamps)
 				timeStamps = append(timeStamps, b.TimeStamps[i].TimeStamps)
 				itemValues = append(itemValues, b.ItemValues[i].ItemValue)
+				groupNames = append(groupNames, b.GroupNames[i])
+				itemNames = append(itemNames, b.ItemNames[i])
 			}
 			bs = append(bs, boolHItemValues{
-				GroupNames: b.GroupNames,
-				ItemNames:  b.ItemNames,
+				GroupNames: groupNames,
+				ItemNames:  itemNames,
 				ItemValues: itemValues,
 				TimeStamps: timeStamps,
 			})
@@ -989,7 +1020,7 @@ func (s *server) UserLogin(_ context.Context, r *pb.AuthInfo) (*pb.UserToken, er
 		PassWord: r.GetPassWord(),
 	}
 	if token, err := s.gdb.userLogin(g); err != nil {
-		return &pb.UserToken{}, nil
+		return &pb.UserToken{}, err
 	} else {
 		return &pb.UserToken{Token: token.Token}, nil
 	}

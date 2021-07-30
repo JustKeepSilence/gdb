@@ -435,7 +435,7 @@ func ExampleGdb_GetFloatHistoricalData() {
 		}
 	}
 	// Output:
-	// {"X1":[[1626838972,1626860572,1626882172,1626903772,1626838972,1626860572,1626882172,1626903772],[2.4913614,2.4554338,3.019772,2.8327777,2.4913614,2.4554338,3.019772,2.8327777]],"Y":[null,null]}
+	// {"X1":{"timeStamps": [1626838972,1626860572,1626882172,1626903772,1626838972,1626860572,1626882172,1626903772], "itemValues": [2.4913614,2.4554338,3.019772,2.8327777,2.4913614,2.4554338,3.019772,2.8327777]},"Y":{"timeStamps": null,"itemValues": null}}
 }
 
 func ExampleGdb_GetIntHistoricalData() {
@@ -452,7 +452,7 @@ func ExampleGdb_GetIntHistoricalData() {
 		}
 	}
 	// Output:
-	// {"xInt":[[1626840105,1626861705,1626883305,1626904905],[1932697017,132599088,1758527870,1151289996]]}
+	// {"xInt":{"timeStamps": [1626840105,1626861705,1626883305,1626904905],"itemValues": [1932697017,132599088,1758527870,1151289996]}}
 }
 
 func ExampleGdb_GetStringHistoricalData() {
@@ -469,7 +469,7 @@ func ExampleGdb_GetStringHistoricalData() {
 		}
 	}
 	// Output:
-	// {"xString":[[1626839992,1626861592,1626883192,1626904792],["2021-07-02 15:59:52","2021-07-02 09:59:52","2021-07-02 03:59:52","2021-07-01 21:59:52"]]}
+	// {"xString":{"timeStamps": [1626839992,1626861592,1626883192,1626904792],"itemValues": ["2021-07-02 15:59:52","2021-07-02 09:59:52","2021-07-02 03:59:52","2021-07-01 21:59:52"]}}
 }
 
 func ExampleGdb_GetBoolHistoricalData() {
@@ -486,7 +486,7 @@ func ExampleGdb_GetBoolHistoricalData() {
 		}
 	}
 	// Output:
-	// {"xBool":[[1626840057,1626861657,1626883257,1626904857],[true,true,true,true]]}
+	// {"xBool":{"timeStamps": [1626840057,1626861657,1626883257,1626904857],"itemValues": [true,true,true,true]}}
 }
 
 func ExampleGdb_GetFloatRawHistoricalData() {
@@ -581,7 +581,7 @@ func ExampleGdb_GetIntHistoricalDataWithStamp() {
 		}
 	}
 	// Output:
-	// {"xInt":[[1626085279,1626171679,1626258079,1626344479,1626430879],[1208980727,2117437444,1398993897,781075096,2106205256]]}
+	// {"xInt":{"timeStamps": [1626085279,1626171679,1626258079,1626344479,1626430879],"itemValues": [1208980727,2117437444,1398993897,781075096,2106205256]}}
 }
 
 func ExampleGdb_GetStringHistoricalDataWithStamp() {
@@ -603,7 +603,7 @@ func ExampleGdb_GetStringHistoricalDataWithStamp() {
 		}
 	}
 	// Output:
-	// {"xString":[[1626085482,1626171882,1626258282,1626344682,1626431082],["2021-07-11 09:35:02","2021-07-10 09:35:02","2021-07-09 09:35:02","2021-07-08 09:35:02","2021-07-07 09:35:02"]]}
+	// {"xString":{"timeStamps": [1626085482,1626171882,1626258282,1626344682,1626431082],"itemValues": ["2021-07-11 09:35:02","2021-07-10 09:35:02","2021-07-09 09:35:02","2021-07-08 09:35:02","2021-07-07 09:35:02"]}}
 }
 
 func ExampleGdb_GetBoolHistoricalDataWithStamp() {
@@ -625,7 +625,7 @@ func ExampleGdb_GetBoolHistoricalDataWithStamp() {
 		}
 	}
 	// Output:
-	// {"xBool":[[1626085566,1626171966,1626258366,1626344766,1626431166],[false,false,false,false,false]]}
+	// {"xBool":{"timeStamps": [1626085566,1626171966,1626258366,1626344766,1626431166],"itemValues": [false,false,false,false,false]}}
 }
 
 func ExampleGdb_GetFloatHistoricalDataWithCondition() {

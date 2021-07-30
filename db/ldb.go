@@ -35,7 +35,9 @@ const syncBytes = "syncBytes"
 // BatchWriteFloatData write float32 data to database, the dataType of written items MUST be float32, and all items MUST exist in gdb
 // mapping relationship between parameters are groupName in groupNames corresponds to the itemName([]string) in itemNames at the same time
 // corresponds to itemValue([]float32) in itemValues
-func (gdb *Gdb) BatchWriteFloatData(groupNames []string, itemNames [][]string, itemValues [][]float32) (TimeRows, error) {
+//
+// flags record whether to write info message, if flags == nil we will write info message
+func (gdb *Gdb) BatchWriteFloatData(groupNames []string, itemNames [][]string, itemValues [][]float32, flags ...bool) (TimeRows, error) {
 	st := time.Now()
 	// check items
 	if len(groupNames) == len(itemNames) && len(itemNames) == len(itemValues) {
@@ -82,18 +84,20 @@ func (gdb *Gdb) BatchWriteFloatData(groupNames []string, itemNames [][]string, i
 			if err := g.Wait(); err != nil {
 				return TimeRows{}, err
 			} else {
-				// write info
 				d := time.Since(st).Milliseconds()
 				counts := 0
 				for i := 0; i < len(itemNames); i++ {
 					counts += len(itemNames[i])
 				}
-				sd := fmt.Sprintf("%dms/%d", d, counts)
-				infoBatch := &leveldb.Batch{}
-				infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
-				infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
-				if err := gdb.floatInfoDb.Write(infoBatch, nil); err != nil {
-					return TimeRows{}, err
+				if flags == nil {
+					// write info
+					sd := fmt.Sprintf("%dms/%d", d, counts)
+					infoBatch := &leveldb.Batch{}
+					infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
+					infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
+					if err := gdb.floatInfoDb.Write(infoBatch, nil); err != nil {
+						return TimeRows{}, err
+					}
 				}
 				return TimeRows{counts, d}, nil
 			}
@@ -106,7 +110,9 @@ func (gdb *Gdb) BatchWriteFloatData(groupNames []string, itemNames [][]string, i
 // BatchWriteIntData write int32 data to database, the dataType of written items MUST be int32 and all items MUST exist in gdb
 // mapping relationship between parameters are groupName in groupNames corresponds to the itemName([]string) in itemNames at the same time
 // corresponds to itemValue([]int32) in itemValues
-func (gdb *Gdb) BatchWriteIntData(groupNames []string, itemNames [][]string, itemValues [][]int32) (TimeRows, error) {
+//
+// flags record whether to write info message, if flags == nil we will write info message
+func (gdb *Gdb) BatchWriteIntData(groupNames []string, itemNames [][]string, itemValues [][]int32, flags ...bool) (TimeRows, error) {
 	st := time.Now()
 	// check items
 	if len(groupNames) == len(itemNames) && len(itemNames) == len(itemValues) {
@@ -148,18 +154,20 @@ func (gdb *Gdb) BatchWriteIntData(groupNames []string, itemNames [][]string, ite
 			if err := g.Wait(); err != nil {
 				return TimeRows{}, err
 			} else {
-				// write info
 				d := time.Since(st).Milliseconds()
 				counts := 0
 				for i := 0; i < len(itemNames); i++ {
 					counts += len(itemNames[i])
 				}
-				sd := fmt.Sprintf("%dms/%d", d, counts)
-				infoBatch := &leveldb.Batch{}
-				infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
-				infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
-				if err := gdb.intInfoDb.Write(infoBatch, nil); err != nil {
-					return TimeRows{}, err
+				if flags == nil {
+					// write info
+					sd := fmt.Sprintf("%dms/%d", d, counts)
+					infoBatch := &leveldb.Batch{}
+					infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
+					infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
+					if err := gdb.intInfoDb.Write(infoBatch, nil); err != nil {
+						return TimeRows{}, err
+					}
 				}
 				return TimeRows{counts, d}, nil
 			}
@@ -172,7 +180,9 @@ func (gdb *Gdb) BatchWriteIntData(groupNames []string, itemNames [][]string, ite
 // BatchWriteStringData write string data to database, the dataType of written items MUST be string and all items MUST exist in gdb
 // mapping relationship between parameters are groupName in groupNames corresponds to the itemName([]string) in itemNames at the same time
 // corresponds to itemValue([]string) in itemValues
-func (gdb *Gdb) BatchWriteStringData(groupNames []string, itemNames [][]string, itemValues [][]string) (TimeRows, error) {
+//
+// flags record whether to write info message, if flags == nil we will write info message
+func (gdb *Gdb) BatchWriteStringData(groupNames []string, itemNames [][]string, itemValues [][]string, flags ...bool) (TimeRows, error) {
 	st := time.Now()
 	// check items
 	if len(groupNames) == len(itemNames) && len(itemNames) == len(itemValues) {
@@ -214,18 +224,20 @@ func (gdb *Gdb) BatchWriteStringData(groupNames []string, itemNames [][]string, 
 			if err := g.Wait(); err != nil {
 				return TimeRows{}, err
 			} else {
-				// write info
 				d := time.Since(st).Milliseconds()
 				counts := 0
 				for i := 0; i < len(itemNames); i++ {
 					counts += len(itemNames[i])
 				}
-				sd := fmt.Sprintf("%dms/%d", d, counts)
-				infoBatch := &leveldb.Batch{}
-				infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
-				infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
-				if err := gdb.stringInfoDb.Write(infoBatch, nil); err != nil {
-					return TimeRows{}, err
+				if flags == nil {
+					// write info
+					sd := fmt.Sprintf("%dms/%d", d, counts)
+					infoBatch := &leveldb.Batch{}
+					infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
+					infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
+					if err := gdb.stringInfoDb.Write(infoBatch, nil); err != nil {
+						return TimeRows{}, err
+					}
 				}
 				return TimeRows{counts, d}, nil
 			}
@@ -238,7 +250,9 @@ func (gdb *Gdb) BatchWriteStringData(groupNames []string, itemNames [][]string, 
 // BatchWriteBoolData write bool data to database, the dataType of written items MUST be bool and all items MUST exist in gdb
 // mapping relationship between parameters are groupName in groupNames corresponds to the itemName([]string) in itemNames at the same time
 // corresponds to itemValue([]bool) in itemValues
-func (gdb *Gdb) BatchWriteBoolData(groupNames []string, itemNames [][]string, itemValues [][]bool) (TimeRows, error) {
+//
+// flags record whether to write info message, if flags == nil we will write info message
+func (gdb *Gdb) BatchWriteBoolData(groupNames []string, itemNames [][]string, itemValues [][]bool, flags ...bool) (TimeRows, error) {
 	st := time.Now()
 	// check items
 	if len(groupNames) == len(itemNames) && len(itemNames) == len(itemValues) {
@@ -280,18 +294,20 @@ func (gdb *Gdb) BatchWriteBoolData(groupNames []string, itemNames [][]string, it
 			if err := g.Wait(); err != nil {
 				return TimeRows{}, err
 			} else {
-				// write info
 				d := time.Since(st).Milliseconds()
 				counts := 0
 				for i := 0; i < len(itemNames); i++ {
 					counts += len(itemNames[i])
 				}
-				sd := fmt.Sprintf("%dms/%d", d, counts)
-				infoBatch := &leveldb.Batch{}
-				infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
-				infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
-				if err := gdb.boolInfoDb.Write(infoBatch, nil); err != nil {
-					return TimeRows{}, err
+				if flags == nil {
+					// write info
+					sd := fmt.Sprintf("%dms/%d", d, counts)
+					infoBatch := &leveldb.Batch{}
+					infoBatch.Put(convertStringToByte(speed), convertStringToByte(sd))                                             // speed
+					infoBatch.Put(convertStringToByte(speed+strconv.Itoa(int(time.Now().Unix()+8*3600))), convertStringToByte(sd)) // history data of speed
+					if err := gdb.boolInfoDb.Write(infoBatch, nil); err != nil {
+						return TimeRows{}, err
+					}
 				}
 				return TimeRows{counts, d}, nil
 			}
@@ -1415,7 +1431,7 @@ float32:
 								lengthMap[index] = len(leveldbTs)
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -1522,7 +1538,7 @@ int32:
 								lengthMap[index] = len(leveldbTs)
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -1736,7 +1752,7 @@ bool32:
 								lengthMap[index] = len(leveldbTs)
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -1874,7 +1890,7 @@ float32:
 								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": lastLeveldbTs, "itemValues": lastLeveldbHis})
 						return nil
 					})
 				}
@@ -1993,7 +2009,7 @@ int32:
 								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": lastLeveldbTs, "itemValues": lastLeveldbHis})
 						return nil
 					})
 				}
@@ -2110,7 +2126,7 @@ string32:
 								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": lastLeveldbTs, "itemValues": lastLeveldbHis})
 						return nil
 					})
 				}
@@ -2227,7 +2243,7 @@ bool32:
 								lastLeveldbTs = append(lastLeveldbTs, leveldbTs[k])
 							}
 						}
-						m.Set(rawItemNames[index], []interface{}{lastLeveldbTs, lastLeveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": lastLeveldbTs, "itemValues": lastLeveldbHis})
 						return nil
 					})
 				}
@@ -2332,7 +2348,7 @@ float32:
 						}
 						leveldbTs = append(leveldbTs, memTs...)
 						leveldbHis = append(leveldbHis, memHis...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -2420,7 +2436,7 @@ int32:
 						}
 						leveldbTs = append(leveldbTs, memTs...)
 						leveldbHis = append(leveldbHis, memHis...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -2508,7 +2524,7 @@ string32:
 						}
 						leveldbTs = append(leveldbTs, memTs...)
 						leveldbHis = append(leveldbHis, memHis...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -2596,7 +2612,7 @@ bool32:
 						}
 						leveldbTs = append(leveldbTs, memTs...)
 						leveldbHis = append(leveldbHis, memHis...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -2678,7 +2694,7 @@ float32:
 						}
 						leveldbHis = append(leveldbHis, memHis...)
 						leveldbTs = append(leveldbTs, memTs...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -2743,7 +2759,7 @@ int32:
 						}
 						leveldbHis = append(leveldbHis, memHis...)
 						leveldbTs = append(leveldbTs, memTs...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -2808,7 +2824,7 @@ string32:
 						}
 						leveldbHis = append(leveldbHis, memHis...)
 						leveldbTs = append(leveldbTs, memTs...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -2873,7 +2889,7 @@ bool32:
 						}
 						leveldbHis = append(leveldbHis, memHis...)
 						leveldbTs = append(leveldbTs, memTs...)
-						m.Set(rawItemNames[index], []interface{}{leveldbTs, leveldbHis})
+						m.Set(rawItemNames[index], map[string]interface{}{"timeStamps": leveldbTs, "itemValues": leveldbHis})
 						return nil
 					})
 				}
@@ -3094,9 +3110,10 @@ float32:
 				var values []float32
 				var lastValue float32
 				var tts []int32
-				data, _ := dd.Get(name)                   // get data
-				ts := data.([]interface{})[0].([]int32)   // ts
-				hs := data.([]interface{})[1].([]float32) // values
+				data, _ := dd.Get(name) // get data,map[string]interface{}
+				dataC := data.(map[string]interface{})
+				ts := dataC["timeStamps"].([]int32)   // ts
+				hs := dataC["itemValues"].([]float32) // values
 				flags := map[float32]int32{}
 				for k := 0; k < len(ts); k++ {
 					if k == 0 {
@@ -3123,7 +3140,7 @@ float32:
 						}
 					}
 				}
-				m.Set(name, []interface{}{tts, values})
+				m.Set(name, map[string]interface{}{"timeStamps": tts, "itemValues": values})
 				return nil
 			}
 		doNotFilter:
@@ -3157,9 +3174,10 @@ int32:
 				var values []int32
 				var lastValue int32
 				var tts []int32
-				data, _ := dd.Get(name)                 // get data
-				ts := data.([]interface{})[0].([]int32) // ts
-				hs := data.([]interface{})[1].([]int32) // values
+				data, _ := dd.Get(name) // get data,map[string]interface{}
+				dataC := data.(map[string]interface{})
+				ts := dataC["timeStamps"].([]int32) // ts
+				hs := dataC["itemValues"].([]int32) // values
 				flags := map[int32]int32{}
 				for k := 0; k < len(ts); k++ {
 					if k == 0 {
@@ -3186,7 +3204,7 @@ int32:
 						}
 					}
 				}
-				m.Set(name, []interface{}{tts, values})
+				m.Set(name, map[string]interface{}{"timeStamps": tts, "itemValues": values})
 				return nil
 			}
 		doNotFilter:
@@ -3220,9 +3238,10 @@ string32:
 				var values []string
 				var lastValue string
 				var tts []int32
-				data, _ := dd.Get(name)                  // get data
-				ts := data.([]interface{})[0].([]int32)  // ts
-				hs := data.([]interface{})[1].([]string) // values
+				data, _ := dd.Get(name) // get data
+				dataC := data.(map[string]interface{})
+				ts := dataC["timeStamps"].([]int32)  // ts
+				hs := dataC["itemValues"].([]string) // values
 				flags := map[string]int32{}
 				for k := 0; k < len(ts); k++ {
 					if k == 0 {
@@ -3249,7 +3268,7 @@ string32:
 						}
 					}
 				}
-				m.Set(name, []interface{}{tts, values})
+				m.Set(name, map[string]interface{}{"timeStamps": tts, "itemValues": values})
 				return nil
 			}
 		doNotFilter:
@@ -3283,9 +3302,10 @@ bool32:
 				var values []bool
 				var lastValue bool
 				var tts []int32
-				data, _ := dd.Get(name)                 // get data
-				ts := data.([]interface{})[0].([]int32) // ts
-				hs := data.([]interface{})[1].([]bool)  // values
+				data, _ := dd.Get(name) // get data
+				dataC := data.(map[string]interface{})
+				ts := dataC["timeStamps"].([]int32) // ts
+				hs := dataC["itemValues"].([]bool)  // values
 				flags := map[bool]int32{}
 				for k := 0; k < len(ts); k++ {
 					if k == 0 {
@@ -3312,7 +3332,7 @@ bool32:
 						}
 					}
 				}
-				m.Set(name, []interface{}{tts, values})
+				m.Set(name, map[string]interface{}{"timeStamps": tts, "itemValues": values})
 				return nil
 			}
 		doNotFilter:
@@ -4837,19 +4857,19 @@ func (gdb *Gdb) checkTimeStampsInDb(itemName string, startTime, endTime int, sn 
 }
 
 func (gdb *Gdb) writeFloatRtData(groupNames []string, itemNames [][]string, itemValues [][]float32) (TimeRows, error) {
-	return gdb.BatchWriteFloatData(groupNames, itemNames, itemValues)
+	return gdb.BatchWriteFloatData(groupNames, itemNames, itemValues, true)
 }
 
 func (gdb *Gdb) writeIntRtData(groupNames []string, itemNames [][]string, itemValues [][]int32) (TimeRows, error) {
-	return gdb.BatchWriteIntData(groupNames, itemNames, itemValues)
+	return gdb.BatchWriteIntData(groupNames, itemNames, itemValues, true)
 }
 
 func (gdb *Gdb) writeStringRtData(groupNames []string, itemNames [][]string, itemValues [][]string) (TimeRows, error) {
-	return gdb.BatchWriteStringData(groupNames, itemNames, itemValues)
+	return gdb.BatchWriteStringData(groupNames, itemNames, itemValues, true)
 }
 
 func (gdb *Gdb) writeBoolRtData(groupNames []string, itemNames [][]string, itemValues [][]bool) (TimeRows, error) {
-	return gdb.BatchWriteBoolData(groupNames, itemNames, itemValues)
+	return gdb.BatchWriteBoolData(groupNames, itemNames, itemValues, true)
 }
 
 func (gdb *Gdb) getDbInfo() (cmap.ConcurrentMap, error) {
