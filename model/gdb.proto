@@ -522,7 +522,3 @@ message BoolHistoricalData {
   repeated bool values = 1;
   repeated int32 timeStamps = 2;
 }
-
-message FloatHistoricalDatas {
-  map<string, FloatHistoricalData> historyValues = 1;
-}
