@@ -431,7 +431,7 @@ func (gdb *Gdb) rollBack(groupNames ...[]string) {
 }
 
 // check whether column name is valid, trim ‘ and empty string between the column name
-// if all column names are valid the the index is -1, column names can't be one of id, itemName, groupName and empty string
+// if all column names are valid the index is -1, column names can't be one of id, itemName, groupName and empty string
 func checkColumnNames(columnNames ...string) (int, []string) {
 	r := []string{}
 	for index, columnName := range columnNames {

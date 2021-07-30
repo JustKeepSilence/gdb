@@ -1,3 +1,4 @@
+//go:build gdbServer
 // +build gdbServer
 
 /*
@@ -354,6 +355,7 @@ func StartDbServer(configs Config) error {
 	g.Go(gdb.calc)           // calc goroutine
 	g.Go(gdb.syncRtData)
 	g.Go(gdb.syncHisData)
+	g.Go(gdb.cleanLogs)
 	if err := g.Wait(); err != nil {
 		fmt.Println(err)
 		return err
