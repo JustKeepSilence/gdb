@@ -333,7 +333,7 @@ Notes: you need set gdb,config.json, and ssl folder in the same path to sure gdb
 ### Download Gdb
 
 if you are not familiar with go at all, you can also directly download the compiled installer we provided,
-the download url is: https://wws.lanzoui.com/irUJ0rowr8d, download passWord is 7659
+the download url is: https://wws.lanzoui.com/iOe4Ms5as5g, download passWord is 4akk
 
 ### HTTPS Mode
 
