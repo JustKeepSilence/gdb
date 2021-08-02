@@ -559,7 +559,7 @@ func ExampleGdb_GetFloatHistoricalDataWithStamp() {
 		}
 	}
 	// Output:
-	// {"X1":[[1626045377,1626131777,1626218177,1626304577,1626390977],[0.26911953,1.5107508,1.7978884,0.84435517,0.05435284]],"Y":[null,null]}
+	// {"X1":{"timeStamps": [1626045377,1626131777,1626218177,1626304577,1626390977],"itemValues": [0.26911953,1.5107508,1.7978884,0.84435517,0.05435284]},"Y":{"timeStamps": null,"itemValues": null}}
 }
 
 func ExampleGdb_GetIntHistoricalDataWithStamp() {
